@@ -27,7 +27,7 @@ function budgetAmount(value) {
 
 export default function App() {
   const [view, setView] = useState('overview');
-  const [rangeKey, setRangeKey] = useState('90d');
+  const [rangeKey, setRangeKey] = useState('30d');
   const [stats, setStats] = useState(null);
   const [netWorth, setNetWorth] = useState([]);
   const [spendingByDay, setSpendingByDay] = useState([]);
