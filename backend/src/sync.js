@@ -1,16 +1,16 @@
 const db = require('./db');
 const firefly = require('./fireflyClient');
 
-const ASSET_TYPES = new Set(['asset', 'loan', 'debt', 'mortgage']);
+const NET_WORTH_TYPES = new Set(['asset', 'cash', 'liability', 'liabilities', 'loan', 'debt', 'mortgage']);
 
 function upsertAccount(row) {
   db.prepare(
-    `INSERT INTO accounts (id, name, type, currency_code, opening_balance, opening_balance_date, current_balance, active)
-     VALUES (@id, @name, @type, @currency_code, @opening_balance, @opening_balance_date, @current_balance, @active)
+    `INSERT INTO accounts (id, name, type, currency_code, opening_balance, opening_balance_date, current_balance, include_net_worth, active)
+     VALUES (@id, @name, @type, @currency_code, @opening_balance, @opening_balance_date, @current_balance, @include_net_worth, @active)
      ON CONFLICT(id) DO UPDATE SET
        name=excluded.name, type=excluded.type, currency_code=excluded.currency_code,
        opening_balance=excluded.opening_balance, opening_balance_date=excluded.opening_balance_date,
-       current_balance=excluded.current_balance, active=excluded.active`
+       current_balance=excluded.current_balance, include_net_worth=excluded.include_net_worth, active=excluded.active`
   ).run(row);
 }
 
@@ -56,6 +56,7 @@ async function syncAccounts() {
         opening_balance: parseFloat(attr.opening_balance || '0'),
         opening_balance_date: attr.opening_balance_date,
         current_balance: parseFloat(attr.current_balance || '0'),
+        include_net_worth: attr.include_net_worth === false ? 0 : 1,
         active: attr.active ? 1 : 0,
       });
     });
@@ -127,8 +128,10 @@ async function syncTransactions() {
  */
 function rebuildBalanceHistory() {
   const accounts = db
-    .prepare('SELECT id, opening_balance, opening_balance_date FROM accounts WHERE type IN (?, ?, ?, ?)')
-    .all(...ASSET_TYPES);
+    .prepare(`SELECT id, opening_balance, opening_balance_date
+          FROM accounts
+          WHERE include_net_worth = 1 AND type IN (${[...NET_WORTH_TYPES].map(() => '?').join(', ')})`)
+    .all(...NET_WORTH_TYPES);
 
   const clear = db.prepare('DELETE FROM balance_history');
   const insert = db.prepare(
@@ -138,6 +141,7 @@ function rebuildBalanceHistory() {
   const txQuery = db.prepare(
     `SELECT date, amount, source_id, destination_id FROM transactions
      WHERE (source_id = ? OR destination_id = ?) AND type != 'opening balance'
+       AND date >= ?
      ORDER BY date ASC`
   );
 
@@ -152,7 +156,7 @@ function rebuildBalanceHistory() {
       const points = new Map();
       points.set(startDate, balance);
 
-      const rows = txQuery.all(acc.id, acc.id);
+      const rows = txQuery.all(acc.id, acc.id, startDate);
       rows.forEach((r) => {
         if (r.source_id === acc.id) balance -= r.amount; // money left this account
         if (r.destination_id === acc.id) balance += r.amount; // money came into this account

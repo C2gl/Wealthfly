@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   opening_balance REAL DEFAULT 0,
   opening_balance_date TEXT,
   current_balance REAL DEFAULT 0,
+  include_net_worth INTEGER DEFAULT 1,
   active INTEGER DEFAULT 1
 );
 
@@ -64,5 +65,10 @@ CREATE INDEX IF NOT EXISTS idx_tx_category ON transactions(category_name);
 CREATE INDEX IF NOT EXISTS idx_tx_destination ON transactions(destination_name);
 CREATE INDEX IF NOT EXISTS idx_balhist_date ON balance_history(date);
 `);
+
+const accountColumns = db.prepare('PRAGMA table_info(accounts)').all();
+if (!accountColumns.some((column) => column.name === 'include_net_worth')) {
+  db.exec('ALTER TABLE accounts ADD COLUMN include_net_worth INTEGER DEFAULT 1');
+}
 
 module.exports = db;

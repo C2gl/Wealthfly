@@ -2,7 +2,7 @@ import React from 'react';
 import { formatCurrency } from '../utils';
 
 const TYPE_ORDER = ['asset', 'cash', 'liability', 'loan', 'debt', 'mortgage'];
-const VISIBLE_TYPES = new Set(['asset', 'cash']);
+const VISIBLE_TYPES = new Set(['asset', 'cash', 'liability', 'liabilities', 'loan', 'debt', 'mortgage']);
 const TYPE_LABELS = {
   asset: 'Asset accounts',
   cash: 'Cash accounts',

@@ -97,6 +97,7 @@ npm run dev
   multiple currencies the totals in the charts will mix them. If that matters to you, filter by
   account/currency, or extend `sync.js` to convert to a base currency using Firefly's exchange rate
   data.
-- **Account types included in net worth**: currently `asset`, `loan`, `debt`, `mortgage` (see
-  `ASSET_TYPES` in `backend/src/sync.js`) — adjust to match how you've set up your Firefly accounts.
+- **Account types included in net worth**: Firefly `asset`, `cash`, and `liability` accounts are
+  included when their `include_net_worth` flag is enabled. Liability subtypes (`loan`, `debt`, and
+  `mortgage`) are represented by Firefly as `type: liability`.
 - **Sync frequency**: set `SYNC_CRON` in `.env` (standard cron syntax).

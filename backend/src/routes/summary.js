@@ -8,15 +8,24 @@ function dateFilter(req) {
   return { start: start || '0000-01-01', end: end || '9999-12-31' };
 }
 
-// Total net worth over time = sum of every asset/liability account's daily balance.
+// Each point uses the latest known balance for every included account, so accounts
+// without a transaction on that date still contribute to the total.
 router.get('/net-worth', (req, res) => {
   const { start, end } = dateFilter(req);
   const rows = db
     .prepare(
-      `SELECT date, SUM(balance) as total
-       FROM balance_history
-       WHERE date BETWEEN ? AND ?
-       GROUP BY date ORDER BY date ASC`
+      `WITH dates AS (
+         SELECT DISTINCT date FROM balance_history WHERE date BETWEEN ? AND ?
+       )
+       SELECT dates.date,
+              SUM((SELECT bh.balance
+                   FROM balance_history bh
+                   WHERE bh.account_id = accounts.id AND bh.date <= dates.date
+                   ORDER BY bh.date DESC LIMIT 1)) as total
+       FROM dates
+       CROSS JOIN accounts
+       WHERE accounts.include_net_worth = 1
+       GROUP BY dates.date ORDER BY dates.date ASC`
     )
     .all(start, end);
   res.json(rows);
@@ -28,10 +37,10 @@ router.get('/net-worth-by-account', (req, res) => {
   const rows = db
     .prepare(
       `SELECT bh.date, a.name as account, bh.balance
-       FROM balance_history bh
-       JOIN accounts a ON a.id = bh.account_id
-       WHERE bh.date BETWEEN ? AND ?
-       ORDER BY bh.date ASC`
+      FROM balance_history bh
+      JOIN accounts a ON a.id = bh.account_id AND a.include_net_worth = 1
+      WHERE bh.date BETWEEN ? AND ?
+      ORDER BY bh.date ASC`
     )
     .all(start, end);
   res.json(rows);
@@ -124,9 +133,12 @@ router.get('/stats', (req, res) => {
   const { start, end } = dateFilter(req);
   const netWorth = db
     .prepare(
-      `SELECT SUM(balance) as total
-       FROM balance_history
-       WHERE date = (SELECT MAX(date) FROM balance_history WHERE date <= ?)`
+      `SELECT SUM((SELECT bh.balance
+                  FROM balance_history bh
+                  WHERE bh.account_id = accounts.id AND bh.date <= ?
+                  ORDER BY bh.date DESC LIMIT 1)) as total
+       FROM accounts
+       WHERE accounts.include_net_worth = 1`
     )
     .get(end);
 
@@ -143,7 +155,7 @@ router.get('/stats', (req, res) => {
   const lastSync = db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get();
 
   res.json({
-    netWorth: netWorth.total ?? db.prepare('SELECT SUM(current_balance) as total FROM accounts').get().total ?? 0,
+    netWorth: netWorth.total ?? db.prepare('SELECT SUM(current_balance) as total FROM accounts WHERE include_net_worth = 1').get().total ?? 0,
     monthExpenses: expenses.total || 0,
     monthIncome: income.total || 0,
     lastSync: lastSync ? lastSync.value : null,
