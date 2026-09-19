@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatCurrency, formatDate } from '../utils';
+import { categoryColor, formatCurrency, formatDate } from '../utils';
 
 export default function TransactionsTable({ transactions }) {
   return (
@@ -36,7 +36,7 @@ export default function TransactionsTable({ transactions }) {
                   <td>{tx.description}</td>
                   <td>{tx.source_name || '—'}</td>
                   <td>{tx.destination_name || '—'}</td>
-                  <td>{tx.category_name || '—'}</td>
+                  <td><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }}>{tx.category_name || 'Uncategorized'}</span></td>
                   <td>
                     {tags.map((t) => (
                       <span className="tag-chip" key={t}>
