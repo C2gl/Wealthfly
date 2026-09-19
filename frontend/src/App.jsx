@@ -17,6 +17,12 @@ const RANGES = [
   { key: 'all', label: 'ALL', start: () => '0000-01-01' },
 ];
 
+function budgetAmount(value) {
+  const raw = value && typeof value === 'object' ? value.amount ?? value.sum : value;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) ? Math.abs(numeric) : 0;
+}
+
 export default function App() {
   const [view, setView] = useState('overview');
   const [rangeKey, setRangeKey] = useState('90d');
@@ -46,11 +52,11 @@ export default function App() {
         return start <= range.end && end >= range.end;
       }) || [...(budget.limits || [])].sort((a, b) => String(b.end || '').localeCompare(String(a.end || '')))[0];
       const spent = currentLimit
-        ? Math.abs(Number(currentLimit.spent || 0))
-        : Math.abs((budget.spent || []).reduce((sum, item) => sum + Number(item.sum || 0), 0));
+        ? budgetAmount(currentLimit.spent)
+        : (budget.spent || []).reduce((sum, item) => sum + budgetAmount(item), 0);
       const target = currentLimit
-        ? Math.abs(Number(currentLimit.amount || 0))
-        : Math.abs(Number(budget.auto_budget_amount || 0));
+        ? budgetAmount(currentLimit.amount)
+        : budgetAmount(budget.auto_budget_amount);
       const currency = currentLimit?.currency_code || budget.spent?.[0]?.currency_code;
       return {
         id: budget.id,
