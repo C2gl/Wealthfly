@@ -1,6 +1,6 @@
 services:
   wealthfly:
-    build: .
+    image: ghcr.io/c2gl/wealthfly:latest
     container_name: wealthfly
     restart: unless-stopped
     ports:

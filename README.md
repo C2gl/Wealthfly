@@ -30,7 +30,8 @@ FIREFLY_TOKEN=eyJ0eXAiOiJKV1Q...
 ## 3. Run
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Wealthfly will be available at `http://<host>:4400`. On first boot it automatically runs an initial
