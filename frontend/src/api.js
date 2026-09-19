@@ -17,6 +17,7 @@ export const api = {
   expensesByTag: (range) => get('/summary/expenses-by-tag', range),
   transactions: (params) => get('/transactions', params),
   accounts: () => get('/accounts'),
+  budgets: (range) => get('/budgets', range),
   categories: () => get('/categories'),
   tags: () => get('/tags'),
   triggerSync: () =>

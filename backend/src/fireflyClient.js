@@ -50,6 +50,20 @@ async function getTags() {
   return fetchAllPages('/tags');
 }
 
+async function getBudgets({ start, end } = {}) {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  return fetchAllPages('/budgets', params);
+}
+
+async function getBudgetLimits(id, { start, end } = {}) {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  return fetchAllPages(`/budgets/${id}/limits`, params);
+}
+
 async function getTransactions({ start, end } = {}) {
   const params = {};
   if (start) params.start = start;
@@ -66,6 +80,8 @@ module.exports = {
   getAccounts,
   getCategories,
   getTags,
+  getBudgets,
+  getBudgetLimits,
   getTransactions,
   testConnection,
 };

@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { runFullSync } = require('../sync');
+const firefly = require('../fireflyClient');
 
 const router = express.Router();
 
@@ -15,6 +16,26 @@ router.get('/categories', (req, res) => {
 
 router.get('/tags', (req, res) => {
   res.json(db.prepare('SELECT * FROM tags ORDER BY name').all());
+});
+
+router.get('/budgets', async (req, res) => {
+  const { start, end } = req.query;
+  try {
+    const budgets = await firefly.getBudgets({ start, end });
+    const result = await Promise.all(budgets.map(async (budget) => {
+      const attributes = budget.attributes || {};
+      const limits = await firefly.getBudgetLimits(budget.id, { start, end });
+      return {
+        id: budget.id,
+        ...attributes,
+        limits: limits.map((limit) => ({ id: limit.id, ...limit.attributes })),
+      };
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error('[budgets] failed:', err.message);
+    res.status(502).json({ error: 'Could not load budgets from Firefly III' });
+  }
 });
 
 router.get('/transactions', (req, res) => {

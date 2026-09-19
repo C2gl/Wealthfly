@@ -28,29 +28,20 @@ export default function App() {
   const [byTag, setByTag] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [budgets, setBudgets] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(null);
   const [showCategoryInsights, setShowCategoryInsights] = useState(false);
-  const [budget, setBudget] = useState('');
-  const [budgetDraft, setBudgetDraft] = useState('');
-  const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [showTrends, setShowTrends] = useState(false);
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
   const rangeLabel = RANGES.find((r) => r.key === rangeKey).label;
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const budgetTarget = Number(budget || 0);
-  const periodDays = Math.max(1, Math.ceil((new Date(`${range.end}T00:00:00`) - new Date(`${range.start}T00:00:00`)) / 86400000) + 1);
-  const budgetRows = [
-    { label: 'Spent', current: periodSpent, target: budgetTarget, color: '#8da34d' },
-    { label: 'Remaining', current: Math.max(budgetTarget - periodSpent, 0), target: budgetTarget, color: '#c6a642' },
-    { label: 'Daily pace', current: periodSpent / periodDays, target: budgetTarget / periodDays, color: '#62615d' },
-  ];
 
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [s, nw, daily, cat, tgt, tag, tx, accountRows] = await Promise.all([
+      const [s, nw, daily, cat, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
         api.stats(range),
         api.netWorth(range),
         api.expensesByDay(range),
@@ -59,6 +50,7 @@ export default function App() {
         api.expensesByTag(range),
         api.transactions({ ...range, limit: 200 }),
         api.accounts(),
+        api.budgets(range),
       ]);
       setStats(s);
       setNetWorth(nw);
@@ -68,6 +60,7 @@ export default function App() {
       setByTag(tag);
       setTransactions(tx);
       setAccounts(accountRows);
+      setBudgets(budgetRows);
     } catch (e) {
       setError(e.message);
     }
@@ -150,25 +143,26 @@ export default function App() {
               <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} initialMode="bar" onViewAll={() => setShowCategoryInsights(true)} />
               <div className="side-stack">
                 <section className="insight-panel budget-panel">
-                  <div className="panel-heading-row"><h2>Budget pulse</h2><span>{rangeLabel} · Current / target</span></div>
-                  {budget ? (
-                    <div className="budget-meter" aria-label={`Budget comparison for ${formatCurrency(budgetTarget)}`}>
-                      {budgetRows.map((row) => {
-                        const scale = Math.max(row.current, row.target, 1);
+                  <div className="panel-heading-row"><h2>Budget pulse</h2><span>{rangeLabel} · Firefly III</span></div>
+                  {budgets.length ? (
+                    <div className="budget-meter" aria-label="Firefly III budget comparison">
+                      {budgets.filter((budget) => budget.active !== false).map((budget, index) => {
+                        const spent = Number(budget.spent?.[0]?.sum || 0);
+                        const target = Number(budget.limits?.reduce((sum, limit) => sum + Number(limit.amount || 0), 0) || budget.auto_budget_amount || 0);
+                        const scale = Math.max(spent, target, 1);
                         return (
-                          <div className="budget-meter-row" key={row.label}>
-                            <span className="budget-meter-label"><i style={{ backgroundColor: row.color }} />{row.label}</span>
-                            <div className="budget-track" aria-label={`${row.label}: ${formatCurrency(row.current)} of ${formatCurrency(row.target)}`}>
-                              <span className="budget-fill" style={{ width: `${(row.current / scale) * 100}%`, backgroundColor: row.color }} />
-                              <span className="budget-target" style={{ left: `${(row.target / scale) * 100}%` }} />
+                          <div className="budget-meter-row" key={budget.id}>
+                            <span className="budget-meter-label"><i className={`budget-dot budget-dot-${index % 3}`} />{budget.name}</span>
+                            <div className="budget-track" aria-label={`${budget.name}: ${formatCurrency(spent)} of ${formatCurrency(target)}`}>
+                              <span className="budget-fill" style={{ width: `${(spent / scale) * 100}%` }} />
+                              <span className="budget-target" style={{ left: `${(target / scale) * 100}%` }} />
                             </div>
-                            <span className="budget-meter-value">{formatCurrency(row.current)}</span>
+                            <span className="budget-meter-value">{formatCurrency(spent)}</span>
                           </div>
                         );
                       })}
                     </div>
-                  ) : <p className="budget-empty">Set a target to compare your spending pace and remaining budget.</p>}
-                  {showBudgetForm ? <form className="budget-form" onSubmit={(event) => { event.preventDefault(); setBudget(budgetDraft); setShowBudgetForm(false); }}><input type="number" min="0" step="0.01" value={budgetDraft} onChange={(event) => setBudgetDraft(event.target.value)} placeholder="Amount" autoFocus /><button className="text-button" type="submit">Save</button></form> : <button className="text-button" onClick={() => { setBudgetDraft(budget); setShowBudgetForm(true); }}>{budget ? 'Edit target →' : 'Set a target →'}</button>}
+                  ) : <p className="budget-empty">No Firefly III budgets are configured for this period.</p>}
                 </section>
                 <section className="insight-panel">
                   <div className="panel-heading-row"><h2>Worth a look</h2><span>{byCategory.length} categories</span></div>
