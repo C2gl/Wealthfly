@@ -5,6 +5,7 @@ import NetWorthChart from './components/NetWorthChart.jsx';
 import SpendingChart from './components/SpendingChart.jsx';
 import BreakdownBars from './components/BreakdownBars.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
+import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import { api } from './api.js';
 import { categoryColor, daysAgo, formatCurrency, formatDate, today } from './utils.js';
 
@@ -27,6 +28,11 @@ export default function App() {
   const [transactions, setTransactions] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(null);
+  const [showCategoryInsights, setShowCategoryInsights] = useState(false);
+  const [budget, setBudget] = useState('');
+  const [budgetDraft, setBudgetDraft] = useState('');
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
+  const [showTrends, setShowTrends] = useState(false);
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
 
@@ -104,14 +110,14 @@ export default function App() {
             <StatRow stats={stats} />
             <NetWorthChart data={netWorth} />
             <div className="grid-two">
-              <BreakdownBars title="Spending by category" rows={byCategory} labelKey="category" />
+              <BreakdownBars title="Spending by category" rows={byCategory} labelKey="category" initialMode="donut" onViewAll={() => setShowCategoryInsights(true)} />
               <BreakdownBars
                 title="Spending by target account"
                 rows={byTargetAccount}
                 labelKey="account"
               />
             </div>
-            <BreakdownBars title="Spending by tag" rows={byTag} labelKey="tag" limit={10} />
+            <BreakdownBars title="Spending by tag" rows={byTag} labelKey="tag" limit={10} initialMode="donut" onViewAll={() => setShowCategoryInsights(true)} />
           </>
         ) : view === 'spending' ? (
           <>
@@ -126,17 +132,17 @@ export default function App() {
             </div>
             <SpendingChart data={spendingByDay} />
             <div className="spending-grid">
-              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} />
+              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} onViewAll={() => setShowCategoryInsights(true)} />
               <div className="side-stack">
                 <section className="insight-panel">
                   <div className="panel-heading-row"><h2>Monthly budget</h2><span>Selected period</span></div>
-                  <p>No monthly target set for this budget month.</p>
-                  <button className="text-button">Set a budget →</button>
+                  {budget ? <p>Monthly target: <strong>{formatCurrency(budget)}</strong></p> : <p>No monthly target set for this budget month.</p>}
+                  {showBudgetForm ? <form className="budget-form" onSubmit={(event) => { event.preventDefault(); setBudget(budgetDraft); setShowBudgetForm(false); }}><input type="number" min="0" step="0.01" value={budgetDraft} onChange={(event) => setBudgetDraft(event.target.value)} placeholder="Amount" autoFocus /><button className="text-button" type="submit">Save</button></form> : <button className="text-button" onClick={() => setShowBudgetForm(true)}>{budget ? 'Edit budget →' : 'Set a budget →'}</button>}
                 </section>
                 <section className="insight-panel">
                   <div className="panel-heading-row"><h2>Worth a look</h2><span>{byCategory.length} categories</span></div>
                   <p>{transactions.length ? `${transactions.length} transactions in this period.` : 'No transactions in this period.'}</p>
-                  <button className="text-button">View trends →</button>
+                  <button className="text-button" onClick={() => setShowTrends(true)}>View trends →</button>
                 </section>
               </div>
             </div>
@@ -156,6 +162,8 @@ export default function App() {
           <TransactionsTable transactions={transactions} />
         )}
       </main>
+      {showCategoryInsights && <CategoryInsightsPanel rows={byCategory} onClose={() => setShowCategoryInsights(false)} />}
+      {showTrends && <div className="drawer-backdrop" onClick={() => setShowTrends(false)}><aside className="insights-drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-header"><div><span className="eyebrow">Spending trends</span><h2>Selected period</h2></div><button className="icon-button" onClick={() => setShowTrends(false)} aria-label="Close spending trends">×</button></div><SpendingChart data={spendingByDay} /><BreakdownBars title="By category" rows={byCategory} labelKey="category" initialMode="donut" /></aside></div>}
     </div>
   );
 }
