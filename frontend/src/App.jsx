@@ -37,6 +37,23 @@ export default function App() {
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
   const rangeLabel = RANGES.find((r) => r.key === rangeKey).label;
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
+  const budgetRows = budgets
+    .filter((budget) => budget.active !== false)
+    .map((budget, index) => {
+      const spent = Math.abs((budget.spent || []).reduce((sum, item) => sum + Number(item.sum || 0), 0));
+      const limitTotal = (budget.limits || []).reduce((sum, limit) => sum + Math.abs(Number(limit.amount || 0)), 0);
+      const target = limitTotal || Math.abs(Number(budget.auto_budget_amount || 0));
+      const currency = budget.spent?.[0]?.currency_code || budget.limits?.[0]?.currency_code;
+      return {
+        id: budget.id,
+        name: budget.name,
+        spent,
+        target,
+        remaining: target - spent,
+        currency,
+        color: ['#8da34d', '#c6a642', '#62615d'][index % 3],
+      };
+    });
 
   const load = useCallback(async () => {
     try {
@@ -144,20 +161,19 @@ export default function App() {
               <div className="side-stack">
                 <section className="insight-panel budget-panel">
                   <div className="panel-heading-row"><h2>Budget pulse</h2><span>{rangeLabel} · Firefly III</span></div>
-                  {budgets.length ? (
+                  {budgetRows.length ? (
                     <div className="budget-meter" aria-label="Firefly III budget comparison">
-                      {budgets.filter((budget) => budget.active !== false).map((budget, index) => {
-                        const spent = Number(budget.spent?.[0]?.sum || 0);
-                        const target = Number(budget.limits?.reduce((sum, limit) => sum + Number(limit.amount || 0), 0) || budget.auto_budget_amount || 0);
-                        const scale = Math.max(spent, target, 1);
+                      {budgetRows.map((row) => {
+                        const scale = Math.max(row.spent, row.target, 1);
+                        const currentInfo = `${row.name}: ${formatCurrency(row.spent, row.currency)} spent, ${formatCurrency(row.target, row.currency)} target, ${formatCurrency(row.remaining, row.currency)} remaining`;
                         return (
-                          <div className="budget-meter-row" key={budget.id}>
-                            <span className="budget-meter-label"><i className={`budget-dot budget-dot-${index % 3}`} />{budget.name}</span>
-                            <div className="budget-track" aria-label={`${budget.name}: ${formatCurrency(spent)} of ${formatCurrency(target)}`}>
-                              <span className="budget-fill" style={{ width: `${(spent / scale) * 100}%` }} />
-                              <span className="budget-target" style={{ left: `${(target / scale) * 100}%` }} />
+                          <div className="budget-meter-row" key={row.id}>
+                            <span className="budget-meter-label"><i style={{ backgroundColor: row.color }} />{row.name}</span>
+                            <div className="budget-track" aria-label={currentInfo} title={currentInfo}>
+                              <span className="budget-fill" style={{ width: `${(row.spent / scale) * 100}%`, backgroundColor: row.color }} title={`Current spent: ${formatCurrency(row.spent, row.currency)}`} />
+                              <span className="budget-target" style={{ left: `${(row.target / scale) * 100}%` }} title={`Target: ${formatCurrency(row.target, row.currency)}`} />
                             </div>
-                            <span className="budget-meter-value">{formatCurrency(spent)}</span>
+                            <span className="budget-meter-value">{formatCurrency(row.remaining, row.currency)}</span>
                           </div>
                         );
                       })}
