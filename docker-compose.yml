@@ -1,0 +1,14 @@
+services:
+  wealthfly:
+    build: .
+    container_name: wealthfly
+    restart: unless-stopped
+    ports:
+      - "4400:4400"
+    env_file:
+      - .env
+    volumes:
+      - wealthfly-data:/app/data
+
+volumes:
+  wealthfly-data:
