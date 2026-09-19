@@ -50,6 +50,19 @@ router.get('/expenses-by-category', (req, res) => {
   res.json(rows);
 });
 
+router.get('/expenses-by-day', (req, res) => {
+  const { start, end } = dateFilter(req);
+  const rows = db
+    .prepare(
+      `SELECT date, SUM(amount) as total
+       FROM transactions
+       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+       GROUP BY date ORDER BY date ASC`
+    )
+    .all(start, end);
+  res.json(rows);
+});
+
 // The asset account money left FROM (e.g. "Checking", "Credit Card").
 router.get('/expenses-by-source-account', (req, res) => {
   const { start, end } = dateFilter(req);

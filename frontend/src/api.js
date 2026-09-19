@@ -11,6 +11,7 @@ export const api = {
   stats: (range) => get('/summary/stats', range),
   netWorth: (range) => get('/summary/net-worth', range),
   expensesByCategory: (range) => get('/summary/expenses-by-category', range),
+  expensesByDay: (range) => get('/summary/expenses-by-day', range),
   expensesBySourceAccount: (range) => get('/summary/expenses-by-source-account', range),
   expensesByTargetAccount: (range) => get('/summary/expenses-by-target-account', range),
   expensesByTag: (range) => get('/summary/expenses-by-tag', range),

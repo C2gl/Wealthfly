@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import StatRow from './components/StatRow.jsx';
 import NetWorthChart from './components/NetWorthChart.jsx';
+import SpendingChart from './components/SpendingChart.jsx';
 import BreakdownBars from './components/BreakdownBars.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
 import { api } from './api.js';
-import { daysAgo, today } from './utils.js';
+import { daysAgo, formatCurrency, formatDate, today } from './utils.js';
 
 const RANGES = [
   { key: '30d', label: '30D', start: () => daysAgo(30) },
@@ -19,6 +20,7 @@ export default function App() {
   const [rangeKey, setRangeKey] = useState('90d');
   const [stats, setStats] = useState(null);
   const [netWorth, setNetWorth] = useState([]);
+  const [spendingByDay, setSpendingByDay] = useState([]);
   const [byCategory, setByCategory] = useState([]);
   const [byTargetAccount, setByTargetAccount] = useState([]);
   const [byTag, setByTag] = useState([]);
@@ -31,9 +33,10 @@ export default function App() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [s, nw, cat, tgt, tag, tx] = await Promise.all([
+      const [s, nw, daily, cat, tgt, tag, tx] = await Promise.all([
         api.stats(range),
         api.netWorth(range),
+        api.expensesByDay(range),
         api.expensesByCategory(range),
         api.expensesByTargetAccount(range),
         api.expensesByTag(range),
@@ -41,6 +44,7 @@ export default function App() {
       ]);
       setStats(s);
       setNetWorth(nw);
+      setSpendingByDay(daily);
       setByCategory(cat);
       setByTargetAccount(tgt);
       setByTag(tag);
@@ -79,7 +83,7 @@ export default function App() {
 
       <main className="main">
         <header className="top-bar">
-          <h1>{view === 'overview' ? 'Overview' : 'Transactions'}</h1>
+          <h1>{view === 'overview' ? 'Overview' : view === 'spending' ? 'Spending' : 'Transactions'}</h1>
           <div className="range-toggle">
             {RANGES.map((r) => (
               <button
@@ -108,6 +112,45 @@ export default function App() {
               />
             </div>
             <BreakdownBars title="Spending by tag" rows={byTag} labelKey="tag" limit={10} />
+          </>
+        ) : view === 'spending' ? (
+          <>
+            <div className="spending-summary">
+              <div className="summary-total">
+                <span className="eyebrow">Spent · selected period</span>
+                <strong>{formatCurrency(spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0))}</strong>
+              </div>
+              <div><span>Income</span><strong className="stat-positive">+{formatCurrency(stats?.monthIncome)}</strong></div>
+              <div><span>Spending</span><strong>{formatCurrency(stats?.monthExpenses)}</strong></div>
+              <div><span>Net</span><strong className={(stats?.monthIncome || 0) - (stats?.monthExpenses || 0) >= 0 ? 'stat-positive' : 'stat-negative'}>{formatCurrency((stats?.monthIncome || 0) - (stats?.monthExpenses || 0))}</strong></div>
+            </div>
+            <SpendingChart data={spendingByDay} />
+            <div className="spending-grid">
+              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} />
+              <div className="side-stack">
+                <section className="insight-panel">
+                  <div className="panel-heading-row"><h2>Monthly budget</h2><span>Selected period</span></div>
+                  <p>No monthly target set for this budget month.</p>
+                  <button className="text-button">Set a budget →</button>
+                </section>
+                <section className="insight-panel">
+                  <div className="panel-heading-row"><h2>Worth a look</h2><span>{byCategory.length} categories</span></div>
+                  <p>{transactions.length ? `${transactions.length} transactions in this period.` : 'No transactions in this period.'}</p>
+                  <button className="text-button">View trends →</button>
+                </section>
+              </div>
+            </div>
+            <section className="panel recent-panel">
+              <div className="panel-heading-row"><h2>Recent activity</h2><button className="text-button" onClick={() => setView('transactions')}>View all →</button></div>
+              <div className="recent-list">
+                {transactions.slice(0, 6).map((tx) => (
+                  <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
+                    <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small>{tx.category_name || 'Uncategorized'}</small></div>
+                    <strong className={tx.type === 'withdrawal' ? 'stat-negative' : 'stat-positive'}>{tx.type === 'withdrawal' ? '-' : '+'}{formatCurrency(tx.amount, tx.currency_code)}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
           </>
         ) : (
           <TransactionsTable transactions={transactions} />
