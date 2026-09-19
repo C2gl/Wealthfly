@@ -18,7 +18,9 @@ const RANGES = [
 ];
 
 function budgetAmount(value) {
-  const raw = value && typeof value === 'object' ? value.amount ?? value.sum : value;
+  if (Array.isArray(value)) return value.reduce((sum, item) => sum + budgetAmount(item), 0);
+  const raw = value && typeof value === 'object' ? value.amount ?? value.sum ?? value.value : value;
+  if (raw !== value) return budgetAmount(raw);
   const numeric = Number(raw);
   return Number.isFinite(numeric) ? Math.abs(numeric) : 0;
 }
