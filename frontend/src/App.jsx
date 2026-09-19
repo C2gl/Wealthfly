@@ -40,16 +40,25 @@ export default function App() {
   const budgetRows = budgets
     .filter((budget) => budget.active !== false)
     .map((budget, index) => {
-      const spent = Math.abs((budget.spent || []).reduce((sum, item) => sum + Number(item.sum || 0), 0));
-      const limitTotal = (budget.limits || []).reduce((sum, limit) => sum + Math.abs(Number(limit.amount || 0)), 0);
-      const target = limitTotal || Math.abs(Number(budget.auto_budget_amount || 0));
-      const currency = budget.spent?.[0]?.currency_code || budget.limits?.[0]?.currency_code;
+      const currentLimit = (budget.limits || []).find((limit) => {
+        const start = String(limit.start || '').slice(0, 10);
+        const end = String(limit.end || '').slice(0, 10);
+        return start <= range.end && end >= range.end;
+      }) || [...(budget.limits || [])].sort((a, b) => String(b.end || '').localeCompare(String(a.end || '')))[0];
+      const spent = currentLimit
+        ? Math.abs(Number(currentLimit.spent || 0))
+        : Math.abs((budget.spent || []).reduce((sum, item) => sum + Number(item.sum || 0), 0));
+      const target = currentLimit
+        ? Math.abs(Number(currentLimit.amount || 0))
+        : Math.abs(Number(budget.auto_budget_amount || 0));
+      const currency = currentLimit?.currency_code || budget.spent?.[0]?.currency_code;
       return {
         id: budget.id,
         name: budget.name,
         spent,
         target,
         remaining: target - spent,
+        percent: target > 0 ? (spent / target) * 100 : 0,
         currency,
         color: ['#8da34d', '#c6a642', '#62615d'][index % 3],
       };
@@ -164,16 +173,18 @@ export default function App() {
                   {budgetRows.length ? (
                     <div className="budget-meter" aria-label="Firefly III budget comparison">
                       {budgetRows.map((row) => {
+                        const isOverspent = row.target > 0 && row.spent > row.target;
                         const scale = Math.max(row.spent, row.target, 1);
+                        const fillWidth = row.target > 0 ? Math.min(row.percent, 100) : 0;
                         const currentInfo = `${row.name}: ${formatCurrency(row.spent, row.currency)} spent, ${formatCurrency(row.target, row.currency)} target, ${formatCurrency(row.remaining, row.currency)} remaining`;
                         return (
                           <div className="budget-meter-row" key={row.id}>
                             <span className="budget-meter-label"><i style={{ backgroundColor: row.color }} />{row.name}</span>
                             <div className="budget-track" aria-label={currentInfo} title={currentInfo}>
-                              <span className="budget-fill" style={{ width: `${(row.spent / scale) * 100}%`, backgroundColor: row.color }} title={`Current spent: ${formatCurrency(row.spent, row.currency)}`} />
-                              <span className="budget-target" style={{ left: `${(row.target / scale) * 100}%` }} title={`Target: ${formatCurrency(row.target, row.currency)}`} />
+                              <span className="budget-fill" style={{ width: `${fillWidth}%`, backgroundColor: row.color }} title={`Current spent: ${formatCurrency(row.spent, row.currency)}`} />
+                              {isOverspent && <span className="budget-target" style={{ left: `${(row.target / scale) * 100}%` }} title={`Target before overspending: ${formatCurrency(row.target, row.currency)}`} />}
                             </div>
-                            <span className="budget-meter-value">{formatCurrency(row.remaining, row.currency)}</span>
+                            <span className="budget-meter-value">{row.target > 0 ? `${Math.round(row.percent)}%` : '—'}</span>
                           </div>
                         );
                       })}
