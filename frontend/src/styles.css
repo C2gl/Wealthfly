@@ -87,7 +87,8 @@ body {
 }
 
 .nav-item:nth-child(2)::before { content: '⌁'; }
-.nav-item:nth-child(3)::before { content: '▤'; }
+.nav-item:nth-child(3)::before { content: '◒'; }
+.nav-item:nth-child(4)::before { content: '▤'; }
 
 .nav-item-active {
   border: 0;
@@ -98,6 +99,137 @@ body {
 .nav-item-active::before { color: var(--text); }
 
 .sidebar-footer { display: none; }
+
+.accounts-intro {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 12px 0 26px;
+}
+
+.accounts-intro h2 {
+  margin: 8px 0 7px;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.accounts-intro p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.accounts-count {
+  display: grid;
+  gap: 4px;
+  min-width: 90px;
+  text-align: right;
+}
+
+.accounts-count strong {
+  font: 22px 'IBM Plex Mono', monospace;
+  font-weight: 500;
+}
+
+.accounts-count span {
+  color: var(--text-muted);
+  font: 9px 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+}
+
+.account-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.account-group {
+  padding: 22px 24px 8px;
+}
+
+.account-group-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(122, 129, 119, 0.16);
+}
+
+.account-group-header h3 {
+  margin: 7px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.account-group-total {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 18px;
+  color: var(--text);
+  font: 14px 'IBM Plex Mono', monospace;
+}
+
+.account-list {
+  display: grid;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 68px;
+  border-bottom: 1px solid rgba(122, 129, 119, 0.12);
+}
+
+.account-row:last-child { border-bottom: 0; }
+
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.account-icon {
+  display: grid;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: #dce4d8;
+  color: var(--accent);
+  font: 12px 'IBM Plex Mono', monospace;
+}
+
+.account-identity div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.account-identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.account-identity span:not(.account-icon) {
+  color: var(--text-muted);
+  font: 10px 'IBM Plex Mono', monospace;
+}
+
+.account-row > strong {
+  flex-shrink: 0;
+  font: 13px 'IBM Plex Mono', monospace;
+  font-weight: 500;
+}
 
 .top-bar {
   margin-bottom: 28px;
@@ -758,4 +890,9 @@ body {
   .recent-row > div { grid-template-columns: 1fr; }
   .recent-row small { grid-column: 1; }
   .donut-layout { align-items: flex-start; flex-direction: column; }
+  .accounts-intro { align-items: flex-start; flex-direction: column; }
+  .accounts-count { text-align: left; }
+  .account-group { padding-left: 16px; padding-right: 16px; }
+  .account-group-header { align-items: flex-start; flex-direction: column; }
+  .account-group-total { justify-content: flex-start; }
 }

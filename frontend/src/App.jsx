@@ -6,6 +6,7 @@ import SpendingChart from './components/SpendingChart.jsx';
 import BreakdownBars from './components/BreakdownBars.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
+import AccountsPage from './components/AccountsPage.jsx';
 import { api } from './api.js';
 import { categoryColor, daysAgo, formatCurrency, formatDate, today } from './utils.js';
 
@@ -26,6 +27,7 @@ export default function App() {
   const [byTargetAccount, setByTargetAccount] = useState([]);
   const [byTag, setByTag] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(null);
   const [showCategoryInsights, setShowCategoryInsights] = useState(false);
@@ -40,7 +42,7 @@ export default function App() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [s, nw, daily, cat, tgt, tag, tx] = await Promise.all([
+      const [s, nw, daily, cat, tgt, tag, tx, accountRows] = await Promise.all([
         api.stats(range),
         api.netWorth(range),
         api.expensesByDay(range),
@@ -48,6 +50,7 @@ export default function App() {
         api.expensesByTargetAccount(range),
         api.expensesByTag(range),
         api.transactions({ ...range, limit: 200 }),
+        api.accounts(),
       ]);
       setStats(s);
       setNetWorth(nw);
@@ -56,6 +59,7 @@ export default function App() {
       setByTargetAccount(tgt);
       setByTag(tag);
       setTransactions(tx);
+      setAccounts(accountRows);
     } catch (e) {
       setError(e.message);
     }
@@ -90,8 +94,8 @@ export default function App() {
 
       <main className="main">
         <header className="top-bar">
-          <h1>{view === 'overview' ? 'Overview' : view === 'spending' ? 'Spending' : 'Transactions'}</h1>
-          <div className="range-toggle">
+          <h1>{view === 'overview' ? 'Overview' : view === 'accounts' ? 'Accounts' : view === 'spending' ? 'Spending' : 'Transactions'}</h1>
+          {view !== 'accounts' && <div className="range-toggle">
             {RANGES.map((r) => (
               <button
                 key={r.key}
@@ -101,12 +105,14 @@ export default function App() {
                 {r.label}
               </button>
             ))}
-          </div>
+          </div>}
         </header>
 
         {error && <div className="error-banner">Could not reach the API: {error}</div>}
 
-        {view === 'overview' ? (
+        {view === 'accounts' ? (
+          <AccountsPage accounts={accounts} />
+        ) : view === 'overview' ? (
           <>
             <StatRow stats={stats} rangeLabel={rangeLabel} />
             <NetWorthChart data={netWorth} />
