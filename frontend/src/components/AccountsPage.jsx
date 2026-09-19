@@ -2,6 +2,7 @@ import React from 'react';
 import { formatCurrency } from '../utils';
 
 const TYPE_ORDER = ['asset', 'cash', 'liability', 'loan', 'debt', 'mortgage'];
+const VISIBLE_TYPES = new Set(['asset', 'cash']);
 const TYPE_LABELS = {
   asset: 'Asset accounts',
   cash: 'Cash accounts',
@@ -26,7 +27,7 @@ function formatTotals(accounts) {
 }
 
 export default function AccountsPage({ accounts }) {
-  const visibleAccounts = accounts.filter((account) => account.type !== 'expense');
+  const visibleAccounts = accounts.filter((account) => VISIBLE_TYPES.has(account.type));
   const grouped = visibleAccounts.reduce((groups, account) => {
     const type = account.type || 'other';
     if (!groups[type]) groups[type] = [];
