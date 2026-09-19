@@ -121,11 +121,14 @@ router.get('/expenses-by-tag', (req, res) => {
 });
 
 router.get('/stats', (req, res) => {
-  const netWorth = db.prepare('SELECT SUM(current_balance) as total FROM accounts').get();
-  const thisMonthStart = new Date();
-  thisMonthStart.setDate(1);
-  const start = thisMonthStart.toISOString().slice(0, 10);
-  const end = new Date().toISOString().slice(0, 10);
+  const { start, end } = dateFilter(req);
+  const netWorth = db
+    .prepare(
+      `SELECT SUM(balance) as total
+       FROM balance_history
+       WHERE date = (SELECT MAX(date) FROM balance_history WHERE date <= ?)`
+    )
+    .get(end);
 
   const expenses = db
     .prepare(
@@ -140,7 +143,7 @@ router.get('/stats', (req, res) => {
   const lastSync = db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get();
 
   res.json({
-    netWorth: netWorth.total || 0,
+    netWorth: netWorth.total ?? db.prepare('SELECT SUM(current_balance) as total FROM accounts').get().total ?? 0,
     monthExpenses: expenses.total || 0,
     monthIncome: income.total || 0,
     lastSync: lastSync ? lastSync.value : null,

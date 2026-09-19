@@ -35,6 +35,7 @@ export default function App() {
   const [showTrends, setShowTrends] = useState(false);
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
+  const rangeLabel = RANGES.find((r) => r.key === rangeKey).label;
 
   const load = useCallback(async () => {
     try {
@@ -107,7 +108,7 @@ export default function App() {
 
         {view === 'overview' ? (
           <>
-            <StatRow stats={stats} />
+            <StatRow stats={stats} rangeLabel={rangeLabel} />
             <NetWorthChart data={netWorth} />
             <div className="grid-two">
               <BreakdownBars title="Spending by category" rows={byCategory} labelKey="category" initialMode="donut" onViewAll={() => setShowCategoryInsights(true)} />
@@ -126,13 +127,13 @@ export default function App() {
                 <span className="eyebrow">Spent · selected period</span>
                 <strong>{formatCurrency(spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0))}</strong>
               </div>
-              <div><span>Income</span><strong className="stat-positive">+{formatCurrency(stats?.monthIncome)}</strong></div>
-              <div><span>Spending</span><strong>{formatCurrency(stats?.monthExpenses)}</strong></div>
-              <div><span>Net</span><strong className={(stats?.monthIncome || 0) - (stats?.monthExpenses || 0) >= 0 ? 'stat-positive' : 'stat-negative'}>{formatCurrency((stats?.monthIncome || 0) - (stats?.monthExpenses || 0))}</strong></div>
+              <div><span>Income · {rangeLabel}</span><strong className="stat-positive">+{formatCurrency(stats?.monthIncome)}</strong></div>
+              <div><span>Spending · {rangeLabel}</span><strong>{formatCurrency(stats?.monthExpenses)}</strong></div>
+              <div><span>Net · {rangeLabel}</span><strong className={(stats?.monthIncome || 0) - (stats?.monthExpenses || 0) >= 0 ? 'stat-positive' : 'stat-negative'}>{formatCurrency((stats?.monthIncome || 0) - (stats?.monthExpenses || 0))}</strong></div>
             </div>
             <SpendingChart data={spendingByDay} />
             <div className="spending-grid">
-              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} onViewAll={() => setShowCategoryInsights(true)} />
+              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} initialMode="bar" onViewAll={() => setShowCategoryInsights(true)} />
               <div className="side-stack">
                 <section className="insight-panel">
                   <div className="panel-heading-row"><h2>Monthly budget</h2><span>Selected period</span></div>

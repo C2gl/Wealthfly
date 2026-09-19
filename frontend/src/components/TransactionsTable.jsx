@@ -1,5 +1,5 @@
 import React from 'react';
-import { categoryColor, formatCurrency, formatDate } from '../utils';
+import { categoryColor, formatCurrency } from '../utils';
 
 export default function TransactionsTable({ transactions }) {
   return (
@@ -11,39 +11,20 @@ export default function TransactionsTable({ transactions }) {
         <table className="tx-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Category</th>
-              <th>Tags</th>
+              <th>Name</th>
+              <th>Destination account</th>
               <th className="align-right">Amount</th>
+              <th>Category</th>
             </tr>
           </thead>
           <tbody>
             {transactions.map((tx) => {
-              let tags = [];
-              try {
-                tags = JSON.parse(tx.tags || '[]');
-              } catch {
-                tags = [];
-              }
               const isExpense = tx.type === 'withdrawal';
               const isIncome = tx.type === 'deposit';
               return (
                 <tr key={`${tx.id}-${tx.split_index}`}>
-                  <td className="mono">{formatDate(tx.date)}</td>
                   <td>{tx.description}</td>
-                  <td>{tx.source_name || '—'}</td>
                   <td>{tx.destination_name || '—'}</td>
-                  <td><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }}>{tx.category_name || 'Uncategorized'}</span></td>
-                  <td>
-                    {tags.map((t) => (
-                      <span className="tag-chip" key={t}>
-                        {t}
-                      </span>
-                    ))}
-                  </td>
                   <td
                     className={`mono align-right ${
                       isExpense ? 'stat-negative' : isIncome ? 'stat-positive' : ''
@@ -52,12 +33,13 @@ export default function TransactionsTable({ transactions }) {
                     {isExpense ? '-' : isIncome ? '+' : ''}
                     {formatCurrency(tx.amount, tx.currency_code)}
                   </td>
+                  <td><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }}>{tx.category_name || 'Uncategorized'}</span></td>
                 </tr>
               );
             })}
             {transactions.length === 0 && (
               <tr>
-                <td colSpan={7} className="empty-state">
+                <td colSpan={4} className="empty-state">
                   No transactions in this range.
                 </td>
               </tr>
