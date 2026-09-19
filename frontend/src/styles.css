@@ -555,6 +555,8 @@ body {
 }
 
 .wordmark-mark {
+  position: relative;
+  overflow: hidden;
   width: 28px;
   height: 28px;
   border-radius: 4px;
@@ -565,6 +567,26 @@ body {
   align-items: center;
   justify-content: center;
   font-family: 'IBM Plex Mono', monospace;
+  font-size: 0;
+}
+
+.wordmark-mark::before {
+  content: 'W';
+  color: #f8f7ed;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.wordmark-mark::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: #c6a642;
 }
 
 .wordmark-text {
