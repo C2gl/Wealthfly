@@ -21,19 +21,22 @@ export default function TransactionsTable({ transactions }) {
             {transactions.map((tx) => {
               const isExpense = tx.type === 'withdrawal';
               const isIncome = tx.type === 'deposit';
+              const name = tx.description || tx.name || 'Unnamed transaction';
+              const destination = tx.destination_name || tx.destination || tx.source_name || '—';
+              const category = tx.category_name || tx.category || 'Uncategorized';
               return (
                 <tr key={`${tx.id}-${tx.split_index}`}>
-                  <td>{tx.description}</td>
-                  <td>{tx.destination_name || '—'}</td>
+                  <td className="transaction-name">{name}</td>
+                  <td>{destination}</td>
                   <td
                     className={`mono align-right ${
                       isExpense ? 'stat-negative' : isIncome ? 'stat-positive' : ''
                     }`}
                   >
                     {isExpense ? '-' : isIncome ? '+' : ''}
-                    {formatCurrency(tx.amount, tx.currency_code)}
+                    {formatCurrency(Number(tx.amount || 0), tx.currency_code)}
                   </td>
-                  <td><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }}>{tx.category_name || 'Uncategorized'}</span></td>
+                  <td><span className="category-chip" style={{ '--category-color': categoryColor(category) }}>{category}</span></td>
                 </tr>
               );
             })}
