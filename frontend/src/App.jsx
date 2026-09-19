@@ -38,6 +38,14 @@ export default function App() {
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
   const rangeLabel = RANGES.find((r) => r.key === rangeKey).label;
+  const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
+  const budgetTarget = Number(budget || 0);
+  const periodDays = Math.max(1, Math.ceil((new Date(`${range.end}T00:00:00`) - new Date(`${range.start}T00:00:00`)) / 86400000) + 1);
+  const budgetRows = [
+    { label: 'Spent', current: periodSpent, target: budgetTarget, color: '#8da34d' },
+    { label: 'Remaining', current: Math.max(budgetTarget - periodSpent, 0), target: budgetTarget, color: '#c6a642' },
+    { label: 'Daily pace', current: periodSpent / periodDays, target: budgetTarget / periodDays, color: '#62615d' },
+  ];
 
   const load = useCallback(async () => {
     try {
@@ -141,10 +149,26 @@ export default function App() {
             <div className="spending-grid">
               <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} initialMode="bar" onViewAll={() => setShowCategoryInsights(true)} />
               <div className="side-stack">
-                <section className="insight-panel">
-                  <div className="panel-heading-row"><h2>Monthly budget</h2><span>Selected period</span></div>
-                  {budget ? <p>Monthly target: <strong>{formatCurrency(budget)}</strong></p> : <p>No monthly target set for this budget month.</p>}
-                  {showBudgetForm ? <form className="budget-form" onSubmit={(event) => { event.preventDefault(); setBudget(budgetDraft); setShowBudgetForm(false); }}><input type="number" min="0" step="0.01" value={budgetDraft} onChange={(event) => setBudgetDraft(event.target.value)} placeholder="Amount" autoFocus /><button className="text-button" type="submit">Save</button></form> : <button className="text-button" onClick={() => setShowBudgetForm(true)}>{budget ? 'Edit budget →' : 'Set a budget →'}</button>}
+                <section className="insight-panel budget-panel">
+                  <div className="panel-heading-row"><h2>Budget pulse</h2><span>{rangeLabel} · Current / target</span></div>
+                  {budget ? (
+                    <div className="budget-meter" aria-label={`Budget comparison for ${formatCurrency(budgetTarget)}`}>
+                      {budgetRows.map((row) => {
+                        const scale = Math.max(row.current, row.target, 1);
+                        return (
+                          <div className="budget-meter-row" key={row.label}>
+                            <span className="budget-meter-label"><i style={{ backgroundColor: row.color }} />{row.label}</span>
+                            <div className="budget-track" aria-label={`${row.label}: ${formatCurrency(row.current)} of ${formatCurrency(row.target)}`}>
+                              <span className="budget-fill" style={{ width: `${(row.current / scale) * 100}%`, backgroundColor: row.color }} />
+                              <span className="budget-target" style={{ left: `${(row.target / scale) * 100}%` }} />
+                            </div>
+                            <span className="budget-meter-value">{formatCurrency(row.current)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : <p className="budget-empty">Set a target to compare your spending pace and remaining budget.</p>}
+                  {showBudgetForm ? <form className="budget-form" onSubmit={(event) => { event.preventDefault(); setBudget(budgetDraft); setShowBudgetForm(false); }}><input type="number" min="0" step="0.01" value={budgetDraft} onChange={(event) => setBudgetDraft(event.target.value)} placeholder="Amount" autoFocus /><button className="text-button" type="submit">Save</button></form> : <button className="text-button" onClick={() => { setBudgetDraft(budget); setShowBudgetForm(true); }}>{budget ? 'Edit target →' : 'Set a target →'}</button>}
                 </section>
                 <section className="insight-panel">
                   <div className="panel-heading-row"><h2>Worth a look</h2><span>{byCategory.length} categories</span></div>
