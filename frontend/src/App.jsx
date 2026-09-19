@@ -124,7 +124,7 @@ export default function App() {
                 labelKey="account"
               />
             </div>
-            <BreakdownBars title="Spending by tag" rows={byTag} labelKey="tag" limit={10} initialMode="donut" onViewAll={() => setShowCategoryInsights(true)} />
+            <BreakdownBars title="Spending by tag" rows={byTag} labelKey="tag" limit={10} initialMode="bar" onViewAll={() => setShowCategoryInsights(true)} />
           </>
         ) : view === 'spending' ? (
           <>
