@@ -1,55 +1,34 @@
 import React from 'react';
-import { categoryColor, formatCurrency } from '../utils';
+import { categoryColor, formatCurrency, formatDate } from '../utils';
 
 export default function TransactionsTable({ transactions }) {
   return (
-    <div className="panel panel-large">
-      <div className="panel-header">
-        <h2>Transactions</h2>
+    <section className="transactions-page">
+      <div className="transactions-heading">
+        <div><span className="eyebrow">Selected period</span><h2>Transactions</h2></div>
+        <span className="transaction-count">{transactions.length} records</span>
       </div>
-      <div className="table-wrap">
-        <table className="tx-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Destination account</th>
-              <th className="align-right">Amount</th>
-              <th>Category</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((tx) => {
+      <div className="transaction-list">
+        {transactions.map((tx) => {
               const isExpense = tx.type === 'withdrawal';
               const isIncome = tx.type === 'deposit';
               const name = tx.description || tx.name || 'Unnamed transaction';
               const destination = tx.destination_name || tx.destination || tx.source_name || '—';
               const category = tx.category_name || tx.category || 'Uncategorized';
               return (
-                <tr key={`${tx.id}-${tx.split_index}`}>
-                  <td className="transaction-name">{name}</td>
-                  <td>{destination}</td>
-                  <td
-                    className={`mono align-right ${
-                      isExpense ? 'stat-negative' : isIncome ? 'stat-positive' : ''
-                    }`}
-                  >
+                <article className="transaction-card" key={`${tx.id}-${tx.split_index}`}>
+                  <div className="transaction-date">{formatDate(tx.date)}</div>
+                  <div className="transaction-main"><strong>{name}</strong><span>{destination}</span></div>
+                  <span className="category-chip" style={{ '--category-color': categoryColor(category) }}>{category}</span>
+                  <strong className={`transaction-amount mono ${isExpense ? 'stat-negative' : isIncome ? 'stat-positive' : ''}`}>
                     {isExpense ? '-' : isIncome ? '+' : ''}
                     {formatCurrency(Number(tx.amount || 0), tx.currency_code)}
-                  </td>
-                  <td><span className="category-chip" style={{ '--category-color': categoryColor(category) }}>{category}</span></td>
-                </tr>
+                  </strong>
+                </article>
               );
             })}
-            {transactions.length === 0 && (
-              <tr>
-                <td colSpan={4} className="empty-state">
-                  No transactions in this range.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {transactions.length === 0 && <div className="empty-state">No transactions in this range.</div>}
       </div>
-    </div>
+    </section>
   );
 }

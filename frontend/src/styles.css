@@ -810,41 +810,74 @@ body {
 }
 
 /* Transactions table */
-.table-wrap {
-  overflow-x: auto;
+.transactions-page {
+  padding: 22px 24px 8px;
+  border-radius: 10px;
+  background: rgba(251, 250, 241, 0.82);
+  box-shadow: 0 8px 30px rgba(75, 84, 69, 0.04);
 }
 
-.tx-table {
-  width: 100%;
-  min-width: 640px;
-  border-collapse: collapse;
-  font-size: 12.5px;
-}
-
-.tx-table th:first-child,
-.tx-table td:first-child { width: 38%; }
-
-.tx-table th:nth-child(2),
-.tx-table td:nth-child(2) { width: 27%; }
-
-.transaction-name { font-weight: 500; }
-
-.tx-table th {
-  text-align: left;
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 11px;
-  text-transform: none;
-  padding: 8px 10px;
+.transactions-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
   border-bottom: 1px solid var(--border);
-  white-space: nowrap;
 }
 
-.tx-table td {
-  padding: 9px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  white-space: nowrap;
+.transactions-heading h2 {
+  margin: 8px 0 0;
+  font-size: 17px;
 }
+
+.transaction-count {
+  color: var(--text-muted);
+  font: 10px 'IBM Plex Mono', monospace;
+}
+
+.transaction-list { display: grid; }
+
+.transaction-card {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) minmax(120px, auto) minmax(110px, auto);
+  align-items: center;
+  gap: 18px;
+  min-height: 72px;
+  border-bottom: 1px solid rgba(122, 129, 119, 0.13);
+}
+
+.transaction-card:last-child { border-bottom: 0; }
+
+.transaction-date {
+  color: var(--text-muted);
+  font: 10px 'IBM Plex Mono', monospace;
+}
+
+.transaction-main {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.transaction-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.transaction-main span {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 10px 'IBM Plex Mono', monospace;
+}
+
+.transaction-card .category-chip { justify-self: start; }
+.transaction-amount { justify-self: end; font-size: 12px; font-weight: 500; white-space: nowrap; }
 
 .align-right {
   text-align: right;
@@ -904,4 +937,9 @@ body {
   .account-group { padding-left: 16px; padding-right: 16px; }
   .account-group-header { align-items: flex-start; flex-direction: column; }
   .account-group-total { justify-content: flex-start; }
+  .transactions-page { padding: 18px 14px 6px; }
+  .transaction-card { grid-template-columns: 1fr auto; gap: 8px 14px; padding: 13px 0; }
+  .transaction-date { grid-column: 1 / -1; }
+  .transaction-card .category-chip { grid-column: 1; }
+  .transaction-amount { grid-column: 2; grid-row: 2 / span 2; }
 }

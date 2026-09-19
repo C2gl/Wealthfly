@@ -26,7 +26,8 @@ function formatTotals(accounts) {
 }
 
 export default function AccountsPage({ accounts }) {
-  const grouped = accounts.reduce((groups, account) => {
+  const visibleAccounts = accounts.filter((account) => account.type !== 'expense');
+  const grouped = visibleAccounts.reduce((groups, account) => {
     const type = account.type || 'other';
     if (!groups[type]) groups[type] = [];
     groups[type].push(account);
@@ -42,7 +43,7 @@ export default function AccountsPage({ accounts }) {
           <h2>All accounts</h2>
           <p>Balances grouped by account type, as reported by Firefly III.</p>
         </div>
-        <div className="accounts-count"><strong>{accounts.length}</strong><span>accounts</span></div>
+        <div className="accounts-count"><strong>{visibleAccounts.length}</strong><span>accounts</span></div>
       </section>
 
       {types.length === 0 ? (
