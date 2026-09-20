@@ -150,7 +150,7 @@ export default function App() {
       <Sidebar
         active={view}
         onNavigate={setView}
-        setPreviousByCategory(previousCat);
+        lastSync={stats?.lastSync}
         onSync={handleSync}
         syncing={syncing}
       />
