@@ -1,4 +1,5 @@
 import React from 'react';
+import BreakdownBars from './BreakdownBars.jsx';
 import { formatCurrency, isSavingsAccount } from '../utils.js';
 
 function sumByCurrency(accounts, getValue) {
@@ -26,6 +27,11 @@ export default function SavingsPage({ accounts, accountFlows, rangeLabel, langua
     return totals;
   }, {});
   const transactionCount = savingsAccounts.reduce((sum, account) => sum + Number(flowByAccount.get(account.name)?.transaction_count || 0), 0);
+  const savingsWeights = savingsAccounts
+    .map((account) => ({ account: account.name, total: Math.max(0, Number(account.current_balance || 0)) }))
+    .filter((row) => row.total > 0);
+  const currencies = [...new Set(savingsAccounts.map((account) => account.currency_code).filter(Boolean))];
+  const weightCurrency = currencies.length === 1 ? currencies[0] : undefined;
   const maxFlow = Math.max(1, ...savingsAccounts.map((account) => {
     const flow = flowByAccount.get(account.name);
     return Math.max(Number(flow?.income || 0), Number(flow?.spending || 0));
@@ -46,6 +52,7 @@ export default function SavingsPage({ accounts, accountFlows, rangeLabel, langua
         <div className="panel empty-state">No savings accounts found. Name an account with “savings” or “epargne” to include it here.</div>
       ) : (
         <>
+          <BreakdownBars title="Savings weight" rows={savingsWeights} labelKey="account" limit={savingsWeights.length} initialMode="bar" currency={weightCurrency} language={language} />
           <section className="savings-metrics">
             <div className="savings-metric panel"><span className="eyebrow">Total saved</span><strong><CurrencyTotals totals={balances} language={language} /></strong><small>Across your savings accounts</small></div>
             <div className="savings-metric panel"><span className="eyebrow">Added · {rangeLabel}</span><strong><CurrencyTotals totals={contributions} language={language} /></strong><small>Deposits and transfers in</small></div>

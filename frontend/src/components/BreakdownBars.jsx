@@ -1,7 +1,7 @@
 import React from 'react';
 import { categoryColor, formatCurrency } from '../utils';
 
-export default function BreakdownBars({ title, rows, labelKey, valueKey = 'total', limit = 8, initialMode = 'bar', onViewAll }) {
+export default function BreakdownBars({ title, rows, labelKey, valueKey = 'total', limit = 8, initialMode = 'bar', onViewAll, currency, language = 'en' }) {
   const [mode, setMode] = React.useState(initialMode);
   const top = [...(rows || [])]
     .filter((r) => r[labelKey])
@@ -25,14 +25,14 @@ export default function BreakdownBars({ title, rows, labelKey, valueKey = 'total
           {mode === 'donut' ? (
             <div className="donut-layout">
               <div className="donut-chart" style={{ background: `conic-gradient(${top.map((row, index) => `${categoryColor(row[labelKey])} ${top.slice(0, index).reduce((sum, item) => sum + Number(item[valueKey] || 0), 0) / total * 360}deg ${(top.slice(0, index + 1).reduce((sum, item) => sum + Number(item[valueKey] || 0), 0) / total) * 360}deg`).join(', ')})` }}>
-                <div className="donut-hole"><strong>{formatCurrency(total)}</strong><span>Total</span></div>
+                <div className="donut-hole"><strong>{formatCurrency(total, currency, language)}</strong><span>Total</span></div>
               </div>
               <div className="donut-legend">{top.map((row) => <span key={row[labelKey]}><i style={{ backgroundColor: categoryColor(row[labelKey]) }} />{row[labelKey]}</span>)}</div>
             </div>
           ) : (
             <div className="share-bar" aria-label="Category share">
               {top.map((row) => (
-                <span key={row[labelKey]} className="share-segment" style={{ width: `${(Number(row[valueKey]) / total) * 100}%`, backgroundColor: categoryColor(row[labelKey]) }} title={`${row[labelKey]}: ${formatCurrency(row[valueKey])}`} />
+                <span key={row[labelKey]} className="share-segment" style={{ width: `${(Number(row[valueKey]) / total) * 100}%`, backgroundColor: categoryColor(row[labelKey]) }} title={`${row[labelKey]}: ${formatCurrency(row[valueKey], currency, language)}`} />
               ))}
             </div>
           )}
@@ -41,7 +41,7 @@ export default function BreakdownBars({ title, rows, labelKey, valueKey = 'total
             <div className="bar-row" key={row[labelKey]}>
               <div className="bar-row-labels">
                 <span className="bar-row-name"><span className="category-dot" style={{ backgroundColor: categoryColor(row[labelKey]) }} />{row[labelKey]}</span>
-                <span className="bar-row-metrics"><span>{((Number(row[valueKey]) / total) * 100).toFixed(1)}%</span><strong>{formatCurrency(row[valueKey])}</strong></span>
+                <span className="bar-row-metrics"><span>{((Number(row[valueKey]) / total) * 100).toFixed(1)}%</span><strong>{formatCurrency(row[valueKey], currency, language)}</strong></span>
               </div>
             </div>
           ))}
