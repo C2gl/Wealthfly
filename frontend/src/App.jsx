@@ -53,6 +53,14 @@ export default function App() {
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
   const rangeLabel = RANGES.find((r) => r.key === rangeKey).label;
+  const viewTitle = {
+    overview: 'Overview',
+    accounts: 'Accounts',
+    spending: 'Spending',
+    categories: 'Categories',
+    trends: 'Trends',
+    transactions: 'Transactions',
+  }[view];
   const previousRange = rangeKey === 'all'
     ? null
     : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
@@ -143,7 +151,7 @@ export default function App() {
 
       <main className="main">
         <header className="top-bar">
-          <h1>{view === 'overview' ? 'Overview' : view === 'accounts' ? 'Accounts' : view === 'spending' ? 'Spending' : 'Transactions'}</h1>
+          <h1>{viewTitle}</h1>
           {view !== 'accounts' && <div className="range-toggle">
             {RANGES.map((r) => (
               <button
@@ -161,6 +169,10 @@ export default function App() {
 
         {view === 'accounts' ? (
           <AccountsPage accounts={accounts} />
+        ) : view === 'categories' ? (
+          <CategoryPanel rows={byCategory} />
+        ) : view === 'trends' ? (
+          <TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} />
         ) : view === 'overview' ? (
           <>
             <StatRow stats={stats} rangeLabel={rangeLabel} />

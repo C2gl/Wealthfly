@@ -4,6 +4,8 @@ const NAV = [
   { key: 'overview', label: 'Overview' },
   { key: 'accounts', label: 'Accounts' },
   { key: 'spending', label: 'Spending' },
+  { key: 'categories', label: 'Categories' },
+  { key: 'trends', label: 'Trends' },
   { key: 'transactions', label: 'Transactions' },
 ];
 

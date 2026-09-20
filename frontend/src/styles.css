@@ -88,7 +88,9 @@ body {
 
 .nav-item:nth-child(2)::before { content: '⌁'; }
 .nav-item:nth-child(3)::before { content: '◒'; }
-.nav-item:nth-child(4)::before { content: '▤'; }
+.nav-item:nth-child(4)::before { content: '◫'; }
+.nav-item:nth-child(5)::before { content: '⌁'; }
+.nav-item:nth-child(6)::before { content: '▤'; }
 
 .nav-item-active {
   border: 0;
