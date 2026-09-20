@@ -9,7 +9,7 @@ import TrendsPanel from './components/TrendsPanel.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
-import NotificationPanel from './components/NotificationPanel.jsx';
+import NotificationBell from './components/NotificationBell.jsx';
 import { api } from './api.js';
 import { categoryColor, daysAgo, formatCurrency, formatDate, today, transactionAmountMeta } from './utils.js';
 
@@ -214,20 +214,21 @@ export default function App() {
       <main className="main">
         <header className="top-bar">
           <h1>{viewTitle}</h1>
-          <div className="range-toggle">
-            {RANGES.map((r) => (
-              <button
-                key={r.key}
-                className={`range-btn ${rangeKey === r.key ? 'range-btn-active' : ''}`}
-                onClick={() => setRangeKey(r.key)}
-              >
-                {r.label}
-              </button>
-            ))}
+          <div className="top-bar-actions">
+            <div className="range-toggle">
+              {RANGES.map((r) => (
+                <button
+                  key={r.key}
+                  className={`range-btn ${rangeKey === r.key ? 'range-btn-active' : ''}`}
+                  onClick={() => setRangeKey(r.key)}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <NotificationBell notifications={notifications} />
           </div>
         </header>
-
-        <NotificationPanel notifications={notifications} />
 
         {view === 'accounts' ? (
           <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />

@@ -1103,6 +1103,98 @@ body {
   outline: none;
 }
 
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notification-bell-root {
+  position: relative;
+}
+
+.notification-bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.notification-bell:hover,
+.notification-bell:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.notification-bell-active {
+  color: var(--accent);
+  border-color: rgba(217, 165, 79, 0.4);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #c6a642;
+  color: #fff;
+  font: 10px 'IBM Plex Mono', monospace;
+  line-height: 16px;
+  text-align: center;
+}
+
+.notification-badge-critical {
+  background: var(--negative);
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 14px 16px;
+  z-index: 20;
+}
+
+.notification-dropdown-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.notification-dropdown .notification-count {
+  font-weight: 400;
+}
+
+.notification-empty {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 4px 0 2px;
+}
+
+.notification-dropdown .notification-list {
+  margin-top: 0;
+}
+
 /* Stats */
 .stat-row {
   display: grid;
