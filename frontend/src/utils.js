@@ -71,3 +71,9 @@ export function categoryColor(category, avoidColor) {
   if (!avoidColor || CATEGORY_COLORS[baseIndex] !== avoidColor) return CATEGORY_COLORS[baseIndex];
   return CATEGORY_COLORS[(baseIndex + 1) % CATEGORY_COLORS.length];
 }
+
+export function isSavingsAccount(account) {
+  const name = String(account?.name || '');
+  if (/^initial balance for\b/i.test(name.trim())) return false;
+  return /saving|epargne|épargne/i.test(name);
+}

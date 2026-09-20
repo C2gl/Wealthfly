@@ -9,10 +9,11 @@ import TrendsPanel from './components/TrendsPanel.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
+import SavingsPage from './components/SavingsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import { useTranslation } from './i18n.jsx';
 import { api } from './api.js';
-import { categoryColor, daysAgo, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
+import { categoryColor, daysAgo, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isSavingsAccount, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
 
 const RANGES = [
   { key: '30d', start: () => daysAgo(30) },
@@ -122,7 +123,7 @@ export default function App() {
     ? null
     : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !/saving/i.test(account.name || ''));
+  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isSavingsAccount(account));
   const budgetRows = budgets
     .filter((budget) => budget.active !== false)
     .map((budget, index) => {
@@ -249,6 +250,8 @@ export default function App() {
 
         {view === 'accounts' ? (
           <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />
+        ) : view === 'savings' ? (
+          <SavingsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} language={language} />
         ) : view === 'categories' ? (
           <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} />
         ) : view === 'trends' ? (

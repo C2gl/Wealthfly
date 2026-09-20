@@ -4,6 +4,7 @@ import { useTranslation } from '../i18n.jsx';
 const NAV = [
   { key: 'overview' },
   { key: 'accounts' },
+  { key: 'savings' },
   { key: 'spending' },
   { key: 'categories' },
   { key: 'trends' },
