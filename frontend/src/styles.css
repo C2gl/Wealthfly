@@ -1046,6 +1046,10 @@ body {
   color: var(--negative);
 }
 
+.stat-neutral {
+  color: var(--positive);
+}
+
 /* Panels */
 .panel {
   background: var(--panel);
@@ -1454,6 +1458,80 @@ body {
 }
 
 .transaction-list { display: grid; }
+
+.transaction-distribution-panel {
+  margin-top: 18px;
+  margin-bottom: 20px;
+  padding: 18px 20px;
+}
+
+.transaction-distribution-header h3 {
+  margin: 8px 0 0;
+  font-size: 16px;
+}
+
+.transaction-distribution-wrap {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.transaction-distribution-chart {
+  width: 190px;
+  height: 190px;
+  display: block;
+  margin: 0 auto;
+}
+
+.transaction-distribution-total-label {
+  fill: var(--text);
+  font-size: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+
+.transaction-distribution-total-sub {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.transaction-distribution-legend {
+  display: grid;
+  gap: 12px;
+}
+
+.transaction-distribution-item {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.transaction-distribution-item strong,
+.transaction-distribution-item b {
+  display: block;
+  font-size: 12px;
+}
+
+.transaction-distribution-item small {
+  display: block;
+  color: var(--text-muted);
+  font: 10px 'IBM Plex Mono', monospace;
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
 
 .transaction-card {
   display: grid;

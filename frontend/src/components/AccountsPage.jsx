@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api.js';
-import { categoryColor, formatCurrency, formatDate } from '../utils';
+import { categoryColor, formatCurrency, formatDate, transactionAmountMeta } from '../utils';
 
 const TYPE_ORDER = ['asset', 'cash', 'liability', 'loan', 'debt', 'mortgage'];
 const VISIBLE_TYPES = new Set(['asset', 'cash', 'liability', 'liabilities', 'loan', 'debt', 'mortgage']);
@@ -171,7 +171,7 @@ function AccountTransactions({ account, range }) {
   return (
     <div className="account-transactions">
       {transactions.map((tx) => {
-        const isExpense = tx.type === 'withdrawal' || (tx.type === 'transfer' && tx.source_name === account.name);
+        const meta = transactionAmountMeta(tx);
         const category = tx.category_name || 'Uncategorized';
         return (
           <div className="account-transaction" key={`${tx.id}-${tx.split_index}`}>
@@ -181,9 +181,7 @@ function AccountTransactions({ account, range }) {
               <span>{tx.destination_name || tx.source_name || '—'}</span>
             </div>
             <span className="category-chip" style={{ '--category-color': categoryColor(category) }}>{category}</span>
-            <strong className={`account-transaction-amount ${isExpense ? 'stat-negative' : 'stat-positive'}`}>
-              {isExpense ? '-' : '+'}{formatCurrency(tx.amount, tx.currency_code)}
-            </strong>
+            <strong className={`account-transaction-amount ${meta.tone}`}>{meta.display}</strong>
           </div>
         );
       })}

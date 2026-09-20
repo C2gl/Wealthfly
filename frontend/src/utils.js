@@ -8,6 +8,36 @@ export function formatCurrency(value, currency) {
   return `${sign}${currency ? currency + ' ' : ''}${formatted}`;
 }
 
+export function transactionAmountMeta(tx) {
+  const amount = Number(tx.amount || 0);
+  const abs = Math.abs(amount);
+
+  if (tx.type === 'withdrawal') {
+    return {
+      prefix: '-',
+      tone: 'stat-negative',
+      value: formatCurrency(abs, tx.currency_code),
+      display: `-${formatCurrency(abs, tx.currency_code)}`,
+    };
+  }
+
+  if (tx.type === 'deposit') {
+    return {
+      prefix: '+',
+      tone: 'stat-positive',
+      value: formatCurrency(abs, tx.currency_code),
+      display: `+${formatCurrency(abs, tx.currency_code)}`,
+    };
+  }
+
+  return {
+    prefix: '=',
+    tone: 'stat-positive',
+    value: formatCurrency(abs, tx.currency_code),
+    display: `=${formatCurrency(abs, tx.currency_code)}`,
+  };
+}
+
 export function formatCompact(value) {
   const n = Number(value || 0);
   return new Intl.NumberFormat('en-US', {

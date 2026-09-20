@@ -10,7 +10,7 @@ import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
 import { api } from './api.js';
-import { categoryColor, daysAgo, formatCurrency, formatDate, today } from './utils.js';
+import { categoryColor, daysAgo, formatCurrency, formatDate, today, transactionAmountMeta } from './utils.js';
 
 const RANGES = [
   { key: '30d', label: '30D', start: () => daysAgo(30) },
@@ -227,12 +227,15 @@ export default function App() {
             <section className="panel recent-panel">
               <div className="panel-heading-row"><h2>Recent activity</h2><button className="text-button" onClick={() => setView('transactions')}>View all →</button></div>
               <div className="recent-list">
-                {transactions.slice(0, 5).map((tx) => (
-                  <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
-                    <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
-                    <strong className={tx.type === 'withdrawal' ? 'stat-negative' : 'stat-positive'}>{tx.type === 'withdrawal' ? '-' : '+'}{formatCurrency(tx.amount, tx.currency_code)}</strong>
-                  </div>
-                ))}
+                {transactions.slice(0, 5).map((tx) => {
+                  const meta = transactionAmountMeta(tx);
+                  return (
+                    <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
+                      <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
+                      <strong className={meta.tone}>{meta.display}</strong>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           </>
@@ -284,12 +287,15 @@ export default function App() {
             <section className="panel recent-panel">
               <div className="panel-heading-row"><h2>Recent activity</h2><button className="text-button" onClick={() => setView('transactions')}>View all →</button></div>
               <div className="recent-list">
-                {transactions.slice(0, 6).map((tx) => (
-                  <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
-                    <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
-                    <strong className={tx.type === 'withdrawal' ? 'stat-negative' : 'stat-positive'}>{tx.type === 'withdrawal' ? '-' : '+'}{formatCurrency(tx.amount, tx.currency_code)}</strong>
-                  </div>
-                ))}
+                {transactions.slice(0, 6).map((tx) => {
+                  const meta = transactionAmountMeta(tx);
+                  return (
+                    <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
+                      <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
+                      <strong className={meta.tone}>{meta.display}</strong>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           </>
