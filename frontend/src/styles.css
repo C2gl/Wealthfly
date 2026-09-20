@@ -1657,8 +1657,8 @@ body {
 }
 
 .transaction-type-deposit {
-  border-color: rgba(53, 105, 87, 0.28);
-  background: rgba(53, 105, 87, 0.12);
+  border-color: rgba(53, 105, 87, 0.3);
+  background: rgba(92, 174, 116, 0.16);
   color: var(--positive);
 }
 
@@ -1669,9 +1669,9 @@ body {
 }
 
 .transaction-type-transfer {
-  border-color: rgba(53, 105, 87, 0.28);
-  background: rgba(53, 105, 87, 0.12);
-  color: var(--positive);
+  border-color: rgba(70, 127, 164, 0.34);
+  background: rgba(111, 178, 214, 0.18);
+  color: #3f708d;
 }
 
 .align-right {
