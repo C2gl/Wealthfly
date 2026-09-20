@@ -73,5 +73,7 @@ export function categoryColor(category, avoidColor) {
 }
 
 export function isSavingsAccount(account) {
-  return /saving|epargne|épargne/i.test(String(account?.name || ''));
+  const name = String(account?.name || '');
+  if (/^initial balance for\b/i.test(name.trim())) return false;
+  return /saving|epargne|épargne/i.test(name);
 }
