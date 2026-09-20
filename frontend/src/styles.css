@@ -887,15 +887,14 @@ body {
 .drawer-section { margin-top: 26px; }
 .drawer-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
 .drawer-section-heading > span:last-child { color: var(--text-muted); font: 10px 'IBM Plex Mono', monospace; }
-.source-account-list { display: grid; gap: 16px; }
-.source-account-row { display: grid; gap: 6px; }
-.source-account-label { display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: 12px; }
-.source-account-label span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.source-account-label i { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; }
-.source-account-label strong { font: 11px 'IBM Plex Mono', monospace; font-weight: 500; }
-.source-account-track { height: 8px; overflow: hidden; border-radius: 5px; background: rgba(122, 129, 119, 0.14); }
-.source-account-track span { display: block; height: 100%; min-width: 3px; border-radius: inherit; }
-.source-account-row small { color: var(--text-muted); font: 10px 'IBM Plex Mono', monospace; }
+.source-account-bar { display: flex; height: 16px; overflow: hidden; border-radius: 8px; background: rgba(122, 129, 119, 0.14); }
+.source-account-bar span { min-width: 3px; cursor: help; outline: none; transition: opacity 160ms ease, filter 160ms ease; }
+.source-account-bar span:hover,
+.source-account-bar span:focus-visible { filter: saturate(1.2) brightness(0.92); outline: 2px solid var(--text); outline-offset: 2px; }
+.source-account-bar span.is-muted { opacity: 0.3; }
+.source-account-active { display: flex; align-items: center; gap: 7px; min-height: 20px; margin-top: 8px; color: var(--text-muted); font: 10px 'IBM Plex Mono', monospace; }
+.source-account-active i { width: 8px; height: 8px; border-radius: 50%; }
+.source-account-active strong { color: var(--text); font-weight: 500; }
 .category-transaction-list { border-top: 1px solid rgba(122, 129, 119, 0.16); }
 .category-transaction-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid rgba(122, 129, 119, 0.16); }
 .category-transaction-row > div { display: grid; gap: 3px; min-width: 0; }

@@ -2,6 +2,7 @@ import React from 'react';
 import { categoryColor, formatCurrency, formatDate, transactionAmountMeta } from '../utils';
 
 export default function CategoryInsightsPanel({ rows, category, transactions, onClose }) {
+  const [hoveredAccount, setHoveredAccount] = React.useState(null);
   const selectedRow = rows.find((row) => row.category === category);
   const categoryTransactions = transactions.filter((transaction) => (transaction.category_name || 'Uncategorized') === category);
   const accountRows = Array.from(categoryTransactions.reduce((accounts, transaction) => {
@@ -13,6 +14,7 @@ export default function CategoryInsightsPanel({ rows, category, transactions, on
     return accounts;
   }, new Map()).values()).sort((a, b) => b.total - a.total);
   const total = Number(selectedRow?.total || categoryTransactions.reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0));
+  const activeAccount = accountRows.find((row) => row.account === hoveredAccount);
 
   return (
     <div className="drawer-backdrop" onClick={onClose}>
@@ -27,20 +29,15 @@ export default function CategoryInsightsPanel({ rows, category, transactions, on
         <p className="drawer-intro">Transactions and source accounts for this category in the selected period.</p>
         <div className="drawer-total"><span>{categoryTransactions.length} {categoryTransactions.length === 1 ? 'transaction' : 'transactions'}</span><strong>{formatCurrency(total)}</strong></div>
         <section className="drawer-section">
-          <div className="drawer-section-heading"><span className="eyebrow">Source accounts</span><span>share of category</span></div>
-          <div className="source-account-list">
+          <div className="drawer-section-heading"><span className="eyebrow">Source accounts</span><span>{activeAccount ? `${activeAccount.account} · ${((activeAccount.total / total) * 100).toFixed(1)}%` : 'hover to inspect'}</span></div>
+          <div className="source-account-bar" role="img" aria-label="Spending share by source account">
             {accountRows.map((row) => {
               const share = total ? (row.total / total) * 100 : 0;
-              return (
-                <div className="source-account-row" key={row.account}>
-                  <div className="source-account-label"><span><i style={{ backgroundColor: categoryColor(row.account) }} />{row.account}</span><strong>{share.toFixed(1)}%</strong></div>
-                  <div className="source-account-track"><span style={{ width: `${share}%`, backgroundColor: categoryColor(row.account) }} /></div>
-                  <small>{formatCurrency(row.total)} · {row.count} {row.count === 1 ? 'transaction' : 'transactions'}</small>
-                </div>
-              );
+              const accountLabel = `${row.account}: ${share.toFixed(1)}%, ${formatCurrency(row.total)}, ${row.count} ${row.count === 1 ? 'transaction' : 'transactions'}`;
+              return <span key={row.account} className={hoveredAccount && hoveredAccount !== row.account ? 'is-muted' : ''} style={{ width: `${share}%`, backgroundColor: categoryColor(row.account) }} title={accountLabel} aria-label={accountLabel} tabIndex="0" onMouseEnter={() => setHoveredAccount(row.account)} onMouseLeave={() => setHoveredAccount(null)} onFocus={() => setHoveredAccount(row.account)} onBlur={() => setHoveredAccount(null)} />;
             })}
-            {!accountRows.length && <p className="empty-state">No source account data for this category.</p>}
           </div>
+          {activeAccount && <div className="source-account-active"><i style={{ backgroundColor: categoryColor(activeAccount.account) }} /><strong>{formatCurrency(activeAccount.total)}</strong><span>{activeAccount.count} {activeAccount.count === 1 ? 'transaction' : 'transactions'}</span></div>}
         </section>
         <section className="drawer-section">
           <div className="drawer-section-heading"><span className="eyebrow">Transactions</span><span>{categoryTransactions.length} records</span></div>
