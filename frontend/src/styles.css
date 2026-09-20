@@ -958,6 +958,18 @@ body {
   font-weight: 500;
 }
 
+.category-detail-amounts {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.category-detail-amounts span {
+  color: var(--text-muted);
+  font: 10px 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+}
+
 .category-detail-meta {
   color: var(--text-muted);
   font: 10px 'IBM Plex Mono', monospace;

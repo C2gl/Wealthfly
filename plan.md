@@ -2,7 +2,7 @@
 
 - [x] accounts
 - [ ] trends 
-- [ ] categories
+- [x] categories
 - [ ] overview organisation
 
 ## accounts 
