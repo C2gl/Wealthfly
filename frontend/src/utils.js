@@ -49,6 +49,7 @@ export function formatCompact(value) {
 export function formatDate(dateStr, language = 'en') {
   if (!dateStr) return '';
   const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return String(dateStr);
   return d.toLocaleDateString(language, { month: 'short', day: '2-digit', year: 'numeric' });
 }
 

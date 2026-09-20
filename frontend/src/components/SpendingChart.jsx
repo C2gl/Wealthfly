@@ -11,7 +11,9 @@ import {
 import { formatCurrency, formatDate } from '../utils';
 
 function shortDate(value) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString('en-US', {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return String(value || '');
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   });
