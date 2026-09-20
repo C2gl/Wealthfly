@@ -1,11 +1,9 @@
 name: Build and publish Docker image
 
 on:
-  push:
-    branches:
-      - '**'
-    tags:
-      - "v*"
+  workflow_run:
+    workflows: ["Test"]
+    types: [completed]
   workflow_dispatch:
 
 env:
@@ -14,6 +12,7 @@ env:
 
 jobs:
   build-and-push:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
