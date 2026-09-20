@@ -1,6 +1,6 @@
 services:
   wealthfly:
-    image: ghcr.io/c2gl/wealthfly:latest
+    image: ghcr.io/c2gl/wealthfly:${WEALTHFLY_IMAGE_TAG:-latest}
     container_name: wealthfly
     restart: unless-stopped
     ports:

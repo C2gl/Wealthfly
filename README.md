@@ -111,6 +111,15 @@ git switch -c feature/short-description
 
 Commit focused changes on the branch, run the local checks, then open a pull request into `main`. Do not commit `.env`, database files, or generated build output.
 
+Docker images pushed from `main` are published as `:latest`. Images pushed from other branches are
+published as `:dev` (and also receive their branch and commit tags), so branch testing does not replace
+the production image tag. To run the branch image locally:
+
+```bash
+WEALTHFLY_IMAGE_TAG=dev docker compose pull
+WEALTHFLY_IMAGE_TAG=dev docker compose up -d
+```
+
 ## Notes / things you may want to tune
 
 - **Multi-currency**: amounts are stored and summed as-is per Firefly's reported values; if you run
