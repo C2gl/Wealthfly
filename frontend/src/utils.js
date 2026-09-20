@@ -50,7 +50,8 @@ export function formatDate(dateStr, language = 'en') {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return String(dateStr);
-  return d.toLocaleDateString(language, { month: 'short', day: '2-digit', year: 'numeric' });
+  const locale = typeof language === 'string' ? language : 'en';
+  return d.toLocaleDateString(locale, { month: 'short', day: '2-digit', year: 'numeric' });
 }
 
 export function daysAgo(n) {
