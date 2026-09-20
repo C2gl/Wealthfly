@@ -1,4 +1,4 @@
-# Wealthfly
+# Wealthfly - AI generated
 
 A self-hosted dashboard that pulls your expense data out of [Firefly III](https://www.firefly-iii.org/)
 via its REST API and displays it in a Wealthfolio-style dashboard: net worth over time, spending by
