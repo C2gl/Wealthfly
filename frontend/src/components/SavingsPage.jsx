@@ -45,7 +45,7 @@ export default function SavingsPage({ accounts, accountFlows, range, rangeLabel,
       </section>
 
       {savingsAccounts.length === 0 ? (
-        <div className="panel empty-state">No savings accounts found. Name an account with “savings” or “epargne” to include it here.</div>
+        <div className="panel empty-state">No asset or cash accounts found. Run a sync to load your accounts.</div>
       ) : (
         <>
           <AccountWeightChart

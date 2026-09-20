@@ -79,7 +79,15 @@ export function categoryColor(category, avoidColor) {
   return CATEGORY_COLORS[(baseIndex + 1) % CATEGORY_COLORS.length];
 }
 
+const SAVINGS_ACCOUNT_TYPES = new Set(['asset', 'cash']);
+
 export function isSavingsAccount(account) {
+  const name = String(account?.name || '');
+  if (/^initial balance for\b/i.test(name.trim())) return false;
+  return SAVINGS_ACCOUNT_TYPES.has(String(account?.type || '').toLowerCase());
+}
+
+export function isNamedSavingsAccount(account) {
   const name = String(account?.name || '');
   if (/^initial balance for\b/i.test(name.trim())) return false;
   return /saving|epargne|épargne/i.test(name);

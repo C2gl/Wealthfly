@@ -13,7 +13,7 @@ import SavingsPage from './components/SavingsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import { useTranslation } from './i18n.jsx';
 import { api } from './api.js';
-import { categoryColor, daysAgo, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isSavingsAccount, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
+import { categoryColor, daysAgo, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isNamedSavingsAccount, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
 
 const RANGES = [
   { key: '30d', start: () => daysAgo(30) },
@@ -123,7 +123,7 @@ export default function App() {
     ? null
     : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isSavingsAccount(account));
+  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isNamedSavingsAccount(account));
   const budgetRows = budgets
     .filter((budget) => budget.active !== false)
     .map((budget, index) => {
