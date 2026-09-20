@@ -109,6 +109,7 @@ export default function App() {
   const [budgets, setBudgets] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const [syncNotification, setSyncNotification] = useState(null);
+  const [savingsAccountWords, setSavingsAccountWords] = useState(null);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
@@ -123,7 +124,7 @@ export default function App() {
     ? null
     : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isNamedSavingsAccount(account));
+  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isNamedSavingsAccount(account, savingsAccountWords));
   const budgetRows = budgets
     .filter((budget) => budget.active !== false)
     .map((budget, index) => {
@@ -192,6 +193,12 @@ export default function App() {
   }, [rangeKey]);
 
   useEffect(() => {
+    api.config()
+      .then((config) => setSavingsAccountWords(config.savingsAccountWords))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     load();
   }, [load]);
 
@@ -251,7 +258,7 @@ export default function App() {
         {view === 'accounts' ? (
           <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />
         ) : view === 'savings' ? (
-          <SavingsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} language={language} />
+          <SavingsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} language={language} savingsAccountWords={savingsAccountWords} />
         ) : view === 'categories' ? (
           <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} onCategoryClick={setSelectedCategory} />
         ) : view === 'trends' ? (

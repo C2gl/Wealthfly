@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AccountTransactions, AccountWeightChart } from './AccountsPage.jsx';
-import { categoryColor, formatCurrency, isSavingsAccount } from '../utils.js';
+import { categoryColor, formatCurrency, isNamedSavingsAccount } from '../utils.js';
 
 function sumByCurrency(accounts, getValue) {
   return accounts.reduce((totals, account) => {
@@ -16,9 +16,9 @@ function CurrencyTotals({ totals, language }) {
   ));
 }
 
-export default function SavingsPage({ accounts, accountFlows, range, rangeLabel, language }) {
+export default function SavingsPage({ accounts, accountFlows, range, rangeLabel, language, savingsAccountWords }) {
   const [expandedId, setExpandedId] = useState(null);
-  const savingsAccounts = accounts.filter((account) => isSavingsAccount(account));
+  const savingsAccounts = accounts.filter((account) => isNamedSavingsAccount(account, savingsAccountWords));
   const flowByAccount = new Map(accountFlows.map((flow) => [flow.account, flow]));
   const balances = sumByCurrency(savingsAccounts, (account) => account.current_balance);
   const contributions = sumByCurrency(savingsAccounts, (account) => flowByAccount.get(account.name)?.income);

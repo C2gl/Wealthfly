@@ -79,16 +79,16 @@ export function categoryColor(category, avoidColor) {
   return CATEGORY_COLORS[(baseIndex + 1) % CATEGORY_COLORS.length];
 }
 
-const SAVINGS_ACCOUNT_TYPES = new Set(['asset', 'cash']);
+const DEFAULT_SAVINGS_ACCOUNT_WORDS = ['saving', 'epargne', 'épargne'];
 
-export function isSavingsAccount(account) {
-  const name = String(account?.name || '');
-  if (/^initial balance for\b/i.test(name.trim())) return false;
-  return SAVINGS_ACCOUNT_TYPES.has(String(account?.type || '').toLowerCase());
+function savingsAccountNameMatches(name, words) {
+  const normalizedName = name.toLocaleLowerCase();
+  const configuredWords = Array.isArray(words) && words.length ? words : DEFAULT_SAVINGS_ACCOUNT_WORDS;
+  return configuredWords.some((word) => normalizedName.includes(String(word).trim().toLocaleLowerCase()));
 }
 
-export function isNamedSavingsAccount(account) {
+export function isNamedSavingsAccount(account, words = DEFAULT_SAVINGS_ACCOUNT_WORDS) {
   const name = String(account?.name || '');
   if (/^initial balance for\b/i.test(name.trim())) return false;
-  return /saving|epargne|épargne/i.test(name);
+  return savingsAccountNameMatches(name, words);
 }

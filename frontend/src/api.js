@@ -8,6 +8,7 @@ async function get(path, params = {}) {
 }
 
 export const api = {
+  config: () => get('/config'),
   stats: (range) => get('/summary/stats', range),
   netWorth: (range) => get('/summary/net-worth', range),
   expensesByCategory: (range) => get('/summary/expenses-by-category', range),

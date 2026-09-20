@@ -38,7 +38,8 @@ body {
 
 .main {
   flex-grow: 1;
-  width: min(100%, 1380px);
+  width: auto;
+  min-width: 0;
   max-width: none;
   padding: 28px 5vw 56px;
 }
@@ -1067,7 +1068,7 @@ body {
 .main {
   flex-grow: 1;
   padding: 28px 36px;
-  max-width: 1200px;
+  max-width: none;
 }
 
 .top-bar {
