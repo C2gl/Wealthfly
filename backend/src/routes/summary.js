@@ -1,11 +1,11 @@
 const express = require('express');
 const db = require('../db');
+const { resolveDateRange } = require('../dateRange');
 
 const router = express.Router();
 
 function dateFilter(req) {
-  const { start, end } = req.query;
-  return { start: start || '0000-01-01', end: end || '9999-12-31' };
+  return resolveDateRange(req.query);
 }
 
 // Each point uses the latest known balance for every included account, so accounts
