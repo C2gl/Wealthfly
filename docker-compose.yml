@@ -1,12 +1,14 @@
 services:
   wealthfly:
     image: ghcr.io/c2gl/wealthfly:${WEALTHFLY_IMAGE_TAG:-latest}
+    # options are: latest, dev
     container_name: wealthfly
     restart: unless-stopped
     ports:
       - "${PORT:-4400}:4400"
     environment:
       WEALTHFLY_LANGUAGE: ${WEALTHFLY_LANGUAGE:-en}
+      # options are: en, fr
     env_file:
       - .env
     volumes:
