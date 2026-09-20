@@ -39,6 +39,7 @@ export default function NetWorthChart({ data }) {
             width={56}
           />
           <Tooltip
+            cursor={false}
             contentStyle={{
               background: '#151A21',
               border: '1px solid #232A34',
