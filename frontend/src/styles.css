@@ -1018,6 +1018,91 @@ body {
   margin-bottom: 20px;
 }
 
+.notification-panel {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  background: rgba(251, 250, 241, 0.72);
+}
+
+.notification-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notification-heading h2 {
+  margin: 7px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.notification-count {
+  color: var(--text-muted);
+  font: 10px 'IBM Plex Mono', monospace;
+}
+
+.notification-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.notification-marker {
+  width: 8px;
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.notification-item strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.notification-item p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.notification-critical { border-color: rgba(169, 80, 62, 0.34); }
+.notification-critical .notification-marker { background: var(--negative); }
+.notification-warning { border-color: rgba(198, 166, 66, 0.38); }
+.notification-warning .notification-marker { background: #c6a642; }
+.notification-info .notification-marker { background: #4f7f9f; }
+
+.notification-dismiss {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.notification-dismiss:hover,
+.notification-dismiss:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
 /* Stats */
 .stat-row {
   display: grid;

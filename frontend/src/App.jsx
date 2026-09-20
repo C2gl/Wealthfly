@@ -9,6 +9,7 @@ import TrendsPanel from './components/TrendsPanel.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
+import NotificationPanel from './components/NotificationPanel.jsx';
 import { api } from './api.js';
 import { categoryColor, daysAgo, formatCurrency, formatDate, today, transactionAmountMeta } from './utils.js';
 
@@ -31,6 +32,53 @@ function shiftDate(dateString, days) {
   const date = new Date(`${dateString}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
+}
+function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel }) {
+  const notifications = [];
+
+  if (error) {
+    notifications.push({
+      id: 'api-error',
+      level: 'critical',
+      title: 'Dashboard data is unavailable',
+      message: error,
+    });
+  }
+
+  if (stats) {
+    const lastSyncTime = stats.lastSync ? new Date(stats.lastSync).getTime() : 0;
+    const syncAge = lastSyncTime ? Date.now() - lastSyncTime : Infinity;
+    if (!lastSyncTime || syncAge > 24 * 60 * 60 * 1000) {
+      notifications.push({
+        id: 'stale-sync',
+        level: 'warning',
+        title: stats.lastSync ? 'Data may be stale' : 'Data has not synced yet',
+        message: stats.lastSync
+          ? `Last successful sync: ${new Date(stats.lastSync).toLocaleString()}.`
+          : 'Run a sync to load the latest Firefly III data.',
+      });
+    }
+  }
+
+  budgetRows.filter((row) => row.target > 0 && row.spent > row.target).forEach((row) => {
+    notifications.push({
+      id: `budget-${row.id}`,
+      level: 'warning',
+      title: `${row.name} is over budget`,
+      message: `${formatCurrency(row.spent, row.currency)} spent against a ${formatCurrency(row.target, row.currency)} target.`,
+    });
+  });
+
+  if (stats && transactions.length === 0) {
+    notifications.push({
+      id: 'empty-period',
+      level: 'info',
+      title: `No transactions in ${rangeLabel}`,
+      message: 'Try a wider date range or check that the latest sync completed.',
+    });
+  }
+
+  return notifications;
 }
 
 export default function App() {
@@ -96,6 +144,7 @@ export default function App() {
         color: ['#8da34d', '#c6a642', '#62615d'][index % 3],
       };
     });
+  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel });
 
   const load = useCallback(async () => {
     try {
@@ -178,7 +227,7 @@ export default function App() {
           </div>
         </header>
 
-        {error && <div className="error-banner">Could not reach the API: {error}</div>}
+        <NotificationPanel notifications={notifications} />
 
         {view === 'accounts' ? (
           <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />
