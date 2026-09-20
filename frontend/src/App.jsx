@@ -69,6 +69,7 @@ export default function App() {
     ? null
     : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
+  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !/saving/i.test(account.name || ''));
   const budgetRows = budgets
     .filter((budget) => budget.active !== false)
     .map((budget, index) => {
@@ -205,9 +206,9 @@ export default function App() {
               </button>
               <button className="overview-preview" onClick={() => setView('accounts')}>
                 <div className="overview-preview-heading"><span className="eyebrow">Accounts</span><span className="overview-preview-arrow">→</span></div>
-                <strong>{accounts.length} accounts</strong>
+                <strong>{overviewAccounts.length} accounts</strong>
                 <span className="overview-preview-caption">Balances and account activity</span>
-                <div className="overview-account-list">{accounts.slice(0, 3).map((account) => <span key={account.id}><b>{account.name}</b><em>{formatCurrency(account.current_balance, account.currency_code)}</em></span>)}</div>
+                <div className="overview-account-list">{overviewAccounts.slice(0, 3).map((account) => <span key={account.id}><b>{account.name}</b><em>{formatCurrency(account.current_balance, account.currency_code)}</em></span>)}</div>
                 <span className="overview-preview-foot">Open account details</span>
               </button>
               <button className="overview-preview" onClick={() => setView('trends')}>
