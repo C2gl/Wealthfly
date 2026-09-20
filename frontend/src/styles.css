@@ -1523,6 +1523,18 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.18);
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.transaction-distribution-item:hover,
+.transaction-distribution-item:focus-visible,
+.transaction-distribution-item.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px rgba(75, 84, 69, 0.08);
+  transform: translateY(-1px);
 }
 
 .transaction-distribution-item strong,
@@ -1542,6 +1554,23 @@ body {
   height: 10px;
   border-radius: 999px;
   display: inline-block;
+}
+
+.transaction-segment {
+  cursor: pointer;
+  transition: opacity 160ms ease, transform 160ms ease;
+  opacity: 1;
+}
+
+.transaction-segment:hover,
+.transaction-segment:focus-visible,
+.transaction-segment.is-active {
+  opacity: 1;
+  filter: brightness(1.04);
+}
+
+.transaction-segment.is-muted {
+  opacity: 0.35;
 }
 
 .transaction-card {

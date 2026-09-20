@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { categoryColor, formatCurrency, formatDate, transactionAmountMeta } from '../utils';
 
 function arcPath(startAngle, endAngle) {
@@ -18,18 +18,21 @@ function arcSegments(rows, total) {
   const visible = rows.filter((row) => row.total > 0);
   if (!visible.length) return [];
 
-  let cursor = 0;
+  let cursor = 180;
   return visible.map((row) => {
     const share = total ? row.total / total : 0;
-    const span = 360 * share;
-    const start = cursor;
-    const end = cursor + span;
-    cursor = end;
-    return { ...row, start, end, share };
+    const span = 180 * share;
+    const start = cursor + 1.5;
+    const end = cursor + span - 1.5;
+    cursor += span;
+    return { ...row, share, start, end };
   });
 }
 
 export default function TransactionsTable({ transactions }) {
+  const [hoveredKey, setHoveredKey] = useState(null);
+  const [selectedKey, setSelectedKey] = useState(null);
+
   const totals = {
     withdrawal: transactions.filter((tx) => tx.type === 'withdrawal').reduce((sum, tx) => sum + Math.abs(Number(tx.amount || 0)), 0),
     deposit: transactions.filter((tx) => tx.type === 'deposit').reduce((sum, tx) => sum + Math.abs(Number(tx.amount || 0)), 0),
@@ -44,6 +47,8 @@ export default function TransactionsTable({ transactions }) {
 
   const total = distribution.reduce((sum, row) => sum + row.total, 0);
   const segments = arcSegments(distribution, total);
+  const activeKey = hoveredKey || selectedKey || distribution[0]?.key;
+  const activeRow = distribution.find((row) => row.key === activeKey) || distribution[0];
 
   return (
     <section className="transactions-page">
@@ -62,32 +67,56 @@ export default function TransactionsTable({ transactions }) {
           </div>
           <div className="transaction-distribution-wrap">
             <svg viewBox="0 0 190 190" className="transaction-distribution-chart" role="img" aria-label="Transaction distribution by type">
-              {segments.map((segment) => (
-                <path
-                  key={segment.key}
-                  d={arcPath(segment.start - 90, segment.end - 90)}
-                  fill="none"
-                  stroke={segment.color}
-                  strokeWidth="28"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              ))}
+              {segments.map((segment) => {
+                const isMuted = hoveredKey && hoveredKey !== segment.key && !selectedKey;
+                const isSelected = (selectedKey || hoveredKey) === segment.key;
+                return (
+                  <path
+                    key={segment.key}
+                    d={arcPath(segment.start, segment.end)}
+                    fill="none"
+                    stroke={segment.color}
+                    strokeWidth="28"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={isSelected ? 'transaction-segment is-active' : isMuted ? 'transaction-segment is-muted' : 'transaction-segment'}
+                    onMouseEnter={() => setHoveredKey(segment.key)}
+                    onMouseLeave={() => setHoveredKey(null)}
+                    onFocus={() => setHoveredKey(segment.key)}
+                    onBlur={() => setHoveredKey(null)}
+                    onClick={() => setSelectedKey((current) => (current === segment.key ? null : segment.key))}
+                    tabIndex={0}
+                    aria-label={`${segment.label}: ${formatCurrency(segment.total)}`}
+                  />
+                );
+              })}
               <circle cx="95" cy="95" r="48" fill="rgba(251, 250, 241, 0.9)" />
-              <text x="95" y="90" textAnchor="middle" className="transaction-distribution-total-label">{formatCurrency(total)}</text>
-              <text x="95" y="112" textAnchor="middle" className="transaction-distribution-total-sub">total</text>
+              <text x="95" y="90" textAnchor="middle" className="transaction-distribution-total-label">{formatCurrency(activeRow?.total || total)}</text>
+              <text x="95" y="112" textAnchor="middle" className="transaction-distribution-total-sub">{activeRow?.label || 'total'}</text>
             </svg>
             <div className="transaction-distribution-legend">
-              {distribution.map((row) => (
-                <div key={row.key} className="transaction-distribution-item">
-                  <span className="legend-swatch" style={{ backgroundColor: row.color }} />
-                  <div>
-                    <strong>{row.label}</strong>
-                    <small>{row.total ? `${((row.total / total) * 100).toFixed(1)}%` : '0.0%'}</small>
-                  </div>
-                  <b>{formatCurrency(row.total)}</b>
-                </div>
-              ))}
+              {distribution.map((row) => {
+                const isSelected = (selectedKey || hoveredKey) === row.key;
+                return (
+                  <button
+                    key={row.key}
+                    className={isSelected ? 'transaction-distribution-item is-active' : 'transaction-distribution-item'}
+                    onMouseEnter={() => setHoveredKey(row.key)}
+                    onMouseLeave={() => setHoveredKey(null)}
+                    onFocus={() => setHoveredKey(row.key)}
+                    onBlur={() => setHoveredKey(null)}
+                    onClick={() => setSelectedKey((current) => (current === row.key ? null : row.key))}
+                    type="button"
+                  >
+                    <span className="legend-swatch" style={{ backgroundColor: row.color }} />
+                    <div>
+                      <strong>{row.label}</strong>
+                      <small>{row.total ? `${((row.total / total) * 100).toFixed(1)}%` : '0.0%'}</small>
+                    </div>
+                    <b>{formatCurrency(row.total)}</b>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
