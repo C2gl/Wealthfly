@@ -107,12 +107,12 @@ function AccountBreakdownChart({ bucket }) {
   );
 }
 
-function AccountWeightChart({ accounts }) {
+export function AccountWeightChart({ accounts, bucketDefinitions = ACCOUNT_BUCKETS, bucketForAccount = accountBucket, title = 'Accounts', eyebrow = 'Balance composition', description = 'Personal · shared · savings' }) {
   const [hoveredKey, setHoveredKey] = useState(null);
   const [selectedKey, setSelectedKey] = useState(null);
-  const buckets = ACCOUNT_BUCKETS.map((bucket) => ({
+  const buckets = bucketDefinitions.map((bucket) => ({
     ...bucket,
-    accounts: accounts.filter((account) => accountBucket(account) === bucket.key),
+    accounts: accounts.filter((account) => bucketForAccount(account) === bucket.key),
   })).map((bucket) => ({
     ...bucket,
     total: bucket.accounts.reduce((sum, account) => sum + Math.max(0, Number(account.current_balance || 0)), 0),
@@ -124,8 +124,8 @@ function AccountWeightChart({ accounts }) {
   return (
     <section className="panel account-weight-panel">
       <div className="panel-heading-row">
-        <div><span className="eyebrow">Balance composition</span><h3>Accounts</h3></div>
-        <span>Personal · shared · savings</span>
+        <div><span className="eyebrow">{eyebrow}</span><h3>{title}</h3></div>
+        <span>{description}</span>
       </div>
       <div className="account-weight-chart">
         <svg viewBox="0 0 240 140" role="img" aria-label="Account balance composition">

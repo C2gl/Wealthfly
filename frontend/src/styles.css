@@ -713,11 +713,14 @@ body {
 
 .donut-hole strong { font: 13px 'IBM Plex Mono', monospace; }
 .donut-hole span { margin-top: 4px; color: var(--text-muted); font: 9px 'IBM Plex Mono', monospace; text-transform: uppercase; }
+.donut-hole small { margin-top: 4px; color: var(--text-muted); font: 11px 'IBM Plex Mono', monospace; }
 .donut-legend { display: grid; gap: 9px; color: var(--text-muted); font-size: 11px; }
-.donut-legend span { display: flex; align-items: center; gap: 8px; cursor: default; outline: none; }
+.donut-legend span { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 8px; border: 1px solid transparent; border-radius: 5px; cursor: default; outline: none; }
 .donut-legend span:hover,
-.donut-legend span:focus-visible { color: var(--text); }
+.donut-legend span:focus-visible,
+.donut-legend span.is-active { color: var(--text); border-color: var(--border); background: rgba(255, 255, 255, 0.32); }
 .donut-legend i { width: 9px; height: 9px; border-radius: 50%; }
+.donut-legend strong { color: var(--text); font: 10px 'IBM Plex Mono', monospace; font-weight: 500; }
 
 .breakdown-hover-info {
   display: flex;

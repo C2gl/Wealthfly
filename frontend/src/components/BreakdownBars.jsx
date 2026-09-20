@@ -9,6 +9,7 @@ export default function BreakdownBars({ title, rows, labelKey, valueKey = 'total
     .slice(0, limit);
   const total = top.reduce((sum, row) => sum + Number(row[valueKey] || 0), 0);
   const hoveredRow = top.find((row) => row[labelKey] === hoveredLabel);
+  const selectedValue = hoveredRow ? Number(hoveredRow[valueKey] || 0) : total;
   const setHovered = (label) => setHoveredLabel(label);
   const clearHovered = () => setHoveredLabel(null);
 
@@ -32,9 +33,9 @@ export default function BreakdownBars({ title, rows, labelKey, valueKey = 'total
           {mode === 'donut' ? (
             <div className="donut-layout">
               <div className="donut-chart" style={{ background: `conic-gradient(${top.map((row, index) => `${categoryColor(row[labelKey])} ${top.slice(0, index).reduce((sum, item) => sum + Number(item[valueKey] || 0), 0) / total * 360}deg ${(top.slice(0, index + 1).reduce((sum, item) => sum + Number(item[valueKey] || 0), 0) / total) * 360}deg`).join(', ')})` }}>
-                <div className="donut-hole"><strong>{formatCurrency(total, currency, language)}</strong><span>Total</span></div>
+                <div className="donut-hole"><strong>{formatCurrency(selectedValue, currency, language)}</strong><span>{hoveredRow?.[labelKey] || 'Total'}</span><small>{hoveredRow ? `${((selectedValue / total) * 100).toFixed(1)}%` : '100.0%'}</small></div>
               </div>
-              <div className="donut-legend">{top.map((row) => <span key={row[labelKey]} onMouseEnter={() => setHovered(row[labelKey])} onMouseLeave={clearHovered} onFocus={() => setHovered(row[labelKey])} onBlur={clearHovered} tabIndex="0"><i style={{ backgroundColor: categoryColor(row[labelKey]) }} />{row[labelKey]}</span>)}</div>
+              <div className="donut-legend">{top.map((row) => <span key={row[labelKey]} className={hoveredRow?.[labelKey] === row[labelKey] ? 'is-active' : ''} onMouseEnter={() => setHovered(row[labelKey])} onMouseLeave={clearHovered} onFocus={() => setHovered(row[labelKey])} onBlur={clearHovered} tabIndex="0"><i style={{ backgroundColor: categoryColor(row[labelKey]) }} />{row[labelKey]}<strong>{((Number(row[valueKey]) / total) * 100).toFixed(1)}%</strong></span>)}</div>
             </div>
           ) : (
             <div className="share-bar" aria-label="Category share">
