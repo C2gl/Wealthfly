@@ -12,7 +12,7 @@ function sparklinePoints(rows, category, maxDay, maxTotal) {
   }).join(' ');
 }
 
-function CategorySparkline({ category, currentRows, previousRows, hasComparison }) {
+function CategorySparkline({ category, color, currentRows, previousRows, hasComparison }) {
   const trendRows = [...currentRows, ...previousRows];
   const maxDay = Math.max(1, ...trendRows.map((row) => Number(row.day || 0)));
   const maxTotal = Math.max(1, ...trendRows.map((row) => Number(row.total || 0)));
@@ -23,7 +23,7 @@ function CategorySparkline({ category, currentRows, previousRows, hasComparison 
     <div className="category-sparkline-wrap">
       <svg className="category-sparkline" viewBox="0 0 120 32" role="img" aria-label={`${category} spending trend`}>
         {hasComparison && <polyline points={previousPoints} fill="none" stroke="#c6a642" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />}
-        <polyline points={currentPoints} fill="none" stroke={categoryColor(category)} strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+        <polyline points={currentPoints} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
       </svg>
       {hasComparison && <span className="category-sparkline-legend"><i className="category-sparkline-current" />now <i className="category-sparkline-previous" />prior</span>}
     </div>
@@ -38,6 +38,10 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
     .filter((row) => !currentCategories.some((currentRow) => currentRow.category === row.category))];
   const total = currentCategories.reduce((sum, row) => sum + Number(row.total || 0), 0);
   const hasComparison = previousRows !== null && previousCategories.length > 0;
+  const categoryColors = categories.reduce((colors, row) => {
+    colors.push(categoryColor(row.category, colors.at(-1)));
+    return colors;
+  }, []);
 
   return (
     <section className="panel category-panel">
@@ -52,7 +56,8 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
         <p className="empty-state">No expenses in this range.</p>
       ) : (
         <div className="category-detail-list category-block-grid">
-          {categories.map((row) => {
+          {categories.map((row, index) => {
+            const color = categoryColors[index];
             const amount = Number(row.total || 0);
             const previousAmount = Number(previousByCategory.get(row.category)?.total || 0);
             const change = amount - previousAmount;
@@ -61,12 +66,12 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
             return (
               <article className="category-detail-row category-block" key={row.category}>
                 <div className="category-detail-heading">
-                  <span className="bar-row-name"><span className="category-dot" style={{ backgroundColor: categoryColor(row.category) }} />{row.category}</span>
+                  <span className="bar-row-name"><span className="category-dot" style={{ backgroundColor: color }} />{row.category}</span>
                   <div className="category-detail-amounts"><strong>{formatCurrency(amount)}</strong><span className={hasComparison ? (change > 0 ? 'stat-negative' : change < 0 ? 'stat-positive' : '') : ''}>{changeLabel}</span></div>
                 </div>
-                <CategorySparkline category={row.category} currentRows={trendRows} previousRows={previousTrendRows} hasComparison={hasComparison} />
+                <CategorySparkline category={row.category} color={color} currentRows={trendRows} previousRows={previousTrendRows} hasComparison={hasComparison} />
                 <div className="category-detail-meta">
-                  <span className="category-detail-track"><span style={{ width: `${share}%`, backgroundColor: categoryColor(row.category) }} /></span>
+                  <span className="category-detail-track"><span style={{ width: `${share}%`, backgroundColor: color }} /></span>
                   <span>{share.toFixed(1)}% · {row.count || 0} {Number(row.count) === 1 ? 'transaction' : 'transactions'}{hasComparison ? ` · prior ${formatCurrency(previousAmount)}` : ''}</span>
                 </div>
               </article>

@@ -34,8 +34,10 @@ export function today() {
 
 const CATEGORY_COLORS = ['#39725a', '#bc704d', '#c4aa64', '#6f8a7b', '#5a73a1', '#8d72b2', '#9f9d93'];
 
-export function categoryColor(category) {
+export function categoryColor(category, avoidColor) {
   const value = String(category || 'Uncategorized');
   const hash = [...value].reduce((total, character) => total + character.charCodeAt(0), 0);
-  return CATEGORY_COLORS[hash % CATEGORY_COLORS.length];
+  const baseIndex = hash % CATEGORY_COLORS.length;
+  if (!avoidColor || CATEGORY_COLORS[baseIndex] !== avoidColor) return CATEGORY_COLORS[baseIndex];
+  return CATEGORY_COLORS[(baseIndex + 1) % CATEGORY_COLORS.length];
 }

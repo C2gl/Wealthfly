@@ -194,7 +194,11 @@ export default function App() {
                 <div className="overview-preview-heading"><span className="eyebrow">Where it went</span><span className="overview-preview-arrow">→</span></div>
                 <strong>{formatCurrency(periodSpent)}</strong>
                 <span className="overview-preview-caption">{byCategory.length} categories · {rangeLabel}</span>
-                <div className="overview-preview-bars">{byCategory.slice(0, 4).map((row) => <span key={row.category} style={{ width: `${periodSpent ? (Number(row.total || 0) / periodSpent) * 100 : 0}%`, backgroundColor: categoryColor(row.category) }} />)}</div>
+                <div className="overview-preview-bars">{byCategory.slice(0, 4).reduce((colors, row) => {
+                  const color = categoryColor(row.category, colors.at(-1));
+                  colors.push(color);
+                  return colors;
+                }, []).map((color, index) => <span key={byCategory[index].category} style={{ width: `${periodSpent ? (Number(byCategory[index].total || 0) / periodSpent) * 100 : 0}%`, backgroundColor: color }} />)}</div>
                 <span className="overview-preview-foot">Open category trends</span>
               </button>
               <button className="overview-preview" onClick={() => setView('spending')}>
