@@ -23,9 +23,13 @@ Edit `.env`:
 ```
 FIREFLY_URL=https://firefly.example.com
 FIREFLY_TOKEN=eyJ0eXAiOiJKV1Q...
+
+# Dashboard language (available catalogs: en, fr)
+WEALTHFLY_LANGUAGE=en
 ```
 
 `FIREFLY_URL` is the base URL of your Firefly III instance — no trailing slash, no `/api` suffix.
+`WEALTHFLY_LANGUAGE` is read by the running container, so it also works when using a prebuilt image.
 
 ## 3. Run
 
@@ -71,9 +75,25 @@ wealthfly/
 │       └── routes/
 ├── frontend/           # React + Recharts dashboard (Vite)
 │   └── src/
+│       ├── locales/         # One JSON catalog per supported language
+│       ├── i18n.jsx         # Translation provider and locale-aware formatters
 ├── Dockerfile          # multi-stage: builds frontend, bundles into backend image
 ├── docker-compose.yml
 └── .env.example
+```
+
+### Adding a translation
+
+User-facing UI text belongs in a catalog under `frontend/src/locales/`. Add the same key to
+`en.json` and every supported catalog, then use `useTranslation().t('section.key')` in a component.
+Keep keys grouped by feature and use `{{name}}` placeholders for dynamic values. Dates and numbers
+should use the locale-aware formatters exposed by the translation context or the helpers in
+`frontend/src/utils.js`; do not hard-code `en-US` in components.
+
+To select a catalog in Docker Compose, set `WEALTHFLY_LANGUAGE` in `.env` and recreate the container:
+
+```bash
+WEALTHFLY_LANGUAGE=fr docker compose up -d
 ```
 
 ## Local development (without Docker)

@@ -1,15 +1,18 @@
 import React from 'react';
+import { useTranslation } from '../i18n.jsx';
 
 const NAV = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'accounts', label: 'Accounts' },
-  { key: 'spending', label: 'Spending' },
-  { key: 'categories', label: 'Categories' },
-  { key: 'trends', label: 'Trends' },
-  { key: 'transactions', label: 'Transactions' },
+  { key: 'overview' },
+  { key: 'accounts' },
+  { key: 'spending' },
+  { key: 'categories' },
+  { key: 'trends' },
+  { key: 'transactions' },
 ];
 
 export default function Sidebar({ active, onNavigate, lastSync, onSync, syncing }) {
+  const { t, formatDate } = useTranslation();
+
   return (
     <aside className="sidebar">
       <div className="wordmark">
@@ -24,20 +27,20 @@ export default function Sidebar({ active, onNavigate, lastSync, onSync, syncing 
             className={`nav-item ${active === item.key ? 'nav-item-active' : ''}`}
             onClick={() => onNavigate(item.key)}
           >
-            {item.label}
+            {t(`nav.${item.key}`)}
           </button>
         ))}
       </nav>
 
       <div className="sidebar-footer">
         <div className="sync-status">
-          <span className="sync-label">Last synced</span>
+          <span className="sync-label">{t('sync.lastSynced')}</span>
           <span className="sync-value">
-            {lastSync ? new Date(lastSync).toLocaleString() : 'never'}
+            {lastSync ? formatDate(new Date(lastSync), { dateStyle: 'medium', timeStyle: 'short' }) : t('sync.never')}
           </span>
         </div>
         <button className="sync-button" onClick={onSync} disabled={syncing}>
-          {syncing ? 'Syncing…' : 'Sync now'}
+          {syncing ? t('sync.inProgress') : t('sync.now')}
         </button>
       </div>
     </aside>
