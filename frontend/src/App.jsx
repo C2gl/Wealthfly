@@ -229,10 +229,14 @@ export default function App() {
               <div className="recent-list">
                 {transactions.slice(0, 5).map((tx) => {
                   const meta = transactionAmountMeta(tx);
+                  const isTransfer = tx.type === 'transfer';
                   return (
                     <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
                       <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
-                      <strong className={meta.tone}>{meta.display}</strong>
+                      <div className="recent-row-amount-wrap">
+                        {isTransfer && <span className="transfer-badge recent-transfer-badge">Transfer</span>}
+                        <strong className={meta.tone}>{meta.display}</strong>
+                      </div>
                     </div>
                   );
                 })}
@@ -289,10 +293,14 @@ export default function App() {
               <div className="recent-list">
                 {transactions.slice(0, 6).map((tx) => {
                   const meta = transactionAmountMeta(tx);
+                  const isTransfer = tx.type === 'transfer';
                   return (
                     <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
                       <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
-                      <strong className={meta.tone}>{meta.display}</strong>
+                      <div className="recent-row-amount-wrap">
+                        {isTransfer && <span className="transfer-badge recent-transfer-badge">Transfer</span>}
+                        <strong className={meta.tone}>{meta.display}</strong>
+                      </div>
                     </div>
                   );
                 })}

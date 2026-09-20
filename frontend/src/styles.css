@@ -810,6 +810,17 @@ body {
 .recent-row strong { font-size: 12px; font-weight: 500; }
 .recent-row small { grid-column: 2; color: var(--text-muted); font-size: 10px; }
 .recent-row > strong { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+.recent-row-amount-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.recent-transfer-badge {
+  font-size: 8px;
+  padding: 2px 6px;
+}
 
 /* Sidebar */
 .sidebar {
