@@ -150,6 +150,125 @@ body {
   padding: 22px 24px 8px;
 }
 
+.account-weight-panel {
+  padding: 22px 24px 18px;
+}
+
+.account-weight-panel h3 {
+  margin: 7px 0 0;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.account-weight-chart {
+  position: relative;
+  width: min(100%, 440px);
+  margin: 12px auto -4px;
+}
+
+.account-weight-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.account-weight-segment {
+  fill: none;
+  stroke-width: 28;
+  stroke-linecap: round;
+  cursor: pointer;
+  transition: opacity 160ms ease, stroke-width 160ms ease;
+}
+
+.account-weight-segment:hover,
+.account-weight-segment:focus {
+  stroke-width: 34;
+  outline: none;
+}
+
+.account-weight-segment.is-muted { opacity: 0.34; }
+
+.account-weight-center {
+  position: absolute;
+  right: 25%;
+  bottom: 12%;
+  left: 25%;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  pointer-events: none;
+  text-align: center;
+}
+
+.account-weight-center strong {
+  font: 19px 'IBM Plex Mono', monospace;
+  font-weight: 500;
+}
+
+.account-weight-center span {
+  color: var(--text-muted);
+  font: 12px 'IBM Plex Mono', monospace;
+}
+
+.account-weight-center small {
+  color: var(--text-muted);
+  font: 11px 'IBM Plex Mono', monospace;
+}
+
+.account-weight-legend {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  border-top: 1px solid rgba(122, 129, 119, 0.16);
+  padding-top: 14px;
+}
+
+.account-weight-legend button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.account-weight-legend button:hover,
+.account-weight-legend button:focus-visible,
+.account-weight-legend button.is-active {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.32);
+  outline: none;
+}
+
+.account-weight-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.account-weight-legend span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  font-size: 11px;
+}
+
+.account-weight-legend small {
+  color: var(--text-muted);
+  font: 9px 'IBM Plex Mono', monospace;
+}
+
+.account-weight-legend strong {
+  font: 10px 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .account-group-header {
   display: flex;
   align-items: end;
@@ -1396,6 +1515,9 @@ body {
   .accounts-intro { align-items: flex-start; flex-direction: column; }
   .accounts-count { text-align: left; }
   .account-group { padding-left: 16px; padding-right: 16px; }
+  .account-weight-panel { padding-left: 16px; padding-right: 16px; }
+  .account-weight-panel .panel-heading-row { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .account-weight-legend { grid-template-columns: 1fr; }
   .account-group-header { align-items: flex-start; flex-direction: column; }
   .account-group-total { justify-content: flex-start; }
   .account-row { align-items: flex-start; flex-wrap: wrap; gap: 10px 14px; padding: 14px 0; }

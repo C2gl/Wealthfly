@@ -27,6 +27,83 @@ function formatTotals(accounts) {
   ));
 }
 
+const ACCOUNT_BUCKETS = [
+  { key: 'personal', label: 'Personal', color: '#356957' },
+  { key: 'shared', label: 'Shared', color: '#8eaa9b' },
+  { key: 'savings', label: 'Savings', color: '#c6a642' },
+];
+
+function accountBucket(account) {
+  const name = String(account.name || '').toLowerCase();
+  if (/saving/.test(name)) return 'savings';
+  if (/joint|shared/.test(name)) return 'shared';
+  return 'personal';
+}
+
+function arcPath(startAngle, endAngle) {
+  const centerX = 120;
+  const centerY = 112;
+  const radius = 82;
+  const point = (angle) => {
+    const radians = (angle * Math.PI) / 180;
+    return [centerX + radius * Math.cos(radians), centerY + radius * Math.sin(radians)];
+  };
+  const [startX, startY] = point(startAngle);
+  const [endX, endY] = point(endAngle);
+  return `M ${startX.toFixed(2)} ${startY.toFixed(2)} A ${radius} ${radius} 0 0 1 ${endX.toFixed(2)} ${endY.toFixed(2)}`;
+}
+
+function AccountWeightChart({ accounts }) {
+  const [hoveredKey, setHoveredKey] = useState(null);
+  const buckets = ACCOUNT_BUCKETS.map((bucket) => ({
+    ...bucket,
+    accounts: accounts.filter((account) => accountBucket(account) === bucket.key),
+  })).map((bucket) => ({
+    ...bucket,
+    total: bucket.accounts.reduce((sum, account) => sum + Math.max(0, Number(account.current_balance || 0)), 0),
+  }));
+  const total = buckets.reduce((sum, bucket) => sum + bucket.total, 0);
+  const selected = buckets.find((bucket) => bucket.key === hoveredKey) || { label: 'Total', total, accounts: accounts.filter((account) => buckets.some((bucket) => bucket.accounts.includes(account))) };
+  let cursor = 180;
+
+  return (
+    <section className="panel account-weight-panel">
+      <div className="panel-heading-row">
+        <div><span className="eyebrow">Balance composition</span><h3>Accounts</h3></div>
+        <span>Personal · shared · savings</span>
+      </div>
+      <div className="account-weight-chart">
+        <svg viewBox="0 0 240 140" role="img" aria-label="Account balance composition">
+          {buckets.map((bucket) => {
+            const share = total ? bucket.total / total : 0;
+            const start = cursor + 2;
+            const end = cursor + Math.max(0, share * 180 - 4);
+            cursor += share * 180;
+            return share > 0 ? (
+              <path
+                key={bucket.key}
+                d={arcPath(start, end)}
+                className={hoveredKey && hoveredKey !== bucket.key ? 'account-weight-segment is-muted' : 'account-weight-segment'}
+                style={{ stroke: bucket.color }}
+                onMouseEnter={() => setHoveredKey(bucket.key)}
+                onMouseLeave={() => setHoveredKey(null)}
+                onFocus={() => setHoveredKey(bucket.key)}
+                onBlur={() => setHoveredKey(null)}
+                tabIndex="0"
+                aria-label={`${bucket.label}: ${formatCurrency(bucket.total)}, ${Math.round(share * 100)} percent`}
+              />
+            ) : null;
+          })}
+        </svg>
+        <div className="account-weight-center"><strong>{formatCurrency(selected.total)}</strong><span>{selected.label}</span><small>{total ? `${((selected.total / total) * 100).toFixed(1)}%` : '0.0%'}</small></div>
+      </div>
+      <div className="account-weight-legend">
+        {buckets.map((bucket) => <button key={bucket.key} className={hoveredKey === bucket.key ? 'is-active' : ''} onMouseEnter={() => setHoveredKey(bucket.key)} onMouseLeave={() => setHoveredKey(null)} onFocus={() => setHoveredKey(bucket.key)} onBlur={() => setHoveredKey(null)}><i style={{ backgroundColor: bucket.color }} /><span>{bucket.label}<small>{bucket.accounts.length} accounts</small></span><strong>{formatCurrency(bucket.total)}</strong></button>)}
+      </div>
+    </section>
+  );
+}
+
 function AccountTransactions({ account, range }) {
   const [transactions, setTransactions] = useState(null);
   const [error, setError] = useState(null);
@@ -91,7 +168,9 @@ export default function AccountsPage({ accounts, accountFlows, range, rangeLabel
       {types.length === 0 ? (
         <div className="panel empty-state">No accounts available. Run a sync to import your Firefly accounts.</div>
       ) : (
-        <div className="account-groups">
+        <>
+          <AccountWeightChart accounts={visibleAccounts.filter((account) => ['asset', 'cash'].includes(account.type))} />
+          <div className="account-groups">
           {types.map((type) => {
             const typeAccounts = grouped[type];
             return (
@@ -130,7 +209,8 @@ export default function AccountsPage({ accounts, accountFlows, range, rangeLabel
               </section>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
