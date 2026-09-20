@@ -1571,6 +1571,27 @@ body {
   font: 10px 'IBM Plex Mono', monospace;
 }
 
+.transaction-meta-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-self: start;
+}
+
+.transfer-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(53, 105, 87, 0.12);
+  border: 1px solid rgba(53, 105, 87, 0.28);
+  color: var(--positive);
+  font: 9px 'IBM Plex Mono', monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .transaction-card .category-chip { justify-self: start; }
 .transaction-amount { justify-self: end; font-size: 12px; font-weight: 500; white-space: nowrap; }
 

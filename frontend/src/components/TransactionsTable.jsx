@@ -99,11 +99,15 @@ export default function TransactionsTable({ transactions }) {
               const name = tx.description || tx.name || 'Unnamed transaction';
               const destination = tx.destination_name || tx.destination || tx.source_name || '—';
               const category = tx.category_name || tx.category || 'Uncategorized';
+              const isTransfer = tx.type === 'transfer';
               return (
                 <article className="transaction-card" key={`${tx.id}-${tx.split_index}`}>
                   <div className="transaction-date">{formatDate(tx.date)}</div>
                   <div className="transaction-main"><strong>{name}</strong><span>{destination}</span></div>
-                  <span className="category-chip" style={{ '--category-color': categoryColor(category) }}>{category}</span>
+                  <div className="transaction-meta-cell">
+                    <span className="category-chip" style={{ '--category-color': categoryColor(category) }}>{category}</span>
+                    {isTransfer && <span className="transfer-badge">Transfer</span>}
+                  </div>
                   <strong className={`transaction-amount mono ${meta.tone}`}>{meta.display}</strong>
                 </article>
               );
