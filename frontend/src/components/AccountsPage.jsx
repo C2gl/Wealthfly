@@ -53,6 +53,21 @@ function arcPath(startAngle, endAngle) {
   return `M ${startX.toFixed(2)} ${startY.toFixed(2)} A ${radius} ${radius} 0 0 1 ${endX.toFixed(2)} ${endY.toFixed(2)}`;
 }
 
+function arcSegments(rows, total) {
+  const visible = rows.filter((row) => row.total > 0);
+  const minimumAngle = Math.min(8, 180 / Math.max(1, visible.length));
+  const remainingAngle = Math.max(0, 180 - (minimumAngle * visible.length));
+  let cursor = 180;
+
+  return visible.map((row) => {
+    const share = total ? row.total / total : 0;
+    const span = minimumAngle + (remainingAngle * share);
+    const segment = { ...row, share, start: cursor + 1.5, end: cursor + span - 1.5 };
+    cursor += span;
+    return segment;
+  });
+}
+
 function AccountBreakdownChart({ bucket }) {
   const [hoveredId, setHoveredId] = useState(null);
   const rows = bucket.accounts.map((account) => ({
@@ -61,22 +76,18 @@ function AccountBreakdownChart({ bucket }) {
   }));
   const total = rows.reduce((sum, row) => sum + row.total, 0);
   const selected = rows.find((row) => row.account.id === hoveredId) || { account: { name: bucket.label }, total };
-  let cursor = 180;
+  const segments = arcSegments(rows, total);
 
   return (
     <div className="account-breakdown">
       <div className="account-breakdown-heading"><div><span className="eyebrow">{bucket.label} accounts</span><h4>Balance weight</h4></div><span>{rows.length} accounts</span></div>
       <div className="account-weight-chart account-breakdown-chart">
         <svg viewBox="0 0 240 140" role="img" aria-label={`${bucket.label} account balance composition`}>
-          {rows.map((row) => {
-            const share = total ? row.total / total : 0;
-            const start = cursor + 2;
-            const end = cursor + Math.max(0, share * 180 - 4);
-            cursor += share * 180;
-            return share > 0 ? (
+          <path d={arcPath(180, 360)} className="account-weight-track" />
+          {segments.map((row) => (
               <path
                 key={row.account.id}
-                d={arcPath(start, end)}
+                d={arcPath(row.start, row.end)}
                 className={hoveredId && hoveredId !== row.account.id ? 'account-weight-segment is-muted' : 'account-weight-segment'}
                 style={{ stroke: categoryColor(row.account.name) }}
                 onMouseEnter={() => setHoveredId(row.account.id)}
@@ -84,10 +95,9 @@ function AccountBreakdownChart({ bucket }) {
                 onFocus={() => setHoveredId(row.account.id)}
                 onBlur={() => setHoveredId(null)}
                 tabIndex="0"
-                aria-label={`${row.account.name}: ${formatCurrency(row.total)}, ${Math.round(share * 100)} percent`}
+                aria-label={`${row.account.name}: ${formatCurrency(row.total)}, ${Math.round(row.share * 100)} percent`}
               />
-            ) : null;
-          })}
+          ))}
         </svg>
         <div className="account-weight-center"><strong>{formatCurrency(selected.total, selected.account.currency_code)}</strong><span>{selected.account.name}</span><small>{total ? `${((selected.total / total) * 100).toFixed(1)}%` : '0.0%'}</small></div>
       </div>
@@ -110,7 +120,7 @@ function AccountWeightChart({ accounts }) {
   }));
   const total = buckets.reduce((sum, bucket) => sum + bucket.total, 0);
   const selected = buckets.find((bucket) => bucket.key === hoveredKey) || { label: 'Total', total, accounts: accounts.filter((account) => buckets.some((bucket) => bucket.accounts.includes(account))) };
-  let cursor = 180;
+  const segments = arcSegments(buckets, total);
 
   return (
     <section className="panel account-weight-panel">
@@ -120,15 +130,11 @@ function AccountWeightChart({ accounts }) {
       </div>
       <div className="account-weight-chart">
         <svg viewBox="0 0 240 140" role="img" aria-label="Account balance composition">
-          {buckets.map((bucket) => {
-            const share = total ? bucket.total / total : 0;
-            const start = cursor + 2;
-            const end = cursor + Math.max(0, share * 180 - 4);
-            cursor += share * 180;
-            return share > 0 ? (
+          <path d={arcPath(180, 360)} className="account-weight-track" />
+          {segments.map((bucket) => (
               <path
                 key={bucket.key}
-                d={arcPath(start, end)}
+                d={arcPath(bucket.start, bucket.end)}
                 className={hoveredKey && hoveredKey !== bucket.key ? 'account-weight-segment is-muted' : 'account-weight-segment'}
                 style={{ stroke: bucket.color }}
                 onMouseEnter={() => setHoveredKey(bucket.key)}
@@ -136,10 +142,9 @@ function AccountWeightChart({ accounts }) {
                 onFocus={() => setHoveredKey(bucket.key)}
                 onBlur={() => setHoveredKey(null)}
                 tabIndex="0"
-                aria-label={`${bucket.label}: ${formatCurrency(bucket.total)}, ${Math.round(share * 100)} percent`}
+                aria-label={`${bucket.label}: ${formatCurrency(bucket.total)}, ${Math.round(bucket.share * 100)} percent`}
               />
-            ) : null;
-          })}
+          ))}
         </svg>
         <div className="account-weight-center"><strong>{formatCurrency(selected.total)}</strong><span>{selected.label}</span><small>{total ? `${((selected.total / total) * 100).toFixed(1)}%` : '0.0%'}</small></div>
       </div>
