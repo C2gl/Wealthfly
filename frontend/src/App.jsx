@@ -41,6 +41,7 @@ export default function App() {
   const [spendingByDay, setSpendingByDay] = useState([]);
   const [previousSpendingByDay, setPreviousSpendingByDay] = useState([]);
   const [byCategory, setByCategory] = useState([]);
+  const [accountFlows, setAccountFlows] = useState([]);
   const [byTargetAccount, setByTargetAccount] = useState([]);
   const [byTag, setByTag] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -95,12 +96,13 @@ export default function App() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [s, nw, daily, previousDaily, cat, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
+      const [s, nw, daily, previousDaily, cat, flows, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
         api.stats(range),
         api.netWorth(range),
         api.expensesByDay(range),
         previousRange ? api.expensesByDay(previousRange) : Promise.resolve([]),
         api.expensesByCategory(range),
+        api.accountFlows(range),
         api.expensesByTargetAccount(range),
         api.expensesByTag(range),
         api.transactions({ ...range, limit: 200 }),
@@ -112,6 +114,7 @@ export default function App() {
       setSpendingByDay(daily);
       setPreviousSpendingByDay(previousDaily);
       setByCategory(cat);
+      setAccountFlows(flows);
       setByTargetAccount(tgt);
       setByTag(tag);
       setTransactions(tx);
@@ -152,7 +155,7 @@ export default function App() {
       <main className="main">
         <header className="top-bar">
           <h1>{viewTitle}</h1>
-          {view !== 'accounts' && <div className="range-toggle">
+          <div className="range-toggle">
             {RANGES.map((r) => (
               <button
                 key={r.key}
@@ -162,13 +165,13 @@ export default function App() {
                 {r.label}
               </button>
             ))}
-          </div>}
+          </div>
         </header>
 
         {error && <div className="error-banner">Could not reach the API: {error}</div>}
 
         {view === 'accounts' ? (
-          <AccountsPage accounts={accounts} />
+          <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />
         ) : view === 'categories' ? (
           <CategoryPanel rows={byCategory} />
         ) : view === 'trends' ? (

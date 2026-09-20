@@ -86,6 +86,30 @@ router.get('/expenses-by-source-account', (req, res) => {
   res.json(rows);
 });
 
+router.get('/account-flows', (req, res) => {
+  const { start, end } = dateFilter(req);
+  const rows = db
+    .prepare(
+      `SELECT account, SUM(income) as income, SUM(spending) as spending, SUM(transaction_count) as transaction_count
+       FROM (
+         SELECT destination_name as account, SUM(amount) as income, 0 as spending, COUNT(*) as transaction_count
+         FROM transactions
+         WHERE type = 'deposit' AND date BETWEEN ? AND ?
+         GROUP BY destination_name
+         UNION ALL
+         SELECT source_name as account, 0 as income, SUM(amount) as spending, COUNT(*) as transaction_count
+         FROM transactions
+         WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+         GROUP BY source_name
+       )
+       WHERE account IS NOT NULL AND account != ''
+       GROUP BY account
+       ORDER BY spending DESC, income DESC`
+    )
+    .all(start, end, start, end);
+  res.json(rows);
+});
+
 // The expense account money went TO (e.g. "Groceries Store", "Landlord") — the "target account".
 router.get('/expenses-by-target-account', (req, res) => {
   const { start, end } = dateFilter(req);
