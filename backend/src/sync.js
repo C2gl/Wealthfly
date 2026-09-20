@@ -1,5 +1,5 @@
 const db = require('./db');
-const firefly = require('./fireflyClient');
+const defaultFirefly = require('./fireflyClient');
 
 const NET_WORTH_TYPES = new Set(['asset', 'cash', 'liability', 'liabilities', 'loan', 'debt', 'mortgage']);
 
@@ -41,7 +41,7 @@ const insertTx = db.prepare(
      category_name=excluded.category_name, tags=excluded.tags`
 );
 
-async function syncAccounts() {
+async function syncAccounts(firefly = defaultFirefly) {
   const accounts = await firefly.getAccounts();
   const clear = db.prepare('DELETE FROM accounts');
   const tx = db.transaction((rows) => {
@@ -65,7 +65,7 @@ async function syncAccounts() {
   return accounts.length;
 }
 
-async function syncCategories() {
+async function syncCategories(firefly = defaultFirefly) {
   const categories = await firefly.getCategories();
   const clear = db.prepare('DELETE FROM categories');
   const tx = db.transaction((rows) => {
@@ -76,7 +76,7 @@ async function syncCategories() {
   return categories.length;
 }
 
-async function syncTags() {
+async function syncTags(firefly = defaultFirefly) {
   const tags = await firefly.getTags();
   const clear = db.prepare('DELETE FROM tags');
   const tx = db.transaction((rows) => {
@@ -87,7 +87,7 @@ async function syncTags() {
   return tags.length;
 }
 
-async function syncTransactions() {
+async function syncTransactions(firefly = defaultFirefly) {
   const groups = await firefly.getTransactions();
   const clear = db.prepare('DELETE FROM transactions');
   let count = 0;
@@ -121,10 +121,39 @@ async function syncTransactions() {
 }
 
 /**
+ * Pure balance-replay function, deliberately kept free of any DB access so it can be
+ * unit tested directly: given an account's opening balance and every transaction that
+ * touches it (chronologically sorted), returns one {date, balance} point per day that
+ * had activity, plus a starting point on `startDate`. When more than one transaction
+ * lands on the same day, the last one in `transactions` wins for that day's point —
+ * callers are responsible for passing transactions in ascending date order.
+ */
+function computeBalancePoints(accountId, openingBalance, startDate, transactions) {
+  const points = new Map();
+  points.set(startDate, openingBalance);
+
+  let balance = openingBalance;
+  transactions.forEach((tx) => {
+    if (tx.source_id === accountId) balance -= tx.amount; // money left this account
+    if (tx.destination_id === accountId) balance += tx.amount; // money came into this account
+    const day = tx.date.slice(0, 10);
+    points.set(day, balance);
+  });
+
+  return Array.from(points.entries()).map(([date, bal]) => ({ date, balance: bal }));
+}
+
+/**
  * Firefly III has no single endpoint for "net worth over time", so we rebuild it:
  * for every asset/liability account, start from its opening balance and replay every
  * transaction touching that account in chronological order to get a daily balance,
  * then sum across accounts for a total net-worth series.
+ *
+ * Previously this per-account lookup ran with no index on source_id/destination_id,
+ * so it was a full table scan of `transactions` once per account. idx_tx_source_id
+ * and idx_tx_destination_id (see db.js) let SQLite satisfy this OR query with its
+ * "multi-index OR" strategy instead — confirmed via EXPLAIN QUERY PLAN, which shows
+ * a SEARCH on each index and a rowid merge, rather than a table SCAN.
  */
 function rebuildBalanceHistory() {
   const accounts = db
@@ -142,43 +171,31 @@ function rebuildBalanceHistory() {
     `SELECT date, amount, source_id, destination_id FROM transactions
      WHERE (source_id = ? OR destination_id = ?) AND type != 'opening balance'
        AND date >= ?
-     ORDER BY date ASC`
+     ORDER BY date ASC, id ASC, split_index ASC`
   );
 
   const run = db.transaction(() => {
     clear.run();
     accounts.forEach((acc) => {
-      let balance = acc.opening_balance || 0;
       const startDate = acc.opening_balance_date
         ? acc.opening_balance_date.slice(0, 10)
         : '1970-01-01';
 
-      const points = new Map();
-      points.set(startDate, balance);
-
       const rows = txQuery.all(acc.id, acc.id, startDate);
-      rows.forEach((r) => {
-        if (r.source_id === acc.id) balance -= r.amount; // money left this account
-        if (r.destination_id === acc.id) balance += r.amount; // money came into this account
-        const day = r.date.slice(0, 10);
-        points.set(day, balance);
-      });
-
-      points.forEach((bal, day) => insert.run(acc.id, day, bal));
+      const points = computeBalancePoints(acc.id, acc.opening_balance || 0, startDate, rows);
+      points.forEach(({ date, balance }) => insert.run(acc.id, date, balance));
     });
   });
 
   run();
 }
 
-async function runFullSync() {
+async function runFullSync(firefly = defaultFirefly) {
   const started = Date.now();
-  const [accounts, categories, tags, transactions] = [
-    await syncAccounts(),
-    await syncCategories(),
-    await syncTags(),
-    await syncTransactions(),
-  ];
+  const accounts = await syncAccounts(firefly);
+  const categories = await syncCategories(firefly);
+  const tags = await syncTags(firefly);
+  const transactions = await syncTransactions(firefly);
   rebuildBalanceHistory();
 
   db.prepare(
@@ -195,4 +212,12 @@ async function runFullSync() {
   };
 }
 
-module.exports = { runFullSync, rebuildBalanceHistory };
+module.exports = {
+  runFullSync,
+  rebuildBalanceHistory,
+  computeBalancePoints,
+  syncAccounts,
+  syncCategories,
+  syncTags,
+  syncTransactions,
+};

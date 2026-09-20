@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS sync_meta (
 CREATE INDEX IF NOT EXISTS idx_tx_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_tx_category ON transactions(category_name);
 CREATE INDEX IF NOT EXISTS idx_tx_destination ON transactions(destination_name);
+CREATE INDEX IF NOT EXISTS idx_tx_source_id ON transactions(source_id);
+CREATE INDEX IF NOT EXISTS idx_tx_destination_id ON transactions(destination_id);
 CREATE INDEX IF NOT EXISTS idx_balhist_date ON balance_history(date);
 `);
 
