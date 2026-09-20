@@ -40,7 +40,7 @@ export default function SpendingChart({ data }) {
           />
           <YAxis hide />
           <Tooltip
-            cursor={{ fill: 'rgba(67, 116, 91, 0.08)' }}
+            cursor={false}
             contentStyle={{
               background: '#fbfaf1',
               border: '1px solid #d9ded1',
