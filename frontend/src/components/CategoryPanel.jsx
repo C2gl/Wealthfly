@@ -30,7 +30,7 @@ function CategorySparkline({ category, color, currentRows, previousRows, hasComp
   );
 }
 
-export default function CategoryPanel({ rows, previousRows = [], trendRows = [], previousTrendRows = [], rangeLabel = 'selected period' }) {
+export default function CategoryPanel({ rows, previousRows = [], trendRows = [], previousTrendRows = [], rangeLabel = 'selected period', onCategoryClick }) {
   const currentCategories = (rows || []).filter((row) => row.category);
   const previousCategories = (previousRows || []).filter((row) => row.category);
   const previousByCategory = new Map(previousCategories.map((row) => [row.category, row]));
@@ -64,7 +64,7 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
             const share = total ? (amount / total) * 100 : 0;
             const changeLabel = !hasComparison ? 'No prior data' : `${change >= 0 ? '+' : ''}${formatCurrency(change)}`;
             return (
-              <article className="category-detail-row category-block" key={row.category}>
+              <button className="category-detail-row category-block" key={row.category} type="button" onClick={() => onCategoryClick?.(row.category)}>
                 <div className="category-detail-heading">
                   <span className="bar-row-name"><span className="category-dot" style={{ backgroundColor: color }} />{row.category}</span>
                   <div className="category-detail-amounts"><strong>{formatCurrency(amount)}</strong><span className={hasComparison ? (change > 0 ? 'stat-negative' : change < 0 ? 'stat-positive' : '') : ''}>{changeLabel}</span></div>
@@ -74,7 +74,7 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
                   <span className="category-detail-track"><span style={{ width: `${share}%`, backgroundColor: color }} /></span>
                   <span>{share.toFixed(1)}% · {row.count || 0} {Number(row.count) === 1 ? 'transaction' : 'transactions'}{hasComparison ? ` · prior ${formatCurrency(previousAmount)}` : ''}</span>
                 </div>
-              </article>
+              </button>
             );
           })}
         </div>
