@@ -23,8 +23,9 @@ export const api = {
   categories: () => get('/categories'),
   tags: () => get('/tags'),
   triggerSync: () =>
-    fetch('/api/sync', { method: 'POST' }).then((r) => {
-      if (!r.ok) throw new Error('sync failed');
-      return r.json();
+    fetch('/api/sync', { method: 'POST' }).then(async (r) => {
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.error || `sync failed: ${r.status}`);
+      return body;
     }),
 };

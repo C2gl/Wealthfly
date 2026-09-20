@@ -33,10 +33,16 @@ function shiftDate(dateString, days) {
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 }
-function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel }) {
+function countLabel(count, singular) {
+  return `${count || 0} ${singular}${count === 1 ? '' : 's'}`;
+}
+
+function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification }) {
   const notifications = [];
 
-  if (error) {
+  if (syncNotification) notifications.push(syncNotification);
+
+  if (error && syncNotification?.level !== 'critical') {
     notifications.push({
       id: 'api-error',
       level: 'critical',
@@ -99,6 +105,7 @@ export default function App() {
   const [accounts, setAccounts] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [syncing, setSyncing] = useState(false);
+  const [syncNotification, setSyncNotification] = useState(null);
   const [error, setError] = useState(null);
   const [showCategoryInsights, setShowCategoryInsights] = useState(false);
   const [showTrends, setShowTrends] = useState(false);
@@ -144,7 +151,7 @@ export default function App() {
         color: ['#8da34d', '#c6a642', '#62615d'][index % 3],
       };
     });
-  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel });
+  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification });
 
   const load = useCallback(async () => {
     try {
@@ -192,9 +199,21 @@ export default function App() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      await api.triggerSync();
+      const result = await api.triggerSync();
+      setSyncNotification({
+        id: `sync-success-${Date.now()}`,
+        level: 'success',
+        title: 'Sync completed',
+        message: `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')}.`,
+      });
       await load();
     } catch (e) {
+      setSyncNotification({
+        id: `sync-failure-${Date.now()}`,
+        level: 'critical',
+        title: 'Sync failed',
+        message: e.message,
+      });
       setError(e.message);
     } finally {
       setSyncing(false);

@@ -1082,6 +1082,8 @@ body {
 
 .notification-critical { border-color: rgba(169, 80, 62, 0.34); }
 .notification-critical .notification-marker { background: var(--negative); }
+.notification-success { border-color: rgba(53, 105, 87, 0.32); }
+.notification-success .notification-marker { background: var(--positive); }
 .notification-warning { border-color: rgba(198, 166, 66, 0.38); }
 .notification-warning .notification-marker { background: #c6a642; }
 .notification-info .notification-marker { background: #4f7f9f; }
