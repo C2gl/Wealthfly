@@ -10,14 +10,15 @@ import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
+import { useTranslation } from './i18n.jsx';
 import { api } from './api.js';
-import { categoryColor, daysAgo, formatCurrency, formatDate, today, transactionAmountMeta } from './utils.js';
+import { categoryColor, daysAgo, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
 
 const RANGES = [
-  { key: '30d', label: '30D', start: () => daysAgo(30) },
-  { key: '90d', label: '90D', start: () => daysAgo(90) },
-  { key: 'ytd', label: 'YTD', start: () => `${new Date().getFullYear()}-01-01` },
-  { key: 'all', label: 'ALL', start: () => '0000-01-01' },
+  { key: '30d', start: () => daysAgo(30) },
+  { key: '90d', start: () => daysAgo(90) },
+  { key: 'ytd', start: () => `${new Date().getFullYear()}-01-01` },
+  { key: 'all', start: () => '0000-01-01' },
 ];
 
 function budgetAmount(value) {
@@ -88,6 +89,7 @@ function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel
 }
 
 export default function App() {
+  const { t, language } = useTranslation();
   const [view, setView] = useState('overview');
   const [rangeKey, setRangeKey] = useState('30d');
   const [stats, setStats] = useState(null);
@@ -111,15 +113,11 @@ export default function App() {
   const [showTrends, setShowTrends] = useState(false);
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
-  const rangeLabel = RANGES.find((r) => r.key === rangeKey).label;
-  const viewTitle = {
-    overview: 'Overview',
-    accounts: 'Accounts',
-    spending: 'Spending',
-    categories: 'Categories',
-    trends: 'Trends',
-    transactions: 'Transactions',
-  }[view];
+  const rangeLabel = t(`periods.${rangeKey}`);
+  const viewTitle = t(`nav.${view}`);
+  const formatCurrency = (value, currency) => formatCurrencyValue(value, currency, language);
+  const formatDate = (value) => formatDateValue(value, language);
+  const transactionAmountMeta = (transaction) => transactionAmountMetaValue(transaction, language);
   const previousRange = rangeKey === 'all'
     ? null
     : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
@@ -241,7 +239,7 @@ export default function App() {
                   className={`range-btn ${rangeKey === r.key ? 'range-btn-active' : ''}`}
                   onClick={() => setRangeKey(r.key)}
                 >
-                  {r.label}
+                  {t(`periods.${r.key}`)}
                 </button>
               ))}
             </div>

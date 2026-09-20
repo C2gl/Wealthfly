@@ -1,6 +1,6 @@
-export function formatCurrency(value, currency) {
+export function formatCurrency(value, currency, language = 'en') {
   const n = Number(value || 0);
-  const formatted = new Intl.NumberFormat('en-US', {
+  const formatted = new Intl.NumberFormat(language, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Math.abs(n));
@@ -8,7 +8,7 @@ export function formatCurrency(value, currency) {
   return `${sign}${currency ? currency + ' ' : ''}${formatted}`;
 }
 
-export function transactionAmountMeta(tx) {
+export function transactionAmountMeta(tx, language = 'en') {
   const amount = Number(tx.amount || 0);
   const abs = Math.abs(amount);
 
@@ -16,8 +16,8 @@ export function transactionAmountMeta(tx) {
     return {
       prefix: '-',
       tone: 'stat-negative',
-      value: formatCurrency(abs, tx.currency_code),
-      display: `-${formatCurrency(abs, tx.currency_code)}`,
+      value: formatCurrency(abs, tx.currency_code, language),
+      display: `-${formatCurrency(abs, tx.currency_code, language)}`,
     };
   }
 
@@ -25,16 +25,16 @@ export function transactionAmountMeta(tx) {
     return {
       prefix: '+',
       tone: 'stat-positive',
-      value: formatCurrency(abs, tx.currency_code),
-      display: `+${formatCurrency(abs, tx.currency_code)}`,
+      value: formatCurrency(abs, tx.currency_code, language),
+      display: `+${formatCurrency(abs, tx.currency_code, language)}`,
     };
   }
 
   return {
     prefix: '=',
     tone: 'stat-positive',
-    value: formatCurrency(abs, tx.currency_code),
-    display: `=${formatCurrency(abs, tx.currency_code)}`,
+    value: formatCurrency(abs, tx.currency_code, language),
+    display: `=${formatCurrency(abs, tx.currency_code, language)}`,
   };
 }
 
@@ -46,10 +46,10 @@ export function formatCompact(value) {
   }).format(n);
 }
 
-export function formatDate(dateStr) {
+export function formatDate(dateStr, language = 'en') {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  return d.toLocaleDateString(language, { month: 'short', day: '2-digit', year: 'numeric' });
 }
 
 export function daysAgo(n) {

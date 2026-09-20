@@ -15,6 +15,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/api/config', (req, res) => {
+  res.json({ language: process.env.WEALTHFLY_LANGUAGE || 'en' });
+});
+
 app.use('/api', dataRoutes);
 app.use('/api/summary', summaryRoutes);
 

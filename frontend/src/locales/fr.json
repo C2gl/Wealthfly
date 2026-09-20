@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "overview": "Vue d'ensemble",
+    "accounts": "Comptes",
+    "spending": "Depenses",
+    "categories": "Categories",
+    "trends": "Tendances",
+    "transactions": "Transactions"
+  },
+  "sync": {
+    "lastSynced": "Derniere synchronisation",
+    "never": "jamais",
+    "now": "Synchroniser",
+    "inProgress": "Synchronisation...",
+    "completed": "Synchronisation terminee",
+    "failed": "Echec de la synchronisation",
+    "syncedSummary": "{{accounts}} compte, {{categories}} categorie, {{tags}} etiquette et {{transactions}} transaction synchronises."
+  },
+  "periods": { "30d": "30J", "90d": "90J", "ytd": "AN", "all": "TOUT" },
+  "overview": {
+    "whereItWent": "Ou est parti l'argent",
+    "spendingRhythm": "Rythme des depenses",
+    "periodChange": "Variation de la periode",
+    "activeDays": "{{count}} jours actifs",
+    "categories": "{{count}} categories",
+    "accounts": "{{count}} comptes",
+    "spentIn": "{{amount}} depenses sur {{period}}",
+    "balancesActivity": "Soldes et activite des comptes",
+    "spendingCompared": "Depenses par rapport a la periode precedente",
+    "openCategoryTrends": "Voir les tendances par categorie",
+    "openSpendingAnalysis": "Voir l'analyse des depenses",
+    "openAccountDetails": "Voir les details des comptes",
+    "openTrendComparison": "Voir la comparaison des tendances",
+    "recentActivity": "Activite recente",
+    "viewAll": "Tout voir ->",
+    "uncategorized": "Sans categorie",
+    "transfer": "Virement"
+  },
+  "spending": {
+    "selectedPeriod": "Depenses · periode selectionnee",
+    "income": "Revenus · {{period}}",
+    "spending": "Depenses · {{period}}",
+    "net": "Net · {{period}}",
+    "budgetPulse": "Etat du budget",
+    "worthALook": "A surveiller",
+    "fireflyBudgets": "{{period}} · Firefly III",
+    "noBudgets": "Aucun budget Firefly III n'est configure pour cette periode.",
+    "categories": "{{count}} categories",
+    "transactionsInPeriod": "{{count}} transactions sur cette periode.",
+    "noTransactionsInPeriod": "Aucune transaction sur cette periode.",
+    "viewTrends": "Voir les tendances ->"
+  },
+  "errors": {
+    "dashboardUnavailable": "Les donnees du tableau de bord sont indisponibles",
+    "staleData": "Les donnees peuvent etre obsoletes",
+    "notSynced": "Les donnees ne sont pas encore synchronisees",
+    "lastSuccessfulSync": "Derniere synchronisation reussie : {{date}}.",
+    "runSync": "Lancez une synchronisation pour charger les dernieres donnees Firefly III.",
+    "noTransactions": "Aucune transaction sur {{period}}",
+    "tryWiderRange": "Essayez une periode plus large ou verifiez la derniere synchronisation."
+  },
+  "language": { "unsupported": "Langue non prise en charge : {{language}}" }
+}

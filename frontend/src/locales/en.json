@@ -1,0 +1,70 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "accounts": "Accounts",
+    "spending": "Spending",
+    "categories": "Categories",
+    "trends": "Trends",
+    "transactions": "Transactions"
+  },
+  "sync": {
+    "lastSynced": "Last synced",
+    "never": "never",
+    "now": "Sync now",
+    "inProgress": "Syncing...",
+    "completed": "Sync completed",
+    "failed": "Sync failed",
+    "syncedSummary": "Synced {{accounts}} account, {{categories}} category, {{tags}} tag, and {{transactions}} transaction."
+  },
+  "periods": {
+    "30d": "30D",
+    "90d": "90D",
+    "ytd": "YTD",
+    "all": "ALL"
+  },
+  "overview": {
+    "whereItWent": "Where it went",
+    "spendingRhythm": "Spending rhythm",
+    "periodChange": "Period change",
+    "activeDays": "{{count}} active days",
+    "categories": "{{count}} categories",
+    "accounts": "{{count}} accounts",
+    "spentIn": "{{amount}} spent in {{period}}",
+    "balancesActivity": "Balances and account activity",
+    "spendingCompared": "Spending versus previous period",
+    "openCategoryTrends": "Open category trends",
+    "openSpendingAnalysis": "Open spending analysis",
+    "openAccountDetails": "Open account details",
+    "openTrendComparison": "Open trend comparison",
+    "recentActivity": "Recent activity",
+    "viewAll": "View all ->",
+    "uncategorized": "Uncategorized",
+    "transfer": "Transfer"
+  },
+  "spending": {
+    "selectedPeriod": "Spent · selected period",
+    "income": "Income · {{period}}",
+    "spending": "Spending · {{period}}",
+    "net": "Net · {{period}}",
+    "budgetPulse": "Budget pulse",
+    "worthALook": "Worth a look",
+    "fireflyBudgets": "{{period}} · Firefly III",
+    "noBudgets": "No Firefly III budgets are configured for this period.",
+    "categories": "{{count}} categories",
+    "transactionsInPeriod": "{{count}} transactions in this period.",
+    "noTransactionsInPeriod": "No transactions in this period.",
+    "viewTrends": "View trends ->"
+  },
+  "errors": {
+    "dashboardUnavailable": "Dashboard data is unavailable",
+    "staleData": "Data may be stale",
+    "notSynced": "Data has not synced yet",
+    "lastSuccessfulSync": "Last successful sync: {{date}}.",
+    "runSync": "Run a sync to load the latest Firefly III data.",
+    "noTransactions": "No transactions in {{period}}",
+    "tryWiderRange": "Try a wider date range or check that the latest sync completed."
+  },
+  "language": {
+    "unsupported": "Unsupported language: {{language}}"
+  }
+}
