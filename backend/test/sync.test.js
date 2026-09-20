@@ -28,6 +28,10 @@ test.beforeEach(() => {
   resetDb();
 });
 
+test.after(() => {
+  if (db.open) db.close();
+});
+
 // Minimal fake of the fireflyClient module shape used by sync.js. Only the
 // methods a given test needs have to return anything meaningful — the rest
 // default to empty lists so unrelated sync steps are no-ops.
