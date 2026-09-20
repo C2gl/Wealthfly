@@ -251,7 +251,7 @@ export default function App() {
         {view === 'accounts' ? (
           <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />
         ) : view === 'savings' ? (
-          <SavingsPage accounts={accounts} accountFlows={accountFlows} rangeLabel={rangeLabel} language={language} />
+          <SavingsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} language={language} />
         ) : view === 'categories' ? (
           <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} />
         ) : view === 'trends' ? (

@@ -1,5 +1,5 @@
-import React from 'react';
-import { AccountWeightChart } from './AccountsPage.jsx';
+import React, { useState } from 'react';
+import { AccountTransactions, AccountWeightChart } from './AccountsPage.jsx';
 import { categoryColor, formatCurrency, isSavingsAccount } from '../utils.js';
 
 function sumByCurrency(accounts, getValue) {
@@ -16,7 +16,8 @@ function CurrencyTotals({ totals, language }) {
   ));
 }
 
-export default function SavingsPage({ accounts, accountFlows, rangeLabel, language }) {
+export default function SavingsPage({ accounts, accountFlows, range, rangeLabel, language }) {
+  const [expandedId, setExpandedId] = useState(null);
   const savingsAccounts = accounts.filter((account) => isSavingsAccount(account));
   const flowByAccount = new Map(accountFlows.map((flow) => [flow.account, flow]));
   const balances = sumByCurrency(savingsAccounts, (account) => account.current_balance);
@@ -72,11 +73,15 @@ export default function SavingsPage({ accounts, accountFlows, rangeLabel, langua
                 const income = Number(flow.income || 0);
                 const spending = Number(flow.spending || 0);
                 return (
-                  <article className="savings-account-row" key={account.id}>
-                    <div className="savings-account-heading"><span className="account-icon">{(account.name || '?').slice(0, 1).toUpperCase()}</span><div><strong>{account.name}</strong><small>{account.active ? 'Active' : 'Inactive'} · {account.currency_code || 'No currency'}</small></div></div>
+                  <div className={`savings-account-row-wrap ${expandedId === account.id ? 'savings-account-row-wrap-expanded' : ''}`} key={account.id}>
+                    <button className="savings-account-row" onClick={() => setExpandedId(expandedId === account.id ? null : account.id)} aria-expanded={expandedId === account.id}>
+                      <div className="savings-account-heading"><span className="account-icon">{(account.name || '?').slice(0, 1).toUpperCase()}</span><div><strong>{account.name}</strong><small>{account.active ? 'Active' : 'Inactive'} · {account.currency_code || 'No currency'}</small></div></div>
                     <strong className="savings-account-balance">{formatCurrency(account.current_balance, account.currency_code, language)}</strong>
                     <div className="savings-flow"><div className="account-flow-bars"><span className="account-flow-bar account-flow-income" style={{ width: `${(income / maxFlow) * 100}%` }} /><span className="account-flow-bar account-flow-spending" style={{ width: `${(spending / maxFlow) * 100}%` }} /></div><span className="account-flow-values"><span className="stat-positive">+{formatCurrency(income, account.currency_code, language)}</span><span className="stat-negative">-{formatCurrency(spending, account.currency_code, language)}</span></span></div>
-                  </article>
+                      <span className="account-expand-icon" aria-hidden="true">{expandedId === account.id ? '−' : '+'}</span>
+                    </button>
+                    {expandedId === account.id && <div className="savings-account-detail"><div className="account-detail-heading"><span className="eyebrow">{rangeLabel} activity</span><span>{flow.transaction_count || 0} records</span></div><AccountTransactions account={account} range={range} /></div>}
+                  </div>
                 );
               })}
             </div>

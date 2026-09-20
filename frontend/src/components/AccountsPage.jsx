@@ -154,7 +154,7 @@ export function AccountWeightChart({ accounts, bucketDefinitions = ACCOUNT_BUCKE
   );
 }
 
-function AccountTransactions({ account, range }) {
+export function AccountTransactions({ account, range }) {
   const [transactions, setTransactions] = useState(null);
   const [error, setError] = useState(null);
 
