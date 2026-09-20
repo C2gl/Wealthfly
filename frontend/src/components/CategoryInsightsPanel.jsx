@@ -14,6 +14,10 @@ export default function CategoryInsightsPanel({ rows, category, transactions, on
     return accounts;
   }, new Map()).values()).sort((a, b) => b.total - a.total);
   const total = Number(selectedRow?.total || categoryTransactions.reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0));
+  const accountColors = accountRows.reduce((colors, row) => {
+    colors.push(categoryColor(row.account, colors));
+    return colors;
+  }, []);
   const activeAccount = accountRows.find((row) => row.account === hoveredAccount);
 
   return (
@@ -31,13 +35,13 @@ export default function CategoryInsightsPanel({ rows, category, transactions, on
         <section className="drawer-section">
           <div className="drawer-section-heading"><span className="eyebrow">Source accounts</span><span>{activeAccount ? `${activeAccount.account} · ${((activeAccount.total / total) * 100).toFixed(1)}%` : 'hover to inspect'}</span></div>
           <div className="source-account-bar" role="img" aria-label="Spending share by source account">
-            {accountRows.map((row) => {
+            {accountRows.map((row, index) => {
               const share = total ? (row.total / total) * 100 : 0;
               const accountLabel = `${row.account}: ${share.toFixed(1)}%, ${formatCurrency(row.total)}, ${row.count} ${row.count === 1 ? 'transaction' : 'transactions'}`;
-              return <span key={row.account} className={hoveredAccount && hoveredAccount !== row.account ? 'is-muted' : ''} style={{ width: `${share}%`, backgroundColor: categoryColor(row.account) }} title={accountLabel} aria-label={accountLabel} tabIndex="0" onMouseEnter={() => setHoveredAccount(row.account)} onMouseLeave={() => setHoveredAccount(null)} onFocus={() => setHoveredAccount(row.account)} onBlur={() => setHoveredAccount(null)} />;
+              return <span key={row.account} className={hoveredAccount && hoveredAccount !== row.account ? 'is-muted' : ''} style={{ width: `${share}%`, backgroundColor: accountColors[index] }} title={accountLabel} aria-label={accountLabel} tabIndex="0" onMouseEnter={() => setHoveredAccount(row.account)} onMouseLeave={() => setHoveredAccount(null)} onFocus={() => setHoveredAccount(row.account)} onBlur={() => setHoveredAccount(null)} />;
             })}
           </div>
-          {activeAccount && <div className="source-account-active"><i style={{ backgroundColor: categoryColor(activeAccount.account) }} /><strong>{formatCurrency(activeAccount.total)}</strong><span>{activeAccount.count} {activeAccount.count === 1 ? 'transaction' : 'transactions'}</span></div>}
+          {activeAccount && <div className="source-account-active"><i style={{ backgroundColor: accountColors[accountRows.indexOf(activeAccount)] }} /><strong>{formatCurrency(activeAccount.total)}</strong><span>{activeAccount.count} {activeAccount.count === 1 ? 'transaction' : 'transactions'}</span></div>}
         </section>
         <section className="drawer-section">
           <div className="drawer-section-heading"><span className="eyebrow">Transactions</span><span>{categoryTransactions.length} records</span></div>

@@ -70,7 +70,12 @@ export function categoryColor(category, avoidColor) {
   const value = String(category || 'Uncategorized');
   const hash = [...value].reduce((total, character) => total + character.charCodeAt(0), 0);
   const baseIndex = hash % CATEGORY_COLORS.length;
-  if (!avoidColor || CATEGORY_COLORS[baseIndex] !== avoidColor) return CATEGORY_COLORS[baseIndex];
+  const isAvoided = (color) => Array.isArray(avoidColor) ? avoidColor.includes(color) : color === avoidColor;
+  if (!avoidColor || !isAvoided(CATEGORY_COLORS[baseIndex])) return CATEGORY_COLORS[baseIndex];
+  for (let offset = 1; offset < CATEGORY_COLORS.length; offset += 1) {
+    const color = CATEGORY_COLORS[(baseIndex + offset) % CATEGORY_COLORS.length];
+    if (!isAvoided(color)) return color;
+  }
   return CATEGORY_COLORS[(baseIndex + 1) % CATEGORY_COLORS.length];
 }
 
