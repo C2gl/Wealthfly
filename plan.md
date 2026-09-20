@@ -3,7 +3,7 @@
 - [x] accounts
 - [ ] trends 
 - [x] categories
-- [ ] overview organisation
+- [x] overview organisation
 
 ## accounts 
 show spendings and income per account, maybe in bar style when in collapsed vieuw, but let the user uncolapse the account on the account plane to see all transactions in the current period for that account.

@@ -188,19 +188,48 @@ export default function App() {
         ) : view === 'overview' ? (
           <>
             <StatRow stats={stats} rangeLabel={rangeLabel} />
+            <div className="overview-preview-grid">
+              <button className="overview-preview overview-preview-category" onClick={() => setView('categories')}>
+                <div className="overview-preview-heading"><span className="eyebrow">Where it went</span><span className="overview-preview-arrow">→</span></div>
+                <strong>{formatCurrency(periodSpent)}</strong>
+                <span className="overview-preview-caption">{byCategory.length} categories · {rangeLabel}</span>
+                <div className="overview-preview-bars">{byCategory.slice(0, 4).map((row) => <span key={row.category} style={{ width: `${periodSpent ? (Number(row.total || 0) / periodSpent) * 100 : 0}%`, backgroundColor: categoryColor(row.category) }} />)}</div>
+                <span className="overview-preview-foot">Open category trends</span>
+              </button>
+              <button className="overview-preview" onClick={() => setView('spending')}>
+                <div className="overview-preview-heading"><span className="eyebrow">Spending rhythm</span><span className="overview-preview-arrow">→</span></div>
+                <strong>{spendingByDay.length} active days</strong>
+                <span className="overview-preview-caption">{formatCurrency(periodSpent)} spent in {rangeLabel}</span>
+                <div className="overview-preview-sparkline">{spendingByDay.slice(-18).map((row, index) => <i key={`${row.date}-${index}`} style={{ height: `${Math.max(8, (Number(row.total || 0) / Math.max(1, ...spendingByDay.map((item) => Number(item.total || 0)))) * 42)}px` }} />)}</div>
+                <span className="overview-preview-foot">Open spending analysis</span>
+              </button>
+              <button className="overview-preview" onClick={() => setView('accounts')}>
+                <div className="overview-preview-heading"><span className="eyebrow">Accounts</span><span className="overview-preview-arrow">→</span></div>
+                <strong>{accounts.length} accounts</strong>
+                <span className="overview-preview-caption">Balances and account activity</span>
+                <div className="overview-account-list">{accounts.slice(0, 3).map((account) => <span key={account.id}><b>{account.name}</b><em>{formatCurrency(account.current_balance, account.currency_code)}</em></span>)}</div>
+                <span className="overview-preview-foot">Open account details</span>
+              </button>
+              <button className="overview-preview" onClick={() => setView('trends')}>
+                <div className="overview-preview-heading"><span className="eyebrow">Period change</span><span className="overview-preview-arrow">→</span></div>
+                <strong>{previousSpendingByDay.length ? `${periodSpent >= previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0) ? '+' : ''}${(((periodSpent - previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0)) / Math.max(1, previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0))) * 100).toFixed(1)}%` : '—'}</strong>
+                <span className="overview-preview-caption">Spending versus previous period</span>
+                <div className="overview-preview-comparison"><span style={{ width: `${Math.min(100, (periodSpent / Math.max(1, periodSpent, previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0))) * 100)}%` }} /><i style={{ left: `${(previousSpendingByDay.length ? previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0) : 0) / Math.max(1, periodSpent, previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0)) * 100}%` }} /></div>
+                <span className="overview-preview-foot">Open trend comparison</span>
+              </button>
+            </div>
             <NetWorthChart data={netWorth} />
-            <div className="grid-two overview-analysis-grid">
-              <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} />
-              <TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} />
-            </div>
-            <div className="grid-two">
-              <BreakdownBars
-                title="Spending by target account"
-                rows={byTargetAccount}
-                labelKey="account"
-              />
-            </div>
-            <BreakdownBars title="Spending by tag" rows={byTag} labelKey="tag" limit={10} initialMode="bar" onViewAll={() => setShowCategoryInsights(true)} />
+            <section className="panel recent-panel">
+              <div className="panel-heading-row"><h2>Recent activity</h2><button className="text-button" onClick={() => setView('transactions')}>View all →</button></div>
+              <div className="recent-list">
+                {transactions.slice(0, 5).map((tx) => (
+                  <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
+                    <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
+                    <strong className={tx.type === 'withdrawal' ? 'stat-negative' : 'stat-positive'}>{tx.type === 'withdrawal' ? '-' : '+'}{formatCurrency(tx.amount, tx.currency_code)}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
           </>
         ) : view === 'spending' ? (
           <>

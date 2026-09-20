@@ -51,7 +51,7 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
       {categories.length === 0 ? (
         <p className="empty-state">No expenses in this range.</p>
       ) : (
-        <div className="category-detail-list">
+        <div className="category-detail-list category-block-grid">
           {categories.map((row) => {
             const amount = Number(row.total || 0);
             const previousAmount = Number(previousByCategory.get(row.category)?.total || 0);
@@ -59,7 +59,7 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
             const share = total ? (amount / total) * 100 : 0;
             const changeLabel = !hasComparison ? 'No prior data' : `${change >= 0 ? '+' : ''}${formatCurrency(change)}`;
             return (
-              <div className="category-detail-row" key={row.category}>
+              <article className="category-detail-row category-block" key={row.category}>
                 <div className="category-detail-heading">
                   <span className="bar-row-name"><span className="category-dot" style={{ backgroundColor: categoryColor(row.category) }} />{row.category}</span>
                   <div className="category-detail-amounts"><strong>{formatCurrency(amount)}</strong><span className={hasComparison ? (change > 0 ? 'stat-negative' : change < 0 ? 'stat-positive' : '') : ''}>{changeLabel}</span></div>
@@ -69,7 +69,7 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
                   <span className="category-detail-track"><span style={{ width: `${share}%`, backgroundColor: categoryColor(row.category) }} /></span>
                   <span>{share.toFixed(1)}% · {row.count || 0} {Number(row.count) === 1 ? 'transaction' : 'transactions'}{hasComparison ? ` · prior ${formatCurrency(previousAmount)}` : ''}</span>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>

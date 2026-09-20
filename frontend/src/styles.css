@@ -917,6 +917,149 @@ body {
   gap: 20px;
 }
 
+.overview-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.overview-preview {
+  min-height: 196px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(251, 250, 241, 0.82);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.overview-preview:hover,
+.overview-preview:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px rgba(75, 84, 69, 0.08);
+  transform: translateY(-2px);
+}
+
+.overview-preview-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.overview-preview-arrow {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.overview-preview > strong {
+  display: block;
+  margin-top: 24px;
+  font: 19px 'IBM Plex Mono', monospace;
+  font-weight: 500;
+}
+
+.overview-preview-caption {
+  display: block;
+  min-height: 30px;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.overview-preview-foot {
+  display: block;
+  margin-top: 16px;
+  color: var(--accent);
+  font: 10px 'IBM Plex Mono', monospace;
+}
+
+.overview-preview-bars {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  margin-top: 17px;
+  border-radius: 5px;
+  background: var(--border);
+}
+
+.overview-preview-bars span {
+  min-width: 2px;
+  border-right: 1px solid var(--panel);
+}
+
+.overview-preview-sparkline {
+  display: flex;
+  align-items: end;
+  gap: 3px;
+  height: 46px;
+  margin-top: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.overview-preview-sparkline i {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.overview-account-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.overview-account-list span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.overview-account-list b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.overview-account-list em {
+  flex-shrink: 0;
+  color: var(--text);
+  font: 10px 'IBM Plex Mono', monospace;
+  font-style: normal;
+}
+
+.overview-preview-comparison {
+  position: relative;
+  height: 8px;
+  margin-top: 26px;
+  border-radius: 4px;
+  background: var(--border);
+}
+
+.overview-preview-comparison span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--negative);
+}
+
+.overview-preview-comparison i {
+  position: absolute;
+  top: -5px;
+  width: 2px;
+  height: 18px;
+  background: var(--text);
+}
+
 .overview-analysis-grid {
   align-items: stretch;
 }
@@ -939,9 +1082,21 @@ body {
   margin-top: 24px;
 }
 
+.category-block-grid {
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+}
+
 .category-detail-row {
   display: grid;
   gap: 7px;
+}
+
+.category-block {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(122, 129, 119, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .category-detail-heading,
@@ -974,13 +1129,16 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 32px;
+  min-height: 64px;
+  padding: 8px 0 2px;
 }
 
 .category-sparkline {
   display: block;
+  flex: 1;
   width: 100%;
-  height: 32px;
+  min-width: 0;
+  height: 64px;
   overflow: visible;
 }
 
@@ -1214,7 +1372,8 @@ body {
     display: none;
   }
   .stat-row,
-  .grid-two {
+  .grid-two,
+  .overview-preview-grid {
     grid-template-columns: 1fr;
   }
   .main {
@@ -1223,10 +1382,12 @@ body {
   .spending-summary { grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
   .summary-total { grid-column: 1 / -1; }
   .spending-grid { grid-template-columns: 1fr; }
+  .overview-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 520px) {
   .top-bar { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .overview-preview-grid { grid-template-columns: 1fr; }
   .spending-summary { margin-left: 0; margin-right: 0; }
   .summary-total strong { font-size: 26px; }
   .recent-row > div { grid-template-columns: 1fr; }
