@@ -78,11 +78,19 @@ wealthfly/
 
 ## Local development (without Docker)
 
+Create a local environment file from the checked-in template:
+
+```bash
+cp .env.example .env
+```
+
+Fill in `FIREFLY_URL` and `FIREFLY_TOKEN` in `.env`. The backend loads this file automatically when started from the repository.
+
 ```bash
 # terminal 1 — backend
 cd backend
 npm install
-cp ../.env.example .env   # backend reads FIREFLY_URL / FIREFLY_TOKEN from env
+node src/index.js
 node src/index.js
 
 # terminal 2 — frontend (proxies /api to localhost:4400)
@@ -90,6 +98,18 @@ cd frontend
 npm install
 npm run dev
 ```
+
+### Branch workflow
+
+Keep `main` deployable and create a branch for each feature or fix:
+
+```bash
+git switch main
+git pull --ff-only
+git switch -c feature/short-description
+```
+
+Commit focused changes on the branch, run the local checks, then open a pull request into `main`. Do not commit `.env`, database files, or generated build output.
 
 ## Notes / things you may want to tune
 
