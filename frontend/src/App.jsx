@@ -110,7 +110,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [syncNotification, setSyncNotification] = useState(null);
   const [error, setError] = useState(null);
-  const [showCategoryInsights, setShowCategoryInsights] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
@@ -253,7 +253,7 @@ export default function App() {
         ) : view === 'savings' ? (
           <SavingsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} language={language} />
         ) : view === 'categories' ? (
-          <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} />
+          <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} onCategoryClick={setSelectedCategory} />
         ) : view === 'trends' ? (
           <TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} />
         ) : view === 'overview' ? (
@@ -326,7 +326,7 @@ export default function App() {
             </div>
             <SpendingChart data={spendingByDay} />
             <div className="spending-grid">
-              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} initialMode="bar" onViewAll={() => setShowCategoryInsights(true)} />
+              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} initialMode="bar" onViewAll={() => setSelectedCategory(byCategory[0]?.category)} />
               <div className="side-stack">
                 <section className="insight-panel budget-panel">
                   <div className="panel-heading-row"><h2>Budget pulse</h2><span>{rangeLabel} · Firefly III</span></div>
@@ -381,7 +381,7 @@ export default function App() {
           <TransactionsTable transactions={transactions} />
         )}
       </main>
-      {showCategoryInsights && <CategoryInsightsPanel rows={byCategory} onClose={() => setShowCategoryInsights(false)} />}
+      {selectedCategory && <CategoryInsightsPanel rows={byCategory} category={selectedCategory} transactions={transactions} onClose={() => setSelectedCategory(null)} />}
       {showTrends && <div className="drawer-backdrop" onClick={() => setShowTrends(false)}><aside className="insights-drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-header"><div><span className="eyebrow">Spending trends</span><h2>Selected period</h2></div><button className="icon-button" onClick={() => setShowTrends(false)} aria-label="Close spending trends">×</button></div><TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} /></aside></div>}
     </div>
   );

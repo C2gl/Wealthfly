@@ -884,6 +884,25 @@ body {
 .drawer-total { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 18px; padding: 15px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); color: var(--text-muted); font: 11px 'IBM Plex Mono', monospace; }
 .drawer-total strong { color: var(--text); font-size: 15px; font-weight: 500; }
 .insights-drawer .panel { padding: 18px 0; background: transparent; box-shadow: none; }
+.drawer-section { margin-top: 26px; }
+.drawer-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.drawer-section-heading > span:last-child { color: var(--text-muted); font: 10px 'IBM Plex Mono', monospace; }
+.source-account-list { display: grid; gap: 16px; }
+.source-account-row { display: grid; gap: 6px; }
+.source-account-label { display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: 12px; }
+.source-account-label span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.source-account-label i { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; }
+.source-account-label strong { font: 11px 'IBM Plex Mono', monospace; font-weight: 500; }
+.source-account-track { height: 8px; overflow: hidden; border-radius: 5px; background: rgba(122, 129, 119, 0.14); }
+.source-account-track span { display: block; height: 100%; min-width: 3px; border-radius: inherit; }
+.source-account-row small { color: var(--text-muted); font: 10px 'IBM Plex Mono', monospace; }
+.category-transaction-list { border-top: 1px solid rgba(122, 129, 119, 0.16); }
+.category-transaction-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid rgba(122, 129, 119, 0.16); }
+.category-transaction-row > div { display: grid; gap: 3px; min-width: 0; }
+.category-transaction-row span,
+.category-transaction-row small { color: var(--text-muted); font: 10px 'IBM Plex Mono', monospace; }
+.category-transaction-row strong { overflow: hidden; font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.category-transaction-row > strong { flex: 0 0 auto; font: 11px 'IBM Plex Mono', monospace; }
 .drawer-placeholder { margin-top: 10px; padding: 20px; border: 1px dashed var(--border); border-radius: 10px; }
 .drawer-placeholder h3 { margin: 9px 0; font-size: 14px; }
 .drawer-placeholder p { margin: 0; color: var(--text-muted); font-size: 12px; }
@@ -1535,6 +1554,19 @@ body {
   border: 1px solid rgba(122, 129, 119, 0.18);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.28);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.category-block:hover,
+.category-block:focus-visible {
+  border-color: rgba(53, 105, 87, 0.45);
+  background: rgba(255, 255, 255, 0.58);
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .category-detail-heading,
