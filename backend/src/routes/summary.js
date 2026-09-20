@@ -94,12 +94,12 @@ router.get('/account-flows', (req, res) => {
        FROM (
          SELECT destination_name as account, SUM(amount) as income, 0 as spending, COUNT(*) as transaction_count
          FROM transactions
-         WHERE type = 'deposit' AND date BETWEEN ? AND ?
+         WHERE type IN ('deposit', 'transfer') AND date BETWEEN ? AND ?
          GROUP BY destination_name
          UNION ALL
          SELECT source_name as account, 0 as income, SUM(amount) as spending, COUNT(*) as transaction_count
          FROM transactions
-         WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+         WHERE type IN ('withdrawal', 'transfer') AND date BETWEEN ? AND ?
          GROUP BY source_name
        )
        WHERE account IS NOT NULL AND account != ''

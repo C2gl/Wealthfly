@@ -44,7 +44,7 @@ function AccountTransactions({ account, range }) {
   return (
     <div className="account-transactions">
       {transactions.map((tx) => {
-        const isExpense = tx.type === 'withdrawal';
+        const isExpense = tx.type === 'withdrawal' || (tx.type === 'transfer' && tx.source_name === account.name);
         const category = tx.category_name || 'Uncategorized';
         return (
           <div className="account-transaction" key={`${tx.id}-${tx.split_index}`}>
