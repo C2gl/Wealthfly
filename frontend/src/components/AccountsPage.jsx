@@ -53,8 +53,54 @@ function arcPath(startAngle, endAngle) {
   return `M ${startX.toFixed(2)} ${startY.toFixed(2)} A ${radius} ${radius} 0 0 1 ${endX.toFixed(2)} ${endY.toFixed(2)}`;
 }
 
+function AccountBreakdownChart({ bucket }) {
+  const [hoveredId, setHoveredId] = useState(null);
+  const rows = bucket.accounts.map((account) => ({
+    account,
+    total: Math.max(0, Number(account.current_balance || 0)),
+  }));
+  const total = rows.reduce((sum, row) => sum + row.total, 0);
+  const selected = rows.find((row) => row.account.id === hoveredId) || { account: { name: bucket.label }, total };
+  let cursor = 180;
+
+  return (
+    <div className="account-breakdown">
+      <div className="account-breakdown-heading"><div><span className="eyebrow">{bucket.label} accounts</span><h4>Balance weight</h4></div><span>{rows.length} accounts</span></div>
+      <div className="account-weight-chart account-breakdown-chart">
+        <svg viewBox="0 0 240 140" role="img" aria-label={`${bucket.label} account balance composition`}>
+          {rows.map((row) => {
+            const share = total ? row.total / total : 0;
+            const start = cursor + 2;
+            const end = cursor + Math.max(0, share * 180 - 4);
+            cursor += share * 180;
+            return share > 0 ? (
+              <path
+                key={row.account.id}
+                d={arcPath(start, end)}
+                className={hoveredId && hoveredId !== row.account.id ? 'account-weight-segment is-muted' : 'account-weight-segment'}
+                style={{ stroke: categoryColor(row.account.name) }}
+                onMouseEnter={() => setHoveredId(row.account.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                onFocus={() => setHoveredId(row.account.id)}
+                onBlur={() => setHoveredId(null)}
+                tabIndex="0"
+                aria-label={`${row.account.name}: ${formatCurrency(row.total)}, ${Math.round(share * 100)} percent`}
+              />
+            ) : null;
+          })}
+        </svg>
+        <div className="account-weight-center"><strong>{formatCurrency(selected.total, selected.account.currency_code)}</strong><span>{selected.account.name}</span><small>{total ? `${((selected.total / total) * 100).toFixed(1)}%` : '0.0%'}</small></div>
+      </div>
+      <div className="account-weight-legend account-sublegend">
+        {rows.map((row) => <button key={row.account.id} className={hoveredId === row.account.id ? 'is-active' : ''} onMouseEnter={() => setHoveredId(row.account.id)} onMouseLeave={() => setHoveredId(null)} onFocus={() => setHoveredId(row.account.id)} onBlur={() => setHoveredId(null)}><i style={{ backgroundColor: categoryColor(row.account.name) }} /><span>{row.account.name}<small>{total ? `${((row.total / total) * 100).toFixed(1)}% of ${bucket.label.toLowerCase()}` : '0.0%'}</small></span><strong>{formatCurrency(row.total, row.account.currency_code)}</strong></button>)}
+      </div>
+    </div>
+  );
+}
+
 function AccountWeightChart({ accounts }) {
   const [hoveredKey, setHoveredKey] = useState(null);
+  const [selectedKey, setSelectedKey] = useState(null);
   const buckets = ACCOUNT_BUCKETS.map((bucket) => ({
     ...bucket,
     accounts: accounts.filter((account) => accountBucket(account) === bucket.key),
@@ -98,8 +144,9 @@ function AccountWeightChart({ accounts }) {
         <div className="account-weight-center"><strong>{formatCurrency(selected.total)}</strong><span>{selected.label}</span><small>{total ? `${((selected.total / total) * 100).toFixed(1)}%` : '0.0%'}</small></div>
       </div>
       <div className="account-weight-legend">
-        {buckets.map((bucket) => <button key={bucket.key} className={hoveredKey === bucket.key ? 'is-active' : ''} onMouseEnter={() => setHoveredKey(bucket.key)} onMouseLeave={() => setHoveredKey(null)} onFocus={() => setHoveredKey(bucket.key)} onBlur={() => setHoveredKey(null)}><i style={{ backgroundColor: bucket.color }} /><span>{bucket.label}<small>{bucket.accounts.length} accounts</small></span><strong>{formatCurrency(bucket.total)}</strong></button>)}
+        {buckets.map((bucket) => <button key={bucket.key} className={`${hoveredKey === bucket.key ? 'is-active' : ''} ${selectedKey === bucket.key ? 'is-selected' : ''}`} onClick={() => setSelectedKey(selectedKey === bucket.key ? null : bucket.key)} onMouseEnter={() => setHoveredKey(bucket.key)} onMouseLeave={() => setHoveredKey(null)} onFocus={() => setHoveredKey(bucket.key)} onBlur={() => setHoveredKey(null)}><i style={{ backgroundColor: bucket.color }} /><span>{bucket.label}<small>{bucket.accounts.length} accounts · click to inspect</small></span><strong>{formatCurrency(bucket.total)}</strong></button>)}
       </div>
+      {selectedKey && <AccountBreakdownChart bucket={buckets.find((bucket) => bucket.key === selectedKey)} />}
     </section>
   );
 }
