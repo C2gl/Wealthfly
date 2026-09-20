@@ -426,6 +426,59 @@ body {
 .account-flow-spending { background: var(--negative); }
 .account-flow-income { background: var(--positive); }
 
+.savings-page { display: grid; gap: 18px; }
+
+.savings-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.savings-metric {
+  display: grid;
+  gap: 8px;
+  min-height: 126px;
+  padding: 18px 20px;
+}
+
+.savings-metric strong {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  font: 20px 'IBM Plex Mono', monospace;
+  font-weight: 500;
+}
+
+.savings-metric small,
+.savings-account-heading small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.savings-accounts-panel { padding: 22px 24px 16px; }
+.savings-account-list { display: grid; margin-top: 14px; }
+
+.savings-account-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.1fr) minmax(110px, auto) minmax(220px, 1fr);
+  align-items: center;
+  gap: 20px;
+  min-height: 76px;
+  border-top: 1px solid rgba(122, 129, 119, 0.14);
+}
+
+.savings-account-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.savings-account-heading div { display: grid; gap: 4px; min-width: 0; }
+.savings-account-heading strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; }
+.savings-account-balance { font: 13px 'IBM Plex Mono', monospace; font-weight: 500; white-space: nowrap; }
+.savings-flow { display: grid; gap: 6px; }
+.savings-flow .account-flow-values { font-size: 9px; }
+.savings-legend { display: flex; gap: 16px; margin-top: 14px; color: var(--text-muted); font: 9px 'IBM Plex Mono', monospace; }
+.savings-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.savings-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.savings-legend-income { background: var(--positive); }
+.savings-legend-spending { background: var(--negative); }
+
 .account-flow-values {
   display: flex;
   justify-content: space-between;
@@ -1868,6 +1921,10 @@ body {
 }
 
 @media (max-width: 900px) {
+  .savings-metrics { grid-template-columns: 1fr; }
+  .savings-account-row { grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; padding: 14px 0; }
+  .savings-flow { grid-column: 1 / -1; }
+
   .layout {
     flex-direction: column;
   }
@@ -1913,6 +1970,7 @@ body {
   .accounts-count { text-align: left; }
   .account-group { padding-left: 16px; padding-right: 16px; }
   .account-weight-panel { padding-left: 16px; padding-right: 16px; }
+  .savings-accounts-panel { padding-left: 16px; padding-right: 16px; }
   .account-weight-panel .panel-heading-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .account-weight-legend { grid-template-columns: 1fr; }
   .account-group-header { align-items: flex-start; flex-direction: column; }
