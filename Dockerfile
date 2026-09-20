@@ -1,19 +1,21 @@
 # ---- Stage 1: build the React frontend ----
-FROM node:20-alpine AS frontend-build
+FROM node:24-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json ./
-RUN npm install
+COPY frontend/package-lock.json ./
+RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
 # ---- Stage 2: backend runtime ----
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 # build tools needed to compile better-sqlite3's native bindings
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 COPY backend/package.json ./
-RUN npm install --omit=dev
+COPY backend/package-lock.json ./
+RUN npm ci --omit=dev
 COPY backend/ ./
 
 # drop the built frontend into ./public, served as static files by Express
