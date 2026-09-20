@@ -4,6 +4,8 @@ import StatRow from './components/StatRow.jsx';
 import NetWorthChart from './components/NetWorthChart.jsx';
 import SpendingChart from './components/SpendingChart.jsx';
 import BreakdownBars from './components/BreakdownBars.jsx';
+import CategoryPanel from './components/CategoryPanel.jsx';
+import TrendsPanel from './components/TrendsPanel.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
@@ -25,12 +27,19 @@ function budgetAmount(value) {
   return Number.isFinite(numeric) ? Math.abs(numeric) : 0;
 }
 
+function shiftDate(dateString, days) {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 export default function App() {
   const [view, setView] = useState('overview');
   const [rangeKey, setRangeKey] = useState('30d');
   const [stats, setStats] = useState(null);
   const [netWorth, setNetWorth] = useState([]);
   const [spendingByDay, setSpendingByDay] = useState([]);
+  const [previousSpendingByDay, setPreviousSpendingByDay] = useState([]);
   const [byCategory, setByCategory] = useState([]);
   const [byTargetAccount, setByTargetAccount] = useState([]);
   const [byTag, setByTag] = useState([]);
@@ -44,6 +53,9 @@ export default function App() {
 
   const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
   const rangeLabel = RANGES.find((r) => r.key === rangeKey).label;
+  const previousRange = rangeKey === 'all'
+    ? null
+    : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
   const budgetRows = budgets
     .filter((budget) => budget.active !== false)
@@ -75,10 +87,11 @@ export default function App() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [s, nw, daily, cat, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
+      const [s, nw, daily, previousDaily, cat, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
         api.stats(range),
         api.netWorth(range),
         api.expensesByDay(range),
+        previousRange ? api.expensesByDay(previousRange) : Promise.resolve([]),
         api.expensesByCategory(range),
         api.expensesByTargetAccount(range),
         api.expensesByTag(range),
@@ -89,6 +102,7 @@ export default function App() {
       setStats(s);
       setNetWorth(nw);
       setSpendingByDay(daily);
+      setPreviousSpendingByDay(previousDaily);
       setByCategory(cat);
       setByTargetAccount(tgt);
       setByTag(tag);
@@ -151,8 +165,11 @@ export default function App() {
           <>
             <StatRow stats={stats} rangeLabel={rangeLabel} />
             <NetWorthChart data={netWorth} />
+            <div className="grid-two overview-analysis-grid">
+              <CategoryPanel rows={byCategory} />
+              <TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} />
+            </div>
             <div className="grid-two">
-              <BreakdownBars title="Spending by category" rows={byCategory} labelKey="category" initialMode="donut" onViewAll={() => setShowCategoryInsights(true)} />
               <BreakdownBars
                 title="Spending by target account"
                 rows={byTargetAccount}
@@ -223,7 +240,7 @@ export default function App() {
         )}
       </main>
       {showCategoryInsights && <CategoryInsightsPanel rows={byCategory} onClose={() => setShowCategoryInsights(false)} />}
-      {showTrends && <div className="drawer-backdrop" onClick={() => setShowTrends(false)}><aside className="insights-drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-header"><div><span className="eyebrow">Spending trends</span><h2>Selected period</h2></div><button className="icon-button" onClick={() => setShowTrends(false)} aria-label="Close spending trends">×</button></div><SpendingChart data={spendingByDay} /><BreakdownBars title="By category" rows={byCategory} labelKey="category" initialMode="donut" /></aside></div>}
+      {showTrends && <div className="drawer-backdrop" onClick={() => setShowTrends(false)}><aside className="insights-drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-header"><div><span className="eyebrow">Spending trends</span><h2>Selected period</h2></div><button className="icon-button" onClick={() => setShowTrends(false)} aria-label="Close spending trends">×</button></div><TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} /></aside></div>}
     </div>
   );
 }
