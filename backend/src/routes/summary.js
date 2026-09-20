@@ -59,6 +59,21 @@ router.get('/expenses-by-category', (req, res) => {
   res.json(rows);
 });
 
+router.get('/expenses-by-category-by-day', (req, res) => {
+  const { start, end } = dateFilter(req);
+  const rows = db
+    .prepare(
+      `SELECT CAST(julianday(date) - julianday(?) AS INTEGER) as day,
+              COALESCE(category_name, 'Uncategorized') as category,
+              SUM(amount) as total
+       FROM transactions
+       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+       GROUP BY day, category ORDER BY day ASC, total DESC`
+    )
+    .all(start, start, end);
+  res.json(rows);
+});
+
 router.get('/expenses-by-day', (req, res) => {
   const { start, end } = dateFilter(req);
   const rows = db

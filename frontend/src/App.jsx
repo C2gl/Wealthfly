@@ -42,6 +42,8 @@ export default function App() {
   const [previousSpendingByDay, setPreviousSpendingByDay] = useState([]);
   const [byCategory, setByCategory] = useState([]);
   const [previousByCategory, setPreviousByCategory] = useState([]);
+  const [categoryTrends, setCategoryTrends] = useState([]);
+  const [previousCategoryTrends, setPreviousCategoryTrends] = useState([]);
   const [accountFlows, setAccountFlows] = useState([]);
   const [byTargetAccount, setByTargetAccount] = useState([]);
   const [byTag, setByTag] = useState([]);
@@ -97,13 +99,15 @@ export default function App() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [s, nw, daily, previousDaily, cat, previousCat, flows, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
+      const [s, nw, daily, previousDaily, cat, previousCat, categoryTrend, previousCategoryTrend, flows, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
         api.stats(range),
         api.netWorth(range),
         api.expensesByDay(range),
         previousRange ? api.expensesByDay(previousRange) : Promise.resolve([]),
         api.expensesByCategory(range),
         previousRange ? api.expensesByCategory(previousRange) : Promise.resolve([]),
+        api.expensesByCategoryByDay(range),
+        previousRange ? api.expensesByCategoryByDay(previousRange) : Promise.resolve([]),
         api.accountFlows(range),
         api.expensesByTargetAccount(range),
         api.expensesByTag(range),
@@ -117,6 +121,8 @@ export default function App() {
       setPreviousSpendingByDay(previousDaily);
       setByCategory(cat);
       setPreviousByCategory(previousCat);
+      setCategoryTrends(categoryTrend);
+      setPreviousCategoryTrends(previousCategoryTrend);
       setAccountFlows(flows);
       setByTargetAccount(tgt);
       setByTag(tag);
@@ -176,7 +182,7 @@ export default function App() {
         {view === 'accounts' ? (
           <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />
         ) : view === 'categories' ? (
-          <CategoryPanel rows={byCategory} previousRows={previousByCategory} rangeLabel={rangeLabel} />
+          <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} />
         ) : view === 'trends' ? (
           <TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} />
         ) : view === 'overview' ? (
@@ -184,7 +190,7 @@ export default function App() {
             <StatRow stats={stats} rangeLabel={rangeLabel} />
             <NetWorthChart data={netWorth} />
             <div className="grid-two overview-analysis-grid">
-              <CategoryPanel rows={byCategory} previousRows={previousByCategory} rangeLabel={rangeLabel} />
+              <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} />
               <TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} />
             </div>
             <div className="grid-two">
