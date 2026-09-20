@@ -83,7 +83,6 @@ function AccountBreakdownChart({ bucket }) {
       <div className="account-breakdown-heading"><div><span className="eyebrow">{bucket.label} accounts</span><h4>Balance weight</h4></div><span>{rows.length} accounts</span></div>
       <div className="account-weight-chart account-breakdown-chart">
         <svg viewBox="0 0 240 140" role="img" aria-label={`${bucket.label} account balance composition`}>
-          <path d={arcPath(180, 360)} className="account-weight-track" />
           {segments.map((row) => (
               <path
                 key={row.account.id}
@@ -130,7 +129,6 @@ function AccountWeightChart({ accounts }) {
       </div>
       <div className="account-weight-chart">
         <svg viewBox="0 0 240 140" role="img" aria-label="Account balance composition">
-          <path d={arcPath(180, 360)} className="account-weight-track" />
           {segments.map((bucket) => (
               <path
                 key={bucket.key}

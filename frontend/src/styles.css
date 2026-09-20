@@ -180,13 +180,6 @@ body {
   transition: opacity 160ms ease, stroke-width 160ms ease;
 }
 
-.account-weight-track {
-  fill: none;
-  stroke: rgba(122, 129, 119, 0.2);
-  stroke-width: 28;
-  stroke-linecap: round;
-}
-
 .account-weight-segment:hover,
 .account-weight-segment:focus {
   stroke-width: 34;
