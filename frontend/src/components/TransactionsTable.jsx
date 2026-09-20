@@ -11,17 +11,18 @@ function arcPath(startAngle, endAngle) {
   };
   const [startX, startY] = point(startAngle);
   const [endX, endY] = point(endAngle);
-  return `M ${startX.toFixed(2)} ${startY.toFixed(2)} A ${radius} ${radius} 0 0 1 ${endX.toFixed(2)} ${endY.toFixed(2)}`;
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${startX.toFixed(2)} ${startY.toFixed(2)} A ${radius} ${radius} 0 ${largeArc} 1 ${endX.toFixed(2)} ${endY.toFixed(2)}`;
 }
 
 function arcSegments(rows, total) {
   const visible = rows.filter((row) => row.total > 0);
   if (!visible.length) return [];
 
-  let cursor = 180;
+  let cursor = -90;
   return visible.map((row) => {
     const share = total ? row.total / total : 0;
-    const span = 180 * share;
+    const span = 360 * share;
     const start = cursor + 1.5;
     const end = cursor + span - 1.5;
     cursor += span;
@@ -77,8 +78,7 @@ export default function TransactionsTable({ transactions }) {
                     fill="none"
                     stroke={segment.color}
                     strokeWidth="28"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    strokeLinecap="butt"
                     className={isSelected ? 'transaction-segment is-active' : isMuted ? 'transaction-segment is-muted' : 'transaction-segment'}
                     onMouseEnter={() => setHoveredKey(segment.key)}
                     onMouseLeave={() => setHoveredKey(null)}
@@ -90,7 +90,7 @@ export default function TransactionsTable({ transactions }) {
                   />
                 );
               })}
-              <circle cx="95" cy="95" r="48" fill="rgba(251, 250, 241, 0.9)" />
+              <circle cx="95" cy="95" r="48" fill="var(--panel)" />
               <text x="95" y="90" textAnchor="middle" className="transaction-distribution-total-label">{formatCurrency(activeRow?.total || total)}</text>
               <text x="95" y="112" textAnchor="middle" className="transaction-distribution-total-sub">{activeRow?.label || 'total'}</text>
             </svg>
@@ -135,7 +135,9 @@ export default function TransactionsTable({ transactions }) {
                   <div className="transaction-main"><strong>{name}</strong><span>{destination}</span></div>
                   <div className="transaction-meta-cell">
                     <span className="category-chip" style={{ '--category-color': categoryColor(category) }}>{category}</span>
-                    {isTransfer && <span className="transfer-badge">Transfer</span>}
+                    <span className={`transaction-type-badge transaction-type-${tx.type}`}>
+                      {isTransfer ? 'Transfer' : tx.type === 'deposit' ? 'Income' : 'Expense'}
+                    </span>
                   </div>
                   <strong className={`transaction-amount mono ${meta.tone}`}>{meta.display}</strong>
                 </article>
