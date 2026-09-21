@@ -8,10 +8,11 @@
 - [ ] add a progress bar for sync
 - [ ] add auth system
 - [ ] update readme and add secutity warning about exposing it
-- [ ] add support for nested category names (see more info in ##nested category name)
-
-# upcoming features
+- [ ] add support for nested category names (see more info in ## 1 nested category name)
 
 
-## nested category names 
+
+## 1 nested category names 
 firefly III itself does not support nested category names, but we should support it when users manually implement it in their naming scheme, example seperating category and sub category using `-` by example `[CATEGORY] - [SUBCATEGORY]`
+
+## 2 
