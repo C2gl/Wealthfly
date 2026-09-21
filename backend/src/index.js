@@ -10,13 +10,20 @@ const { runFullSync } = require('./sync');
 
 const PORT = process.env.PORT || 4400;
 const SYNC_CRON = process.env.SYNC_CRON || '0 */6 * * *'; // every 6 hours by default
+const SAVINGS_ACCOUNT_WORDS = (process.env.RECURENT_WORD_IN_SAVING_ACCOUNTS || 'saving,epargne,épargne')
+  .split(',')
+  .map((word) => word.trim())
+  .filter(Boolean);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 app.get('/api/config', (req, res) => {
-  res.json({ language: process.env.WEALTHFLY_LANGUAGE || 'en' });
+  res.json({
+    language: process.env.WEALTHFLY_LANGUAGE || 'en',
+    savingsAccountWords: SAVINGS_ACCOUNT_WORDS,
+  });
 });
 
 app.use('/api', dataRoutes);

@@ -30,6 +30,8 @@ WEALTHFLY_LANGUAGE=en
 
 `FIREFLY_URL` is the base URL of your Firefly III instance — no trailing slash, no `/api` suffix.
 `WEALTHFLY_LANGUAGE` is read by the running container, so it also works when using a prebuilt image.
+`RECURENT_WORD_IN_SAVING_ACCOUNTS` is a comma-separated list of words used to identify savings
+accounts by name, for example `RECURENT_WORD_IN_SAVING_ACCOUNTS=savings, investment`.
 
 ## 3. Run
 
