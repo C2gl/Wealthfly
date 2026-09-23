@@ -7,6 +7,13 @@ category, spending by target account, spending by tag, and a searchable transact
 It ships as a single Docker container: an Express API that syncs Firefly III data into a local SQLite
 cache, serving a built React + Recharts frontend.
 
+> **⚠️ Security warning: authentication is off by default.**
+> Wealthfly ships with a single shared-password login (see [Authentication](#authentication)
+> below), but it does nothing until you configure it — until then, anyone who can reach
+> `http://<host>:4400` can view your full financial data and trigger a sync. Even with the
+> password enabled, don't expose this port directly to the public internet: put it behind a VPN
+> (e.g. WireGuard, Tailscale), an SSH tunnel, or a reverse-proxy with TLS.
+
 ## 1. Get a Firefly III Personal Access Token
 
 In your Firefly III instance: **Options → Profile → OAuth → Personal Access Tokens → Create New Token**.
@@ -33,6 +40,30 @@ WEALTHFLY_LANGUAGE=en
 `RECURENT_WORD_IN_SAVING_ACCOUNTS` is a comma-separated list of words used to identify savings
 accounts by name, for example `RECURENT_WORD_IN_SAVING_ACCOUNTS=savings, investment`.
 
+## Authentication
+
+Wealthfly supports a single shared password (there are no separate user accounts — it's meant for
+one household/instance). It's optional but strongly recommended.
+
+1. Generate a bcrypt hash of your chosen password:
+
+   ```bash
+   node backend/scripts/hash-password.js "your-password"
+   ```
+
+2. Add the printed hash, plus a random session secret, to `.env`:
+
+   ```
+   WEALTHFLY_PASSWORD_HASH=$2a$12$...
+   WEALTHFLY_SESSION_SECRET=some-long-random-string
+   ```
+
+3. Restart the container (`docker compose up -d`). You'll now get a login screen; sessions are
+   stored in a signed, httpOnly cookie and last 30 days.
+
+Leaving `WEALTHFLY_PASSWORD_HASH` unset keeps Wealthfly in its original, no-login mode (a warning
+is logged on startup to remind you).
+
 ## 3. Run
 
 ```bash
@@ -48,6 +79,9 @@ sync any time from the "Sync now" button in the sidebar, or by calling:
 ```bash
 curl -X POST http://<host>:4400/api/sync
 ```
+
+> Remember: `4400` is unauthenticated — keep it on a trusted network or behind a proxy with auth
+> (see the security warning above) before binding it to anything but `localhost`.
 
 ## How the data maps
 

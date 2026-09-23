@@ -3,6 +3,9 @@ async function get(path, params = {}) {
     Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')
   ).toString();
   const res = await fetch(`/api${path}${query ? `?${query}` : ''}`);
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('wealthfly:unauthorized'));
+  }
   if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
   return res.json();
 }
@@ -25,6 +28,7 @@ export const api = {
   tags: () => get('/tags'),
   triggerSync: () =>
     fetch('/api/sync', { method: 'POST' }).then(async (r) => {
+      if (r.status === 401) window.dispatchEvent(new Event('wealthfly:unauthorized'));
       const body = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(body.error || `sync failed: ${r.status}`);
       return body;
