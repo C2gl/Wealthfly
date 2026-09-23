@@ -31,6 +31,95 @@ body {
   font-family: 'IBM Plex Mono', monospace;
 }
 
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 320px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+}
+
+.login-wordmark {
+  margin-bottom: 6px;
+  align-self: center;
+}
+
+.login-wordmark .wordmark-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+}
+
+.login-wordmark .wordmark-mark::before {
+  font-size: 22px;
+}
+
+.login-wordmark .wordmark-mark::after {
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+}
+
+.login-wordmark .wordmark-text {
+  font-size: 20px;
+}
+
+.login-subtitle {
+  margin: -6px 0 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.login-input {
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.login-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.login-error {
+  color: var(--negative);
+  font-size: 13px;
+}
+
+.login-submit {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: var(--panel);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .layout {
   display: flex;
   min-height: 100vh;

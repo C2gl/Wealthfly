@@ -2,11 +2,14 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const cron = require('node-cron');
 
+const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const summaryRoutes = require('./routes/summary');
 const { runFullSync } = require('./sync');
+const { authEnabled, requireAuth } = require('./auth');
 
 const PORT = process.env.PORT || 4400;
 const SYNC_CRON = process.env.SYNC_CRON || '0 */6 * * *'; // every 6 hours by default
@@ -15,9 +18,27 @@ const SAVINGS_ACCOUNT_WORDS = (process.env.RECURENT_WORD_IN_SAVING_ACCOUNTS || '
   .map((word) => word.trim())
   .filter(Boolean);
 
+const SESSION_SECRET = process.env.WEALTHFLY_SESSION_SECRET || 'insecure-dev-secret-change-me';
+if (authEnabled() && !process.env.WEALTHFLY_SESSION_SECRET) {
+  console.warn(
+    '[auth] WEALTHFLY_PASSWORD is set but WEALTHFLY_SESSION_SECRET is not. ' +
+      'Using an insecure default — set WEALTHFLY_SESSION_SECRET in .env (e.g. `openssl rand -hex 32`).'
+  );
+}
+if (!authEnabled()) {
+  console.warn(
+    '[auth] No WEALTHFLY_PASSWORD set — Wealthfly is running with NO LOGIN. ' +
+      'Anyone who can reach this port can view your data. See README for how to enable auth.'
+  );
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser(SESSION_SECRET));
+
+// Auth routes (login/logout/session-status) must stay public.
+app.use('/api', authRoutes);
 
 app.get('/api/config', (req, res) => {
   res.json({
@@ -26,8 +47,8 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-app.use('/api', dataRoutes);
-app.use('/api/summary', summaryRoutes);
+app.use('/api', requireAuth, dataRoutes);
+app.use('/api/summary', requireAuth, summaryRoutes);
 
 // Serve the built React app (see frontend/ -> copied into ./public at build time).
 const staticDir = path.join(__dirname, '..', 'public');

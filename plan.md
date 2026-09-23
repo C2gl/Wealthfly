@@ -6,8 +6,8 @@
 - [ ] Add sync-health and freshness indicators
 - [ ] Keep refining the transaction/account visual consistency, which is now much closer
 - [ ] add a progress bar for sync
-- [ ] add auth system
-- [ ] update readme and add secutity warning about exposing it
+- [x] add auth system (single shared password via .env, signed session cookie; see README "Authentication")
+- [x] update readme and add secutity warning about exposing it
 - [ ] add support for nested category names (see more info in ## 1 nested category name)
 - [ ] add subscriptions insights plane ##2
 - [ ] clear cashe and prune the sqlite db ##3
