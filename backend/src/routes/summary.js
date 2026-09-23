@@ -15,7 +15,7 @@ router.get('/net-worth', (req, res) => {
   const rows = db
     .prepare(
       `WITH dates AS (
-         SELECT DISTINCT date FROM balance_history WHERE date BETWEEN ? AND ?
+         SELECT DISTINCT date FROM balance_history WHERE substr(date, 1, 10) BETWEEN ? AND ?
        )
        SELECT dates.date,
               SUM((SELECT bh.balance
@@ -39,7 +39,7 @@ router.get('/net-worth-by-account', (req, res) => {
       `SELECT bh.date, a.name as account, bh.balance
       FROM balance_history bh
       JOIN accounts a ON a.id = bh.account_id AND a.include_net_worth = 1
-      WHERE bh.date BETWEEN ? AND ?
+      WHERE bh.substr(date, 1, 10) BETWEEN ? AND ?
       ORDER BY bh.date ASC`
     )
     .all(start, end);
@@ -52,7 +52,7 @@ router.get('/expenses-by-category', (req, res) => {
     .prepare(
       `SELECT COALESCE(category_name, 'Uncategorized') as category, SUM(amount) as total, COUNT(*) as count
        FROM transactions
-       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+       WHERE type = 'withdrawal' AND substr(date, 1, 10) BETWEEN ? AND ?
        GROUP BY category ORDER BY total DESC`
     )
     .all(start, end);
@@ -67,7 +67,7 @@ router.get('/expenses-by-category-by-day', (req, res) => {
               COALESCE(category_name, 'Uncategorized') as category,
               SUM(amount) as total
        FROM transactions
-       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+       WHERE type = 'withdrawal' AND substr(date, 1, 10) BETWEEN ? AND ?
        GROUP BY day, category ORDER BY day ASC, total DESC`
     )
     .all(start, start, end);
@@ -80,7 +80,7 @@ router.get('/expenses-by-day', (req, res) => {
     .prepare(
       `SELECT date, SUM(amount) as total
        FROM transactions
-       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+       WHERE type = 'withdrawal' AND substr(date, 1, 10) BETWEEN ? AND ?
        GROUP BY date ORDER BY date ASC`
     )
     .all(start, end);
@@ -94,7 +94,7 @@ router.get('/expenses-by-source-account', (req, res) => {
     .prepare(
       `SELECT source_name as account, SUM(amount) as total, COUNT(*) as count
        FROM transactions
-       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+       WHERE type = 'withdrawal' AND substr(date, 1, 10) BETWEEN ? AND ?
        GROUP BY source_name ORDER BY total DESC`
     )
     .all(start, end);
@@ -109,12 +109,12 @@ router.get('/account-flows', (req, res) => {
        FROM (
          SELECT destination_name as account, SUM(amount) as income, 0 as spending, COUNT(*) as transaction_count
          FROM transactions
-         WHERE type IN ('deposit', 'transfer') AND date BETWEEN ? AND ?
+         WHERE type IN ('deposit', 'transfer') AND substr(date, 1, 10) BETWEEN ? AND ?
          GROUP BY destination_name
          UNION ALL
          SELECT source_name as account, 0 as income, SUM(amount) as spending, COUNT(*) as transaction_count
          FROM transactions
-         WHERE type IN ('withdrawal', 'transfer') AND date BETWEEN ? AND ?
+         WHERE type IN ('withdrawal', 'transfer') AND substr(date, 1, 10) BETWEEN ? AND ?
          GROUP BY source_name
        )
        WHERE account IS NOT NULL AND account != ''
@@ -132,7 +132,7 @@ router.get('/expenses-by-target-account', (req, res) => {
     .prepare(
       `SELECT destination_name as account, SUM(amount) as total, COUNT(*) as count
        FROM transactions
-       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?
+       WHERE type = 'withdrawal' AND substr(date, 1, 10) BETWEEN ? AND ?
        GROUP BY destination_name ORDER BY total DESC`
     )
     .all(start, end);
@@ -144,7 +144,7 @@ router.get('/expenses-by-tag', (req, res) => {
   const rows = db
     .prepare(
       `SELECT tags, amount FROM transactions
-       WHERE type = 'withdrawal' AND date BETWEEN ? AND ?`
+       WHERE type = 'withdrawal' AND substr(date, 1, 10) BETWEEN ? AND ?`
     )
     .all(start, end);
 
@@ -183,12 +183,12 @@ router.get('/stats', (req, res) => {
 
   const expenses = db
     .prepare(
-      `SELECT SUM(amount) as total FROM transactions WHERE type = 'withdrawal' AND date BETWEEN ? AND ?`
+      `SELECT SUM(amount) as total FROM transactions WHERE type = 'withdrawal' AND substr(date, 1, 10) BETWEEN ? AND ?`
     )
     .get(start, end);
   const income = db
     .prepare(
-      `SELECT SUM(amount) as total FROM transactions WHERE type = 'deposit' AND date BETWEEN ? AND ?`
+      `SELECT SUM(amount) as total FROM transactions WHERE type = 'deposit' AND substr(date, 1, 10) BETWEEN ? AND ?`
     )
     .get(start, end);
   const lastSync = db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get();

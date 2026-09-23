@@ -66,6 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_tx_destination ON transactions(destination_name);
 CREATE INDEX IF NOT EXISTS idx_tx_source_id ON transactions(source_id);
 CREATE INDEX IF NOT EXISTS idx_tx_destination_id ON transactions(destination_id);
 CREATE INDEX IF NOT EXISTS idx_balhist_date ON balance_history(date);
+CREATE INDEX idx_tx_date_only ON transactions(substr(date, 1, 10));
 `);
 
 const accountColumns = db.prepare('PRAGMA table_info(accounts)').all();
