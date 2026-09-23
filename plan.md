@@ -20,3 +20,6 @@ adding a plane for monthly subscriptions, showing a wweight graph showing you wh
 
 ## 3 clear sqlite
 an option for the user to do a clean sync, to fully prune, should be implemented after a sequential sync
+
+## fix date selection
+we should have an option in the date selection to select this month instead of only 30 days (to have a correlation with firefly) see the tentative in out fix that changed to `substr(date, 1, 10)` in `data.js` en `summary.js` 
