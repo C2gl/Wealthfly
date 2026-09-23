@@ -30,7 +30,10 @@ export default function LoginScreen({ onLoggedIn }) {
   return (
     <div className="login-screen">
       <form className="login-card" onSubmit={handleSubmit}>
-        <div className="login-wordmark">wealthfly</div>
+        <div className="wordmark login-wordmark">
+          <span className="wordmark-mark" />
+          <span className="wordmark-text">Wealthfly</span>
+        </div>
         <p className="login-subtitle">Enter the dashboard password to continue.</p>
         <input
           type="password"

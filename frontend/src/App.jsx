@@ -39,10 +39,19 @@ function countLabel(count, singular) {
   return `${count || 0} ${singular}${count === 1 ? '' : 's'}`;
 }
 
-function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification }) {
+function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus }) {
   const notifications = [];
 
   if (syncNotification) notifications.push(syncNotification);
+
+  if (authStatus && !authStatus.authRequired) {
+    notifications.push({
+      id: 'no-auth',
+      level: 'warning',
+      title: 'No password set',
+      message: 'Wealthfly is running without a login — anyone who can reach it can view your data. Set WEALTHFLY_PASSWORD in .env.',
+    });
+  }
 
   if (error && syncNotification?.level !== 'critical') {
     notifications.push({
@@ -110,6 +119,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [syncNotification, setSyncNotification] = useState(null);
   const [savingsAccountWords, setSavingsAccountWords] = useState(null);
+  const [authStatus, setAuthStatus] = useState(null);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
@@ -151,7 +161,7 @@ export default function App() {
         color: ['#8da34d', '#c6a642', '#62615d'][index % 3],
       };
     });
-  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification });
+  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus });
 
   const load = useCallback(async () => {
     try {
@@ -195,6 +205,12 @@ export default function App() {
   useEffect(() => {
     api.config()
       .then((config) => setSavingsAccountWords(config.savingsAccountWords))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    api.session()
+      .then((session) => setAuthStatus(session))
       .catch(() => {});
   }, []);
 
