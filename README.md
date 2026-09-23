@@ -7,6 +7,18 @@ category, spending by target account, spending by tag, and a searchable transact
 It ships as a single Docker container: an Express API that syncs Firefly III data into a local SQLite
 cache, serving a built React + Recharts frontend.
 
+> **⚠️ Security warning: there is no authentication.**
+> Wealthfly has no login, no API key, and no built-in access control of any kind. Anyone who can
+> reach `http://<host>:4400` can view your full financial data and trigger a sync. Do not expose
+> this port to the public internet.
+>
+> - **Recommended**: only bind it to `localhost` or your local network, and access it remotely (if
+>   needed) over a VPN (e.g. WireGuard, Tailscale) or an SSH tunnel.
+> - **If you must expose it externally**, put it behind a reverse proxy (e.g. Caddy, Traefik, Nginx)
+>   configured with its own authentication (basic auth, OAuth2 Proxy, Authelia, etc.) — never port-forward
+>   `4400` directly to the internet.
+> - A built-in auth system is on the roadmap (see `plan.md`) but is not implemented yet.
+
 ## 1. Get a Firefly III Personal Access Token
 
 In your Firefly III instance: **Options → Profile → OAuth → Personal Access Tokens → Create New Token**.
@@ -48,6 +60,9 @@ sync any time from the "Sync now" button in the sidebar, or by calling:
 ```bash
 curl -X POST http://<host>:4400/api/sync
 ```
+
+> Remember: `4400` is unauthenticated — keep it on a trusted network or behind a proxy with auth
+> (see the security warning above) before binding it to anything but `localhost`.
 
 ## How the data maps
 
