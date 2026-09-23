@@ -16,7 +16,7 @@ cache, serving a built React + Recharts frontend.
 >   needed) over a VPN (e.g. WireGuard, Tailscale) or an SSH tunnel.
 > - **If you must expose it externally**, put it behind a reverse proxy (e.g. Caddy, Traefik, Nginx)
 >   configured with its own authentication (basic auth, OAuth2 Proxy, Authelia, etc.) — never port-forward
->   `4400` directly to the internet.
+>   `4400` (or the port your selected) directly to the internet.
 > - A built-in auth system is on the roadmap (see `plan.md`) but is not implemented yet.
 
 ## 1. Get a Firefly III Personal Access Token
