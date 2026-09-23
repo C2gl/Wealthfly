@@ -26,12 +26,12 @@ router.get('/session', (req, res) => {
   });
 });
 
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   if (!authEnabled()) {
     return res.json({ ok: true });
   }
   const { password } = req.body || {};
-  const valid = await verifyPassword(password);
+  const valid = verifyPassword(password);
   if (!valid) {
     return res.status(401).json({ error: 'invalid password' });
   }

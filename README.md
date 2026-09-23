@@ -45,24 +45,24 @@ accounts by name, for example `RECURENT_WORD_IN_SAVING_ACCOUNTS=savings, investm
 Wealthfly supports a single shared password (there are no separate user accounts — it's meant for
 one household/instance). It's optional but strongly recommended.
 
-1. Generate a bcrypt hash of your chosen password:
+Add these two lines to `.env`:
 
-   ```bash
-   node backend/scripts/hash-password.js "your-password"
-   ```
+```
+WEALTHFLY_PASSWORD=choose-a-strong-password
+WEALTHFLY_SESSION_SECRET=some-long-random-string
+```
 
-2. Add the printed hash, plus a random session secret, to `.env`:
+Generate a good value for `WEALTHFLY_SESSION_SECRET` with:
 
-   ```
-   WEALTHFLY_PASSWORD_HASH=$2a$12$...
-   WEALTHFLY_SESSION_SECRET=some-long-random-string
-   ```
+```bash
+openssl rand -hex 32
+```
 
-3. Restart the container (`docker compose up -d`). You'll now get a login screen; sessions are
-   stored in a signed, httpOnly cookie and last 30 days.
+Restart the container (`docker compose up -d`). You'll now get a login screen; sessions are stored
+in a signed, httpOnly cookie and last 30 days.
 
-Leaving `WEALTHFLY_PASSWORD_HASH` unset keeps Wealthfly in its original, no-login mode (a warning
-is logged on startup to remind you).
+Leaving `WEALTHFLY_PASSWORD` unset keeps Wealthfly in its original, no-login mode (a warning is
+logged on startup to remind you).
 
 ## 3. Run
 

@@ -1,19 +1,23 @@
-const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const SESSION_COOKIE_NAME = 'wealthfly_session';
 const SESSION_VALUE = 'authenticated';
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-// Auth is only active when a password hash is configured. This keeps upgrades
-// from an existing, password-less install non-breaking (with a loud warning).
+// Auth is only active when a password is configured. This keeps upgrades from
+// an existing, password-less install non-breaking (with a loud warning).
 function authEnabled() {
-  return Boolean(process.env.WEALTHFLY_PASSWORD_HASH);
+  return Boolean(process.env.WEALTHFLY_PASSWORD);
 }
 
-async function verifyPassword(candidate) {
-  const hash = process.env.WEALTHFLY_PASSWORD_HASH;
-  if (!hash || typeof candidate !== 'string' || !candidate) return false;
-  return bcrypt.compare(candidate, hash);
+// Constant-time comparison, hashed first so mismatched lengths don't leak via
+// crypto.timingSafeEqual's own length check.
+function verifyPassword(candidate) {
+  const expected = process.env.WEALTHFLY_PASSWORD;
+  if (!expected || typeof candidate !== 'string' || !candidate) return false;
+  const expectedDigest = crypto.createHash('sha256').update(expected).digest();
+  const candidateDigest = crypto.createHash('sha256').update(candidate).digest();
+  return crypto.timingSafeEqual(expectedDigest, candidateDigest);
 }
 
 function setSessionCookie(res) {

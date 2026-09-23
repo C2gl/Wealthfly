@@ -21,13 +21,13 @@ const SAVINGS_ACCOUNT_WORDS = (process.env.RECURENT_WORD_IN_SAVING_ACCOUNTS || '
 const SESSION_SECRET = process.env.WEALTHFLY_SESSION_SECRET || 'insecure-dev-secret-change-me';
 if (authEnabled() && !process.env.WEALTHFLY_SESSION_SECRET) {
   console.warn(
-    '[auth] WEALTHFLY_PASSWORD_HASH is set but WEALTHFLY_SESSION_SECRET is not. ' +
-      'Using an insecure default — set WEALTHFLY_SESSION_SECRET in .env to a long random string.'
+    '[auth] WEALTHFLY_PASSWORD is set but WEALTHFLY_SESSION_SECRET is not. ' +
+      'Using an insecure default — set WEALTHFLY_SESSION_SECRET in .env (e.g. `openssl rand -hex 32`).'
   );
 }
 if (!authEnabled()) {
   console.warn(
-    '[auth] No WEALTHFLY_PASSWORD_HASH set — Wealthfly is running with NO LOGIN. ' +
+    '[auth] No WEALTHFLY_PASSWORD set — Wealthfly is running with NO LOGIN. ' +
       'Anyone who can reach this port can view your data. See README for how to enable auth.'
   );
 }
