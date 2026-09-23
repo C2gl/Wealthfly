@@ -41,7 +41,7 @@ router.get('/budgets', async (req, res) => {
 router.get('/transactions', (req, res) => {
   const { start = '0000-01-01', end = '9999-12-31', category, account, tag, type, limit = 100 } = req.query;
 
-  let sql = `SELECT * FROM transactions WHERE date BETWEEN ? AND ?`;
+  let sql = `SELECT * FROM transactions WHERE substr(date, 1, 10) BETWEEN ? AND ?`;
   const params = [start, end];
 
   if (type) {
