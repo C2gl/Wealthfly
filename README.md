@@ -176,13 +176,3 @@ WEALTHFLY_IMAGE_TAG=dev docker compose pull
 WEALTHFLY_IMAGE_TAG=dev docker compose up -d
 ```
 
-## Notes / things you may want to tune
-
-- **Multi-currency**: amounts are stored and summed as-is per Firefly's reported values; if you run
-  multiple currencies the totals in the charts will mix them. If that matters to you, filter by
-  account/currency, or extend `sync.js` to convert to a base currency using Firefly's exchange rate
-  data.
-- **Account types included in net worth**: Firefly `asset`, `cash`, and `liability` accounts are
-  included when their `include_net_worth` flag is enabled. Liability subtypes (`loan`, `debt`, and
-  `mortgage`) are represented by Firefly as `type: liability`.
-- **Sync frequency**: set `SYNC_CRON` in `.env` (standard cron syntax).
