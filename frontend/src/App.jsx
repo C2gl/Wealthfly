@@ -13,13 +13,15 @@ import SavingsPage from './components/SavingsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import { useTranslation } from './i18n.jsx';
 import { api } from './api.js';
-import { categoryColor, daysAgo, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isNamedSavingsAccount, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
+import { categoryColor, daysAgo, endOfMonth, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isNamedSavingsAccount, startOfMonth, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
 
 const RANGES = [
-  { key: '30d', start: () => daysAgo(30) },
-  { key: '90d', start: () => daysAgo(90) },
-  { key: 'ytd', start: () => `${new Date().getFullYear()}-01-01` },
-  { key: 'all', start: () => '0000-01-01' },
+  { key: 'thisMonth', start: () => startOfMonth(0), end: () => today() },
+  { key: 'previousMonth', start: () => startOfMonth(1), end: () => endOfMonth(1) },
+  { key: '30d', start: () => daysAgo(30), end: () => today() },
+  { key: '90d', start: () => daysAgo(90), end: () => today() },
+  { key: 'ytd', start: () => `${new Date().getFullYear()}-01-01`, end: () => today() },
+  { key: 'all', start: () => '0000-01-01', end: () => today() },
 ];
 
 function budgetAmount(value) {
@@ -124,7 +126,8 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
 
-  const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
+  const activeRange = RANGES.find((r) => r.key === rangeKey);
+  const range = { start: activeRange.start(), end: activeRange.end() };
   const rangeLabel = t(`periods.${rangeKey}`);
   const viewTitle = t(`nav.${view}`);
   const formatCurrency = (value, currency) => formatCurrencyValue(value, currency, language);
