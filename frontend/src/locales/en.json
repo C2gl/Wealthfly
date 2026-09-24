@@ -67,5 +67,13 @@
   },
   "language": {
     "unsupported": "Unsupported language: {{language}}"
+  },
+  "auth": {
+    "subtitle": "Enter the daschboard password to continue",
+    "passwordPlaceholder": "Password",
+    "unlock": "Unlock",
+    "checking": "Checking...",
+    "incorrectPassword": "Incorrect password",
+    "loginFailed": "Login failed"
   }
 }

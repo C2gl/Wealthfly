@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../i18n.jsx';
 
 export default function LoginScreen({ onLoggedIn }) {
+  const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -21,7 +23,7 @@ export default function LoginScreen({ onLoggedIn }) {
       }
       onLoggedIn();
     } catch (err) {
-      setError(err.message === 'invalid password' ? 'Incorrect password.' : 'Login failed — try again.');
+      setError(err.message === 'invalid password' ? t('auth.incorrectPassword') : t('auth.loginFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -34,18 +36,18 @@ export default function LoginScreen({ onLoggedIn }) {
           <span className="wordmark-mark" />
           <span className="wordmark-text">Wealthfly</span>
         </div>
-        <p className="login-subtitle">Enter the dashboard password to continue.</p>
+        <p className="login-subtitle">{t('auth.subtitle')}</p>
         <input
           type="password"
           autoFocus
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder={t('auth.passwordPlaceholder')}
           className="login-input"
         />
         {error ? <div className="login-error">{error}</div> : null}
         <button type="submit" className="login-submit" disabled={submitting || !password}>
-          {submitting ? 'Checking…' : 'Unlock'}
+          {submitting ? t('auth.checking') : t('auth.unlock')}
         </button>
       </form>
     </div>
