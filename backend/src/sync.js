@@ -2,6 +2,52 @@ const db = require('./db');
 const defaultFirefly = require('./fireflyClient');
 const { checkReconciliation, storeResult: storeReconciliation } = require('./reconcile');
 
+class SyncInProgressError extends Error {
+  constructor(message = 'A sync is already in progress') {
+    super(message);
+    this.name = 'SyncInProgressError';
+    this.code = 'SYNC_IN_PROGRESS';
+  }
+}
+
+const MAX_SYNC_DURATION_MS = 10 * 60 * 1000; // 10 minutes watchdog
+const syncState = {
+  inProgress: false,
+  startedAt: null,
+  source: null,
+};
+
+function isSyncInProgress() {
+  if (!syncState.inProgress) return false;
+  if (syncState.startedAt && Date.now() - new Date(syncState.startedAt).getTime() > MAX_SYNC_DURATION_MS) {
+    console.warn('[sync] sync lock exceeded timeout (10m), releasing stale lock');
+    syncState.inProgress = false;
+    syncState.startedAt = null;
+    syncState.source = null;
+    return false;
+  }
+  return true;
+}
+
+function getSyncState() {
+  return {
+    inProgress: isSyncInProgress(),
+    startedAt: syncState.startedAt,
+    source: syncState.source,
+  };
+}
+
+function setSyncStatusMeta(status) {
+  try {
+    db.prepare(
+      `INSERT INTO sync_meta (key, value) VALUES ('sync_status', ?)
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value`
+    ).run(status);
+  } catch (err) {
+    // DB might be closed or during unit test setup
+  }
+}
+
 const NET_WORTH_TYPES = new Set(['asset', 'cash', 'liability', 'liabilities', 'loan', 'debt', 'mortgage']);
 
 function upsertAccount(row) {
@@ -191,35 +237,51 @@ function rebuildBalanceHistory() {
   run();
 }
 
-async function runFullSync(firefly = defaultFirefly) {
-  const started = Date.now();
-  const accounts = await syncAccounts(firefly);
-  const categories = await syncCategories(firefly);
-  const tags = await syncTags(firefly);
-  const transactions = await syncTransactions(firefly);
-  rebuildBalanceHistory();
-
-  db.prepare(
-    `INSERT INTO sync_meta (key, value) VALUES ('last_sync', ?)
-     ON CONFLICT(key) DO UPDATE SET value=excluded.value`
-  ).run(new Date().toISOString());
-
-  try {
-    const reconciliation = await checkReconciliation({}, firefly);
-    storeReconciliation(reconciliation);
-  } catch (err) {
-    // Reconciliation is a diagnostic extra, not core to syncing — a Firefly
-    // hiccup here should never fail the sync itself.
-    console.error('[reconcile] failed:', err.message);
+async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
+  if (isSyncInProgress()) {
+    throw new SyncInProgressError('A sync is already in progress');
   }
 
-  return {
-    accounts,
-    categories,
-    tags,
-    transactions,
-    durationMs: Date.now() - started,
-  };
+  syncState.inProgress = true;
+  syncState.startedAt = new Date().toISOString();
+  syncState.source = source;
+  setSyncStatusMeta('running');
+
+  const started = Date.now();
+  try {
+    const accounts = await syncAccounts(firefly);
+    const categories = await syncCategories(firefly);
+    const tags = await syncTags(firefly);
+    const transactions = await syncTransactions(firefly);
+    rebuildBalanceHistory();
+
+    db.prepare(
+      `INSERT INTO sync_meta (key, value) VALUES ('last_sync', ?)
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value`
+    ).run(new Date().toISOString());
+
+    try {
+      const reconciliation = await checkReconciliation({}, firefly);
+      storeReconciliation(reconciliation);
+    } catch (err) {
+      // Reconciliation is a diagnostic extra, not core to syncing — a Firefly
+      // hiccup here should never fail the sync itself.
+      console.error('[reconcile] failed:', err.message);
+    }
+
+    return {
+      accounts,
+      categories,
+      tags,
+      transactions,
+      durationMs: Date.now() - started,
+    };
+  } finally {
+    syncState.inProgress = false;
+    syncState.startedAt = null;
+    syncState.source = null;
+    setSyncStatusMeta('idle');
+  }
 }
 
 module.exports = {
@@ -230,4 +292,9 @@ module.exports = {
   syncCategories,
   syncTags,
   syncTransactions,
+  isSyncInProgress,
+  getSyncState,
+  SyncInProgressError,
+  MAX_SYNC_DURATION_MS,
+  _syncState: syncState,
 };

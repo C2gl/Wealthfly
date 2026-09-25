@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { runFullSync } = require('../sync');
+const { runFullSync, getSyncState, SyncInProgressError } = require('../sync');
 const firefly = require('../fireflyClient');
 
 const router = express.Router();
@@ -77,9 +77,19 @@ router.get('/transactions', (req, res) => {
 
 router.post('/sync', async (req, res) => {
   try {
-    const result = await runFullSync();
+    const result = await runFullSync(undefined, { source: 'api' });
     res.json({ ok: true, ...result });
   } catch (err) {
+    if (err instanceof SyncInProgressError || err.code === 'SYNC_IN_PROGRESS') {
+      const state = getSyncState();
+      return res.status(409).json({
+        ok: false,
+        code: 'SYNC_IN_PROGRESS',
+        error: 'A sync is already in progress. Please wait for it to complete.',
+        startedAt: state.startedAt,
+        source: state.source,
+      });
+    }
     console.error('[sync] failed:', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
@@ -87,7 +97,13 @@ router.post('/sync', async (req, res) => {
 
 router.get('/sync/status', (req, res) => {
   const row = db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get();
-  res.json({ lastSync: row ? row.value : null });
+  const state = getSyncState();
+  res.json({
+    lastSync: row ? row.value : null,
+    inProgress: state.inProgress,
+    startedAt: state.startedAt,
+    source: state.source,
+  });
 });
 
 module.exports = router;

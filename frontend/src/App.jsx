@@ -247,6 +247,16 @@ export default function App() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    api.syncStatus()
+      .then((status) => {
+        if (status?.inProgress) {
+          setSyncing(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const loadReconciliation = useCallback(() => {
     api.reconciliation()
       .then((result) => setReconciliation(result))
@@ -261,10 +271,36 @@ export default function App() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (!syncing) return;
+    const interval = setInterval(async () => {
+      try {
+        const status = await api.syncStatus();
+        if (!status?.inProgress) {
+          setSyncing(false);
+          await load();
+          loadReconciliation();
+        }
+      } catch {
+        // Keep polling on transient failure
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [syncing, load, loadReconciliation]);
+
   const handleSync = async () => {
     setSyncing(true);
     try {
       const result = await api.triggerSync();
+      if (result.inProgress) {
+        setSyncNotification({
+          id: `sync-info-${Date.now()}`,
+          level: 'info',
+          title: 'Sync in progress',
+          message: 'A sync is already running in the background. Results will refresh automatically when finished.',
+        });
+        return;
+      }
       setSyncNotification({
         id: `sync-success-${Date.now()}`,
         level: 'success',
@@ -273,6 +309,8 @@ export default function App() {
       });
       await load();
       loadReconciliation();
+      setSyncing(false);
+    } catch (e) {
       setSyncNotification({
         id: `sync-failure-${Date.now()}`,
         level: 'critical',
@@ -280,7 +318,6 @@ export default function App() {
         message: e.message,
       });
       setError(e.message);
-    } finally {
       setSyncing(false);
     }
   };
