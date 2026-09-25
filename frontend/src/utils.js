@@ -64,6 +64,22 @@ export function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// monthsAgo = 0 -> current month, 1 -> previous month, etc.
+export function startOfMonth(monthsAgo = 0) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - monthsAgo);
+  return d.toISOString().slice(0, 10);
+}
+
+export function endOfMonth(monthsAgo = 0) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - monthsAgo + 1);
+  d.setDate(0); // day 0 of next month = last day of the target month
+  return d.toISOString().slice(0, 10);
+}
+
 const CATEGORY_COLORS = ['#39725a', '#bc704d', '#c4aa64', '#6f8a7b', '#5a73a1', '#8d72b2', '#9f9d93'];
 
 export function categoryColor(category, avoidColor) {

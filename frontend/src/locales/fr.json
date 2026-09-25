@@ -17,7 +17,7 @@
     "failed": "Echec de la synchronisation",
     "syncedSummary": "{{accounts}} compte, {{categories}} categorie, {{tags}} etiquette et {{transactions}} transaction synchronises."
   },
-  "periods": { "30d": "30J", "90d": "90J", "ytd": "AN", "all": "TOUT" },
+  "periods": { "thisMonth": "Ce mois-ci", "previousMonth": "Mois dernier", "30d": "30J", "90d": "90J", "ytd": "AN", "all": "TOUT" },
   "overview": {
     "whereItWent": "Ou est parti l'argent",
     "spendingRhythm": "Rythme des depenses",

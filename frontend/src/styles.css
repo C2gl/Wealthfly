@@ -1176,9 +1176,9 @@ body {
 
 .range-toggle {
   display: flex;
+  flex-wrap: wrap;
   border: 1px solid var(--border);
   border-radius: 4px;
-  overflow: hidden;
 }
 
 .range-btn {

@@ -13,13 +13,15 @@ import SavingsPage from './components/SavingsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import { useTranslation } from './i18n.jsx';
 import { api } from './api.js';
-import { categoryColor, daysAgo, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isNamedSavingsAccount, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
+import { categoryColor, daysAgo, endOfMonth, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isNamedSavingsAccount, startOfMonth, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
 
 const RANGES = [
-  { key: '30d', start: () => daysAgo(30) },
-  { key: '90d', start: () => daysAgo(90) },
-  { key: 'ytd', start: () => `${new Date().getFullYear()}-01-01` },
-  { key: 'all', start: () => '0000-01-01' },
+  { key: 'thisMonth', start: () => startOfMonth(0), end: () => today() },
+  { key: 'previousMonth', start: () => startOfMonth(1), end: () => endOfMonth(1) },
+  { key: '30d', start: () => daysAgo(30), end: () => today() },
+  { key: '90d', start: () => daysAgo(90), end: () => today() },
+  { key: 'ytd', start: () => `${new Date().getFullYear()}-01-01`, end: () => today() },
+  { key: 'all', start: () => '0000-01-01', end: () => today() },
 ];
 
 function budgetAmount(value) {
@@ -101,7 +103,7 @@ function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel
 export default function App() {
   const { t, language } = useTranslation();
   const [view, setView] = useState('overview');
-  const [rangeKey, setRangeKey] = useState('30d');
+  const [rangeKey, setRangeKey] = useState('thisMonth');
   const [stats, setStats] = useState(null);
   const [netWorth, setNetWorth] = useState([]);
   const [spendingByDay, setSpendingByDay] = useState([]);
@@ -124,7 +126,8 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
 
-  const range = { start: RANGES.find((r) => r.key === rangeKey).start(), end: today() };
+  const activeRange = RANGES.find((r) => r.key === rangeKey);
+  const range = { start: activeRange.start(), end: activeRange.end() };
   const rangeLabel = t(`periods.${rangeKey}`);
   const viewTitle = t(`nav.${view}`);
   const formatCurrency = (value, currency) => formatCurrencyValue(value, currency, language);
@@ -135,6 +138,21 @@ export default function App() {
     : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
   const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
   const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isNamedSavingsAccount(account, savingsAccountWords));
+  // For "this month", extend the chart's x-axis to the full calendar month by padding
+  // the remaining (future) days with null values — Recharts stops the line there
+  // instead of drawing through days that haven't happened yet.
+  const chartNetWorth = rangeKey === 'thisMonth'
+    ? (() => {
+        const monthEnd = endOfMonth(0);
+        const padded = [...netWorth];
+        let cursor = padded.length ? shiftDate(padded[padded.length - 1].date, 1) : range.start;
+        while (cursor <= monthEnd) {
+          padded.push({ date: cursor, total: null });
+          cursor = shiftDate(cursor, 1);
+        }
+        return padded;
+      })()
+    : netWorth;
   const budgetRows = budgets
     .filter((budget) => budget.active !== false)
     .map((budget, index) => {
@@ -316,7 +334,7 @@ export default function App() {
                 <span className="overview-preview-foot">Open trend comparison</span>
               </button>
             </div>
-            <NetWorthChart data={netWorth} />
+            <NetWorthChart data={chartNetWorth} />
             <section className="panel recent-panel">
               <div className="panel-heading-row"><h2>Recent activity</h2><button className="text-button" onClick={() => setView('transactions')}>View all →</button></div>
               <div className="recent-list">

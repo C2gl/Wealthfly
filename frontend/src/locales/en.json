@@ -18,6 +18,8 @@
     "syncedSummary": "Synced {{accounts}} account, {{categories}} category, {{tags}} tag, and {{transactions}} transaction."
   },
   "periods": {
+    "thisMonth": "This month",
+    "previousMonth": "Last month",
     "30d": "30D",
     "90d": "90D",
     "ytd": "YTD",
