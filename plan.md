@@ -1,16 +1,5 @@
 # Suggested next priorities
 
-## Done
-- [x] Notification panel for API failures, stale/missing syncs, overspent budgets, and empty periods. Notices can be dismissed for the current session.
-- [x] Auth system: single shared password via `.env` (`WEALTHFLY_PASSWORD`), signed session cookie — see README "Authentication"
-- [x] README security warning about exposing the app without auth
-- [x] Notification warning shown in-app when no password is set
-- [x] Login screen strings translated (en/fr) via i18n
-- [x] Fixed date-range filtering bug: `transactions` stored full timestamps while range filters compared plain dates, silently dropping the last day of any period from income/expense totals — the root cause of the in/out mismatch vs Firefly. Fixed by filtering on `substr(date, 1, 10)` in `data.js` and `summary.js`.
-- [x] Added "This month" and "Previous month" date ranges (now the default view), matching Firefly's own month-based reporting for easier manual sanity checks
-- [x] Overview net-worth chart now spans the full current month on the x-axis, with the line stopping at today instead of extending into the future
-- [x] Reconciliation check: after each sync, compares Wealthfly's income/expenses/net-worth for the current month against Firefly's own `/summary/basic`, storing the result (`reconcile.js`, `sync.js`) and surfacing drift as a dashboard notification (tolerance: 0.5, currently un-localized like the rest of the notification system)
-
 ## Now
 - [ ] **Sync Lock / Mutex**: Add an in-memory/DB sync lock (`isSyncing`) in `sync.js` to prevent concurrent sync executions (e.g. cron firing while user clicks "Sync now") from triggering table wipe collisions or `SQLITE_BUSY` errors.
 - [ ] **Fix CI Docker Push on PR**: Update `.github/workflows/test.yml` so pull requests do not push images to GHCR (`push: ${{ github.event_name != 'pull_request' }}`).
@@ -64,3 +53,15 @@ An option for the user to do a clean sync, to fully prune the DB — should be i
 ### 4. CI/CD & Pipeline Safety
 - **Docker Push on PRs**: The workflow in `.github/workflows/test.yml` currently sets `push: true` for all trigger types including `pull_request`, risking failed runs or unintended image pushes from branches/forks.
 - **Frontend Build in CI**: Frontend builds are only validated inside Docker rather than as a standalone test matrix step.
+
+
+## Done
+- [x] Notification panel for API failures, stale/missing syncs, overspent budgets, and empty periods. Notices can be dismissed for the current session.
+- [x] Auth system: single shared password via `.env` (`WEALTHFLY_PASSWORD`), signed session cookie — see README "Authentication"
+- [x] README security warning about exposing the app without auth
+- [x] Notification warning shown in-app when no password is set
+- [x] Login screen strings translated (en/fr) via i18n
+- [x] Fixed date-range filtering bug: `transactions` stored full timestamps while range filters compared plain dates, silently dropping the last day of any period from income/expense totals — the root cause of the in/out mismatch vs Firefly. Fixed by filtering on `substr(date, 1, 10)` in `data.js` and `summary.js`.
+- [x] Added "This month" and "Previous month" date ranges (now the default view), matching Firefly's own month-based reporting for easier manual sanity checks
+- [x] Overview net-worth chart now spans the full current month on the x-axis, with the line stopping at today instead of extending into the future
+- [x] Reconciliation check: after each sync, compares Wealthfly's income/expenses/net-worth for the current month against Firefly's own `/summary/basic`, storing the result (`reconcile.js`, `sync.js`) and surfacing drift as a dashboard notification (tolerance: 0.5, currently un-localized like the rest of the notification system)
