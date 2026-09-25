@@ -1,5 +1,27 @@
 const path = require('path');
-const Database = require('better-sqlite3');
+let Database;
+try {
+  Database = require('better-sqlite3');
+} catch (err) {
+  if (process.env.MOCK_SQLITE === 'true') {
+    Database = class MockDatabase {
+      pragma() {}
+      exec() {}
+      prepare() {
+        return {
+          run: () => ({ changes: 1 }),
+          get: () => ({ value: null }),
+          all: () => [],
+        };
+      }
+      transaction(fn) {
+        return (...args) => fn(...args);
+      }
+    };
+  } else {
+    throw err;
+  }
+}
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'wealthfly.db');
 

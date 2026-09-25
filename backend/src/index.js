@@ -8,7 +8,8 @@ const cron = require('node-cron');
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const summaryRoutes = require('./routes/summary');
-const { runFullSync } = require('./sync');
+const db = require('./db');
+const { runFullSync, isSyncInProgress } = require('./sync');
 const { authEnabled, requireAuth } = require('./auth');
 
 const PORT = process.env.PORT || 4400;
@@ -61,12 +62,31 @@ app.get('*', (req, res, next) => {
 app.listen(PORT, () => {
   console.log(`[wealthfly] listening on port ${PORT}`);
 
+  // Reset any leftover dirty sync status from a prior crash
+  try {
+    db.prepare(
+      "INSERT INTO sync_meta (key, value) VALUES ('sync_status', 'idle') ON CONFLICT(key) DO UPDATE SET value='idle'"
+    ).run();
+  } catch (err) {
+    console.warn('[sync] could not reset sync_status on boot:', err.message);
+  }
+
   if (cron.validate(SYNC_CRON)) {
     cron.schedule(SYNC_CRON, () => {
-      console.log('[sync] scheduled sync starting...');
-      runFullSync()
-        .then((r) => console.log('[sync] complete', r))
-        .catch((e) => console.error('[sync] failed', e.message));
+      console.log('[sync] scheduled sync triggered');
+      if (isSyncInProgress()) {
+        console.log('[sync] scheduled sync skipped: a sync is already in progress');
+        return;
+      }
+      runFullSync(undefined, { source: 'cron' })
+        .then((r) => console.log('[sync] scheduled sync complete', r))
+        .catch((e) => {
+          if (e.code === 'SYNC_IN_PROGRESS') {
+            console.log('[sync] scheduled sync skipped: a sync is already in progress');
+          } else {
+            console.error('[sync] scheduled sync failed', e.message);
+          }
+        });
     });
     console.log(`[wealthfly] scheduled sync: "${SYNC_CRON}"`);
   }
@@ -74,9 +94,19 @@ app.listen(PORT, () => {
   // Kick off an initial sync shortly after boot if we have credentials.
   if (process.env.FIREFLY_URL && process.env.FIREFLY_TOKEN) {
     setTimeout(() => {
-      runFullSync()
+      if (isSyncInProgress()) {
+        console.log('[sync] initial sync skipped: a sync is already in progress');
+        return;
+      }
+      runFullSync(undefined, { source: 'initial' })
         .then((r) => console.log('[sync] initial sync complete', r))
-        .catch((e) => console.error('[sync] initial sync failed', e.message));
+        .catch((e) => {
+          if (e.code === 'SYNC_IN_PROGRESS') {
+            console.log('[sync] initial sync skipped: a sync is already in progress');
+          } else {
+            console.error('[sync] initial sync failed', e.message);
+          }
+        });
     }, 2000);
   }
 });
