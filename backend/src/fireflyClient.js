@@ -76,6 +76,17 @@ async function testConnection() {
   return data;
 }
 
+// Firefly's own computed totals for a period — not paginated, flat keyed object
+// like { "spent-in-EUR": { key, monetary_value, ... }, "earned-in-EUR": {...}, ... }.
+// Used to cross-check Wealthfly's own totals for the same period.
+async function getSummaryBasic({ start, end } = {}) {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  const { data } = await client.get('/summary/basic', { params });
+  return data;
+}
+
 module.exports = {
   getAccounts,
   getCategories,
@@ -83,5 +94,6 @@ module.exports = {
   getBudgets,
   getBudgetLimits,
   getTransactions,
+  getSummaryBasic,
   testConnection,
 };
