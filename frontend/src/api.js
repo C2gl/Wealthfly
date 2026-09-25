@@ -14,6 +14,7 @@ export const api = {
   config: () => get('/config'),
   session: () => get('/session'),
   stats: (range) => get('/summary/stats', range),
+  reconciliation: () => get('/summary/reconciliation'),
   netWorth: (range) => get('/summary/net-worth', range),
   expensesByCategory: (range) => get('/summary/expenses-by-category', range),
   expensesByCategoryByDay: (range) => get('/summary/expenses-by-category-by-day', range),

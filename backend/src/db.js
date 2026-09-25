@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS sync_meta (
 );
 
 CREATE INDEX IF NOT EXISTS idx_tx_date ON transactions(date);
+CREATE INDEX IF NOT EXISTS idx_tx_date_only ON transactions(substr(date, 1, 10));
 CREATE INDEX IF NOT EXISTS idx_tx_category ON transactions(category_name);
 CREATE INDEX IF NOT EXISTS idx_tx_destination ON transactions(destination_name);
 CREATE INDEX IF NOT EXISTS idx_tx_source_id ON transactions(source_id);

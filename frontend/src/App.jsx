@@ -41,7 +41,7 @@ function countLabel(count, singular) {
   return `${count || 0} ${singular}${count === 1 ? '' : 's'}`;
 }
 
-function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus }) {
+function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus, reconciliation }) {
   const notifications = [];
 
   if (syncNotification) notifications.push(syncNotification);
@@ -52,6 +52,20 @@ function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel
       level: 'warning',
       title: 'No password set',
       message: 'Wealthfly is running without a login — anyone who can reach it can view your data. Set WEALTHFLY_PASSWORD in .env.',
+    });
+  }
+
+  if (reconciliation && reconciliation.drift) {
+    const labels = { income: 'income', expenses: 'expenses', netWorth: 'net worth' };
+    const mismatches = Object.keys(labels).filter((key) => reconciliation[key]?.drift);
+    const detail = mismatches
+      .map((key) => `${labels[key]}: ${reconciliation[key].local} vs Firefly's ${reconciliation[key].firefly}`)
+      .join('; ');
+    notifications.push({
+      id: 'reconciliation-drift',
+      level: 'warning',
+      title: "Totals don't match Firefly",
+      message: `For ${reconciliation.start} to ${reconciliation.end} — ${detail}. Usually means a sync didn't fully complete; try running a sync.`,
     });
   }
 
@@ -122,6 +136,7 @@ export default function App() {
   const [syncNotification, setSyncNotification] = useState(null);
   const [savingsAccountWords, setSavingsAccountWords] = useState(null);
   const [authStatus, setAuthStatus] = useState(null);
+  const [reconciliation, setReconciliation] = useState(null);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
@@ -179,7 +194,7 @@ export default function App() {
         color: ['#8da34d', '#c6a642', '#62615d'][index % 3],
       };
     });
-  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus });
+  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus, reconciliation });
 
   const load = useCallback(async () => {
     try {
@@ -232,6 +247,16 @@ export default function App() {
       .catch(() => {});
   }, []);
 
+  const loadReconciliation = useCallback(() => {
+    api.reconciliation()
+      .then((result) => setReconciliation(result))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    loadReconciliation();
+  }, [loadReconciliation]);
+
   useEffect(() => {
     load();
   }, [load]);
@@ -247,7 +272,7 @@ export default function App() {
         message: `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')}.`,
       });
       await load();
-    } catch (e) {
+      loadReconciliation();
       setSyncNotification({
         id: `sync-failure-${Date.now()}`,
         level: 'critical',

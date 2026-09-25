@@ -1,5 +1,6 @@
 const db = require('./db');
 const defaultFirefly = require('./fireflyClient');
+const { checkReconciliation, storeResult: storeReconciliation } = require('./reconcile');
 
 const NET_WORTH_TYPES = new Set(['asset', 'cash', 'liability', 'liabilities', 'loan', 'debt', 'mortgage']);
 
@@ -202,6 +203,15 @@ async function runFullSync(firefly = defaultFirefly) {
     `INSERT INTO sync_meta (key, value) VALUES ('last_sync', ?)
      ON CONFLICT(key) DO UPDATE SET value=excluded.value`
   ).run(new Date().toISOString());
+
+  try {
+    const reconciliation = await checkReconciliation({}, firefly);
+    storeReconciliation(reconciliation);
+  } catch (err) {
+    // Reconciliation is a diagnostic extra, not core to syncing — a Firefly
+    // hiccup here should never fail the sync itself.
+    console.error('[reconcile] failed:', err.message);
+  }
 
   return {
     accounts,
