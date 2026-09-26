@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { runFullSync, getSyncState, SyncInProgressError } = require('../sync');
+const { runSync, getSyncState, SyncInProgressError } = require('../sync');
 const firefly = require('../fireflyClient');
 
 const router = express.Router();
@@ -77,7 +77,8 @@ router.get('/transactions', (req, res) => {
 
 router.post('/sync', async (req, res) => {
   try {
-    const result = await runFullSync(undefined, { source: 'api' });
+    const full = req.query.full === 'true' || req.query.full === '1';
+    const result = await runSync(undefined, { source: 'api', full });
     res.json({ ok: true, ...result });
   } catch (err) {
     if (err instanceof SyncInProgressError || err.code === 'SYNC_IN_PROGRESS') {

@@ -9,7 +9,7 @@ const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const summaryRoutes = require('./routes/summary');
 const db = require('./db');
-const { runFullSync, isSyncInProgress } = require('./sync');
+const { runSync, isSyncInProgress } = require('./sync');
 const { authEnabled, requireAuth } = require('./auth');
 
 const PORT = process.env.PORT || 4400;
@@ -78,7 +78,7 @@ app.listen(PORT, () => {
         console.log('[sync] scheduled sync skipped: a sync is already in progress');
         return;
       }
-      runFullSync(undefined, { source: 'cron' })
+      runSync(undefined, { source: 'cron' })
         .then((r) => console.log('[sync] scheduled sync complete', r))
         .catch((e) => {
           if (e.code === 'SYNC_IN_PROGRESS') {
@@ -98,7 +98,7 @@ app.listen(PORT, () => {
         console.log('[sync] initial sync skipped: a sync is already in progress');
         return;
       }
-      runFullSync(undefined, { source: 'initial' })
+      runSync(undefined, { source: 'initial' })
         .then((r) => console.log('[sync] initial sync complete', r))
         .catch((e) => {
           if (e.code === 'SYNC_IN_PROGRESS') {

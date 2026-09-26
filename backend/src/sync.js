@@ -2,6 +2,26 @@ const db = require('./db');
 const defaultFirefly = require('./fireflyClient');
 const { checkReconciliation, storeResult: storeReconciliation } = require('./reconcile');
 
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function shiftDate(dateString, days) {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+const DEFAULT_LOOKBACK_DAYS = 30;
+
+// How many trailing days an incremental sync re-fetches and re-applies, so
+// backdated/edited transactions within that window still get picked up.
+// Configurable via SYNC_LOOKBACK_DAYS in .env.
+function getLookbackDays() {
+  const raw = Number(process.env.SYNC_LOOKBACK_DAYS);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : DEFAULT_LOOKBACK_DAYS;
+}
+
 class SyncInProgressError extends Error {
   constructor(message = 'A sync is already in progress') {
     super(message);
@@ -134,6 +154,24 @@ async function syncTags(firefly = defaultFirefly) {
   return tags.length;
 }
 
+function transactionRowFromSplit(group, s, idx) {
+  return {
+    id: group.id,
+    split_index: idx,
+    type: s.type,
+    date: s.date,
+    amount: parseFloat(s.amount || '0'),
+    currency_code: s.currency_code,
+    description: s.description,
+    source_id: s.source_id,
+    source_name: s.source_name,
+    destination_id: s.destination_id,
+    destination_name: s.destination_name,
+    category_name: s.category_name || null,
+    tags: JSON.stringify(s.tags || []),
+  };
+}
+
 async function syncTransactions(firefly = defaultFirefly) {
   const groups = await firefly.getTransactions();
   const clear = db.prepare('DELETE FROM transactions');
@@ -144,27 +182,52 @@ async function syncTransactions(firefly = defaultFirefly) {
     rows.forEach((group) => {
       const splits = group.attributes.transactions || [];
       splits.forEach((s, idx) => {
-        insertTx.run({
-          id: group.id,
-          split_index: idx,
-          type: s.type,
-          date: s.date,
-          amount: parseFloat(s.amount || '0'),
-          currency_code: s.currency_code,
-          description: s.description,
-          source_id: s.source_id,
-          source_name: s.source_name,
-          destination_id: s.destination_id,
-          destination_name: s.destination_name,
-          category_name: s.category_name || null,
-          tags: JSON.stringify(s.tags || []),
-        });
+        insertTx.run(transactionRowFromSplit(group, s, idx));
         count += 1;
       });
     });
   });
   tx(groups);
   return count;
+}
+
+/**
+ * Incremental transaction sync: only re-fetches and re-applies a trailing
+ * window of `lookbackDays` (default 30, via SYNC_LOOKBACK_DAYS) instead of
+ * Wealthfly's entire history. Everything older than the window is left
+ * untouched in the local DB — full sync stays available (see runFullSync /
+ * the "full" option on runSync) for building history from scratch or forcing
+ * a complete refresh.
+ *
+ * This re-fetches the whole window rather than only transactions "new since
+ * last sync", because Firefly transactions can be edited or backdated after
+ * the fact (a bank import landing late, a manual date correction) and the
+ * plain transactions list endpoint has no reliable "updated since" filter.
+ * A wide-enough lookback window catches those edits; a change further back
+ * than the window won't be picked up until the next full sync.
+ */
+async function syncTransactionsIncremental(firefly = defaultFirefly, lookbackDays = getLookbackDays()) {
+  const windowStart = shiftDate(today(), -lookbackDays);
+  const groups = await firefly.getTransactions({ start: windowStart });
+  const clearWindow = db.prepare('DELETE FROM transactions WHERE substr(date, 1, 10) >= ?');
+  let count = 0;
+
+  const tx = db.transaction((rows) => {
+    clearWindow.run(windowStart);
+    rows.forEach((group) => {
+      const splits = group.attributes.transactions || [];
+      splits.forEach((s, idx) => {
+        insertTx.run(transactionRowFromSplit(group, s, idx));
+        count += 1;
+      });
+    });
+  });
+  tx(groups);
+  return { count, windowStart };
+}
+
+function hasSyncedBefore() {
+  return Boolean(db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get());
 }
 
 /**
@@ -237,16 +300,45 @@ function rebuildBalanceHistory() {
   run();
 }
 
-async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
+function acquireSyncLock(source) {
   if (isSyncInProgress()) {
     throw new SyncInProgressError('A sync is already in progress');
   }
-
   syncState.inProgress = true;
   syncState.startedAt = new Date().toISOString();
   syncState.source = source;
   setSyncStatusMeta('running');
+}
 
+function releaseSyncLock() {
+  syncState.inProgress = false;
+  syncState.startedAt = null;
+  syncState.source = null;
+  setSyncStatusMeta('idle');
+}
+
+// Shared tail end of every sync: record last_sync, run the (best-effort,
+// non-fatal) reconciliation check, and shape the result object.
+async function finalizeSync(firefly, started, extra = {}) {
+  db.prepare(
+    `INSERT INTO sync_meta (key, value) VALUES ('last_sync', ?)
+     ON CONFLICT(key) DO UPDATE SET value=excluded.value`
+  ).run(new Date().toISOString());
+
+  try {
+    const reconciliation = await checkReconciliation({}, firefly);
+    storeReconciliation(reconciliation);
+  } catch (err) {
+    // Reconciliation is a diagnostic extra, not core to syncing — a Firefly
+    // hiccup here should never fail the sync itself.
+    console.error('[reconcile] failed:', err.message);
+  }
+
+  return { durationMs: Date.now() - started, ...extra };
+}
+
+async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
+  acquireSyncLock(source);
   const started = Date.now();
   try {
     const accounts = await syncAccounts(firefly);
@@ -255,43 +347,64 @@ async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
     const transactions = await syncTransactions(firefly);
     rebuildBalanceHistory();
 
-    db.prepare(
-      `INSERT INTO sync_meta (key, value) VALUES ('last_sync', ?)
-       ON CONFLICT(key) DO UPDATE SET value=excluded.value`
-    ).run(new Date().toISOString());
-
-    try {
-      const reconciliation = await checkReconciliation({}, firefly);
-      storeReconciliation(reconciliation);
-    } catch (err) {
-      // Reconciliation is a diagnostic extra, not core to syncing — a Firefly
-      // hiccup here should never fail the sync itself.
-      console.error('[reconcile] failed:', err.message);
-    }
-
-    return {
+    return await finalizeSync(firefly, started, {
       accounts,
       categories,
       tags,
       transactions,
-      durationMs: Date.now() - started,
-    };
+      incremental: false,
+    });
   } finally {
-    syncState.inProgress = false;
-    syncState.startedAt = null;
-    syncState.source = null;
-    setSyncStatusMeta('idle');
+    releaseSyncLock();
   }
+}
+
+async function runIncrementalSync(firefly = defaultFirefly, { source = 'api', lookbackDays } = {}) {
+  acquireSyncLock(source);
+  const started = Date.now();
+  try {
+    const accounts = await syncAccounts(firefly);
+    const categories = await syncCategories(firefly);
+    const tags = await syncTags(firefly);
+    const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays);
+    rebuildBalanceHistory();
+
+    return await finalizeSync(firefly, started, {
+      accounts,
+      categories,
+      tags,
+      transactions,
+      incremental: true,
+      lookbackStart: windowStart,
+    });
+  } finally {
+    releaseSyncLock();
+  }
+}
+
+// Main entry point for scheduled/manual syncs: does a full historical sync
+// the very first time (no data yet) or when explicitly forced, and a cheap
+// windowed incremental sync otherwise.
+async function runSync(firefly = defaultFirefly, { source = 'api', full = false, lookbackDays } = {}) {
+  if (full || !hasSyncedBefore()) {
+    return runFullSync(firefly, { source });
+  }
+  return runIncrementalSync(firefly, { source, lookbackDays });
 }
 
 module.exports = {
   runFullSync,
+  runIncrementalSync,
+  runSync,
   rebuildBalanceHistory,
   computeBalancePoints,
   syncAccounts,
   syncCategories,
   syncTags,
   syncTransactions,
+  syncTransactionsIncremental,
+  hasSyncedBefore,
+  getLookbackDays,
   isSyncInProgress,
   getSyncState,
   SyncInProgressError,
