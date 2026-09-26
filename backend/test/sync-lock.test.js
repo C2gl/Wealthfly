@@ -44,6 +44,9 @@ test('isSyncInProgress returns true and tracks metadata while active', () => {
   _syncState.startedAt = '2026-09-25T10:00:00.000Z';
   _syncState.source = 'cron';
 
+  // Set up state to simulate an active lock
+  Object.assign(_syncState, { inProgress: true, startedAt: '2026-09-25T10:00:00.000Z', source: 'cron' });
+
   assert.equal(isSyncInProgress(), true);
   const state = getSyncState();
   assert.equal(state.inProgress, true);
