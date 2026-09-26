@@ -29,12 +29,20 @@ export const api = {
   categories: () => get('/categories'),
   tags: () => get('/tags'),
   syncStatus: () => get('/sync/status'),
-  triggerSync: () =>
-    fetch('/api/sync', { method: 'POST' }).then(async (r) => {
+  triggerSync: ({ full = false } = {}) =>
+    fetch(`/api/sync${full ? '?full=true' : ''}`, { method: 'POST' }).then(async (r) => {
       if (r.status === 401) window.dispatchEvent(new Event('wealthfly:unauthorized'));
       const body = await r.json().catch(() => ({}));
       if (r.status === 409) return { ok: false, inProgress: true, code: 'SYNC_IN_PROGRESS', ...body };
       if (!r.ok) throw new Error(body.error || `sync failed: ${r.status}`);
+      return body;
+    }),
+  purge: () =>
+    fetch('/api/purge', { method: 'POST' }).then(async (r) => {
+      if (r.status === 401) window.dispatchEvent(new Event('wealthfly:unauthorized'));
+      const body = await r.json().catch(() => ({}));
+      if (r.status === 409) return { ok: false, inProgress: true, code: 'SYNC_IN_PROGRESS', ...body };
+      if (!r.ok) throw new Error(body.error || `purge failed: ${r.status}`);
       return body;
     }),
 };

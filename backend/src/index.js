@@ -9,7 +9,7 @@ const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const summaryRoutes = require('./routes/summary');
 const db = require('./db');
-const { runSync, isSyncInProgress } = require('./sync');
+const { runSync, isSyncInProgress, getLookbackDays } = require('./sync');
 const { authEnabled, requireAuth } = require('./auth');
 
 const PORT = process.env.PORT || 4400;
@@ -45,6 +45,7 @@ app.get('/api/config', (req, res) => {
   res.json({
     language: process.env.WEALTHFLY_LANGUAGE || 'en',
     savingsAccountWords: SAVINGS_ACCOUNT_WORDS,
+    syncLookbackDays: getLookbackDays(),
   });
 });
 

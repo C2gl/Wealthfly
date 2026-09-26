@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { runSync, getSyncState, SyncInProgressError } = require('../sync');
+const { runSync, getSyncState, isSyncInProgress, purgeAllData, SyncInProgressError } = require('../sync');
 const firefly = require('../fireflyClient');
 
 const router = express.Router();
@@ -105,6 +105,25 @@ router.get('/sync/status', (req, res) => {
     startedAt: state.startedAt,
     source: state.source,
   });
+});
+
+// Wipes all locally cached data. The next sync (of any kind) will then run as
+// a full historical sync again, since hasSyncedBefore() becomes false.
+router.post('/purge', (req, res) => {
+  if (isSyncInProgress()) {
+    return res.status(409).json({
+      ok: false,
+      code: 'SYNC_IN_PROGRESS',
+      error: 'Cannot purge while a sync is in progress. Please wait for it to complete.',
+    });
+  }
+  try {
+    purgeAllData();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[purge] failed:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 module.exports = router;

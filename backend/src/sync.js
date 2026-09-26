@@ -230,6 +230,21 @@ function hasSyncedBefore() {
   return Boolean(db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get());
 }
 
+// Wipes every synced table so the next sync starts completely from scratch —
+// used by the settings page's "purge" action. Callers are responsible for
+// checking isSyncInProgress() first; this doesn't take the sync lock itself
+// since it's not a sync, just a reset.
+function purgeAllData() {
+  db.exec(`
+    DELETE FROM accounts;
+    DELETE FROM categories;
+    DELETE FROM tags;
+    DELETE FROM transactions;
+    DELETE FROM balance_history;
+    DELETE FROM sync_meta;
+  `);
+}
+
 /**
  * Pure balance-replay function, deliberately kept free of any DB access so it can be
  * unit tested directly: given an account's opening balance and every transaction that
@@ -404,6 +419,7 @@ module.exports = {
   syncTransactions,
   syncTransactionsIncremental,
   hasSyncedBefore,
+  purgeAllData,
   getLookbackDays,
   isSyncInProgress,
   getSyncState,
