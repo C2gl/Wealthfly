@@ -39,17 +39,17 @@ test('sync lock defaults to idle state', () => {
   });
 });
 
-test('isSyncInProgress returns true and tracks metadata while active', () => {
+test('isSyncInProgress returns true and tracks metadata while active', async () => { // Changed to async test
   // Set up state to simulate an active lock using static values matching the original intent for consistency
-  _syncState.inProgress = true;
-  _syncState.startedAt = '2026-09-25T10:00:00.000Z';
-  _syncState.source = 'cron';
+  Object.assign(_syncState, { inProgress: true, startedAt: '2026-09-25T10:00:00.000Z', source: 'cron' });
 
-  assert.equal(isSyncInProgress(), true);
-  const state = getSyncState();
-  assert.equal(state.inProgress, true);
-  assert.equal(state.startedAt, '2026-09-25T10:00:00.000Z');
-  assert.equal(state.source, 'cron');
+  await new Promise(resolve => setImmediate(() => { // Yield execution context to allow state change to register
+      assert.equal(isSyncInProgress(), true);
+      const state = getSyncState();
+      assert.equal(state.inProgress, true);
+      assert.equal(state.startedAt, '2026-09-25T10:00:00.000Z');
+      assert.equal(state.source, 'cron');
+  }));
 });
 
 test('watchdog timeout auto-releases stale lock if duration exceeds threshold', () => {
