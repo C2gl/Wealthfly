@@ -10,6 +10,7 @@ import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
 import SavingsPage from './components/SavingsPage.jsx';
+import SettingsPage from './components/SettingsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import { useTranslation } from './i18n.jsx';
 import { api } from './api.js';
@@ -135,6 +136,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [syncNotification, setSyncNotification] = useState(null);
   const [savingsAccountWords, setSavingsAccountWords] = useState(null);
+  const [syncLookbackDays, setSyncLookbackDays] = useState(null);
   const [authStatus, setAuthStatus] = useState(null);
   const [reconciliation, setReconciliation] = useState(null);
   const [error, setError] = useState(null);
@@ -237,7 +239,10 @@ export default function App() {
 
   useEffect(() => {
     api.config()
-      .then((config) => setSavingsAccountWords(config.savingsAccountWords))
+      .then((config) => {
+        setSavingsAccountWords(config.savingsAccountWords);
+        setSyncLookbackDays(config.syncLookbackDays);
+      })
       .catch(() => {});
   }, []);
 
@@ -288,10 +293,10 @@ export default function App() {
     return () => clearInterval(interval);
   }, [syncing, load, loadReconciliation]);
 
-  const handleSync = async () => {
+  const handleSync = async (full = false) => {
     setSyncing(true);
     try {
-      const result = await api.triggerSync();
+      const result = await api.triggerSync({ full });
       if (result.inProgress) {
         setSyncNotification({
           id: `sync-info-${Date.now()}`,
@@ -305,7 +310,7 @@ export default function App() {
         id: `sync-success-${Date.now()}`,
         level: 'success',
         title: 'Sync completed',
-        message: `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')}.`,
+        message: `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')}${result.incremental === false ? ' (full resync)' : ''}.`,
       });
       await load();
       loadReconciliation();
@@ -322,13 +327,47 @@ export default function App() {
     }
   };
 
+  const [purging, setPurging] = useState(false);
+  const handlePurge = async () => {
+    setPurging(true);
+    try {
+      const result = await api.purge();
+      if (result.inProgress) {
+        setSyncNotification({
+          id: `purge-info-${Date.now()}`,
+          level: 'info',
+          title: 'Sync in progress',
+          message: 'Cannot purge while a sync is running. Try again once it finishes.',
+        });
+        return;
+      }
+      setSyncNotification({
+        id: `purge-success-${Date.now()}`,
+        level: 'success',
+        title: 'Data purged',
+        message: 'All locally cached data was cleared. Run a sync to rebuild it from Firefly III.',
+      });
+      await load();
+      loadReconciliation();
+    } catch (e) {
+      setSyncNotification({
+        id: `purge-failure-${Date.now()}`,
+        level: 'critical',
+        title: 'Purge failed',
+        message: e.message,
+      });
+    } finally {
+      setPurging(false);
+    }
+  };
+
   return (
     <div className="layout">
       <Sidebar
         active={view}
         onNavigate={setView}
         lastSync={stats?.lastSync}
-        onSync={handleSync}
+        onSync={() => handleSync()}
         syncing={syncing}
       />
 
@@ -480,6 +519,14 @@ export default function App() {
               </div>
             </section>
           </>
+        ) : view === 'settings' ? (
+          <SettingsPage
+            onForceFullSync={() => handleSync(true)}
+            syncing={syncing}
+            onPurge={handlePurge}
+            purging={purging}
+            syncLookbackDays={syncLookbackDays}
+          />
         ) : (
           <TransactionsTable transactions={transactions} />
         )}
