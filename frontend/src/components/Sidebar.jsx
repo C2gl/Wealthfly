@@ -9,6 +9,7 @@ const NAV = [
   { key: 'categories' },
   { key: 'trends' },
   { key: 'transactions' },
+  { key: 'settings' },
 ];
 
 export default function Sidebar({ active, onNavigate, lastSync, onSync, syncing }) {

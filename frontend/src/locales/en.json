@@ -6,7 +6,8 @@
     "spending": "Spending",
     "categories": "Categories",
     "trends": "Trends",
-    "transactions": "Transactions"
+    "transactions": "Transactions",
+    "settings": "Settings"
   },
   "sync": {
     "lastSynced": "Last synced",
@@ -69,5 +70,16 @@
   },
   "language": {
     "unsupported": "Unsupported language: {{language}}"
+  },
+  "settings": {
+    "syncTitle": "Sync",
+    "syncDescription": "Regular syncs (the \"Sync now\" button, and the scheduled sync) only re-check the last {{days}} days of transactions, so they stay fast. Use a full resync to rebuild your entire history from Firefly III from scratch — useful if a very old transaction was edited or something looks off.",
+    "forceFullResync": "Force full resync",
+    "dangerTitle": "Danger zone",
+    "dangerDescription": "Permanently deletes every locally cached account, transaction, category, tag, and balance history. This does not touch your Firefly III data — only Wealthfly's local copy. The next sync will rebuild everything from scratch.",
+    "purgeButton": "Purge all local data",
+    "purgeConfirm": "Are you sure? This can't be undone.",
+    "purgeConfirmButton": "Yes, purge everything",
+    "cancel": "Cancel"
   }
 }

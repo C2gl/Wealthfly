@@ -6,7 +6,8 @@
     "spending": "Depenses",
     "categories": "Categories",
     "trends": "Tendances",
-    "transactions": "Transactions"
+    "transactions": "Transactions",
+    "settings": "Parametres"
   },
   "sync": {
     "lastSynced": "Derniere synchronisation",
@@ -60,5 +61,16 @@
     "noTransactions": "Aucune transaction sur {{period}}",
     "tryWiderRange": "Essayez une periode plus large ou verifiez la derniere synchronisation."
   },
-  "language": { "unsupported": "Langue non prise en charge : {{language}}" }
+  "language": { "unsupported": "Langue non prise en charge : {{language}}" },
+  "settings": {
+    "syncTitle": "Synchronisation",
+    "syncDescription": "Les synchronisations habituelles (le bouton \"Synchroniser\" et la synchronisation planifiee) ne revoient que les {{days}} derniers jours de transactions, pour rester rapides. Utilisez une resynchronisation complete pour reconstruire tout l'historique depuis Firefly III — utile si une tres ancienne transaction a ete modifiee ou si quelque chose semble incorrect.",
+    "forceFullResync": "Forcer une resynchronisation complete",
+    "dangerTitle": "Zone dangereuse",
+    "dangerDescription": "Supprime definitivement tous les comptes, transactions, categories, etiquettes et historiques de solde stockes localement. Cela ne touche pas vos donnees Firefly III — seulement la copie locale de Wealthfly. La prochaine synchronisation reconstruira tout depuis zero.",
+    "purgeButton": "Purger toutes les donnees locales",
+    "purgeConfirm": "Etes-vous sur ? Cette action est irreversible.",
+    "purgeConfirmButton": "Oui, tout purger",
+    "cancel": "Annuler"
+  }
 }

@@ -40,14 +40,15 @@ test('sync lock defaults to idle state', () => {
 });
 
 test('isSyncInProgress returns true and tracks metadata while active', () => {
+  const justNow = new Date().toISOString();
   _syncState.inProgress = true;
-  _syncState.startedAt = '2026-09-25T10:00:00.000Z';
+  _syncState.startedAt = justNow;
   _syncState.source = 'cron';
 
   assert.equal(isSyncInProgress(), true);
   const state = getSyncState();
   assert.equal(state.inProgress, true);
-  assert.equal(state.startedAt, '2026-09-25T10:00:00.000Z');
+  assert.equal(state.startedAt, justNow);
   assert.equal(state.source, 'cron');
 });
 
