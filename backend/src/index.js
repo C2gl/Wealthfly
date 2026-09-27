@@ -1,5 +1,11 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+
+// Set the timezone based on the .env file or default to UTC
+if (process.env.WEALTHFLY_TIMEZONE) {
+  process.env.TZ = process.env.WEALTHFLY_TIMEZONE;
+}
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');

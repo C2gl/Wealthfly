@@ -11,11 +11,18 @@ function startOfMonth(monthsAgo = 0) {
   const d = new Date();
   d.setDate(1);
   d.setMonth(d.getMonth() - monthsAgo);
-  return d.toISOString().slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Firefly's /summary/basic returns a flat object keyed like "spent-in-EUR",
@@ -81,7 +88,7 @@ async function checkReconciliation({ start = startOfMonth(0), end = today() } = 
   const result = {
     start,
     end,
-    checkedAt: new Date().toISOString(),
+    checkedAt: new Date().toLocaleString(),
     expenses: compare(local.expenses, fireflyExpenses),
     income: compare(local.income, fireflyIncome),
     netWorth: compare(local.netWorth, fireflyNetWorth),
