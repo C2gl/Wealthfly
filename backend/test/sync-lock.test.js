@@ -39,19 +39,17 @@ test('sync lock defaults to idle state', () => {
   });
 });
 
-test('isSyncInProgress returns true and tracks metadata while active', async () => {
-  // Set up state to simulate an active lock
-  // Use a recent date (within 5 minutes of now) to avoid the 10-minute watchdog timeout
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  Object.assign(_syncState, { inProgress: true, startedAt: fiveMinutesAgo, source: 'cron' });
+test('isSyncInProgress returns true and tracks metadata while active', () => {
+  const justNow = new Date().toISOString();
+  _syncState.inProgress = true;
+  _syncState.startedAt = justNow;
+  _syncState.source = 'cron';
 
-  await new Promise(resolve => setImmediate(() => { // Yield execution context to allow state change to register
-      assert.equal(isSyncInProgress(), true);
-      const state = getSyncState();
-      assert.equal(state.inProgress, true);
-      assert.equal(state.startedAt, fiveMinutesAgo);
-      assert.equal(state.source, 'cron');
-  }));
+  assert.equal(isSyncInProgress(), true);
+  const state = getSyncState();
+  assert.equal(state.inProgress, true);
+  assert.equal(state.startedAt, justNow);
+  assert.equal(state.source, 'cron');
 });
 
 test('watchdog timeout auto-releases stale lock if duration exceeds threshold', () => {
@@ -80,7 +78,9 @@ test('watchdog keeps lock active if within timeout threshold', () => {
 
 test('runFullSync rejects concurrent execution with SyncInProgressError', async () => {
   // Simulate active lock
-  Object.assign(_syncState, { inProgress: true, startedAt: new Date().toISOString(), source: 'api' });
+  _syncState.inProgress = true;
+  _syncState.startedAt = new Date().toISOString();
+  _syncState.source = 'api';
 
   await assert.rejects(
     async () => {
