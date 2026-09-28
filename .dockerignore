@@ -1,0 +1,16 @@
+# Host-built dependencies must never overwrite the ones installed inside the image
+**/node_modules
+**/dist
+backend/public
+backend/data
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets / VCS / misc
+.env
+.env.*
+!.env.example
+.git
+.github
+*.log

@@ -326,6 +326,8 @@ function acquireSyncLock(source) {
   syncState.inProgress = true;
   syncState.startedAt = new Date().toISOString();
   syncState.source = source;
+  syncState.currentStep = 'initializing';
+  syncState.progress = 0;
   setSyncStatusMeta('running');
 }
 
@@ -333,6 +335,8 @@ function releaseSyncLock() {
   syncState.inProgress = false;
   syncState.startedAt = null;
   syncState.source = null;
+  syncState.currentStep = 'initializing';
+  syncState.progress = 0;
   setSyncStatusMeta('idle');
 }
 

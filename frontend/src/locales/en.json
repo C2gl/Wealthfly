@@ -16,7 +16,15 @@
     "inProgress": "Syncing...",
     "completed": "Sync completed",
     "failed": "Sync failed",
-    "syncedSummary": "Synced {{accounts}} account, {{categories}} category, {{tags}} tag, and {{transactions}} transaction."
+    "syncedSummary": "Synced {{accounts}} account, {{categories}} category, {{tags}} tag, and {{transactions}} transaction.",
+    "steps": {
+      "initializing": "Starting sync...",
+      "syncing_accounts": "Syncing accounts...",
+      "syncing_categories": "Syncing categories...",
+      "syncing_tags": "Syncing tags...",
+      "syncing_transactions": "Syncing transactions...",
+      "rebuilding_balance_history": "Rebuilding balance history..."
+    }
   },
   "periods": {
     "thisMonth": "This month",

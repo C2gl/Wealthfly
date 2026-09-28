@@ -135,6 +135,7 @@ export default function App() {
   const [accounts, setAccounts] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [syncing, setSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(null);
   const [syncNotification, setSyncNotification] = useState(null);
   const [savingsAccountWords, setSavingsAccountWords] = useState(null);
   const [syncLookbackDays, setSyncLookbackDays] = useState(null);
@@ -282,8 +283,11 @@ export default function App() {
     const interval = setInterval(async () => {
       try {
         const status = await api.syncStatus();
-        if (!status?.inProgress) {
+        if (status?.inProgress) {
+          setSyncProgress({ currentStep: status.currentStep, progress: status.progress });
+        } else {
           setSyncing(false);
+          setSyncProgress(null);
           await load();
           loadReconciliation();
         }
@@ -373,7 +377,7 @@ export default function App() {
       />
 
       <main className="main">
-      <SyncBar syncing={syncing} syncNotification={syncNotification} />
+        <SyncBar syncing={syncing} syncProgress={syncProgress} syncNotification={syncNotification} />
         <header className="top-bar">
           <h1>{viewTitle}</h1>
           <div className="top-bar-actions">
