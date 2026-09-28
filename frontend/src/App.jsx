@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Sidebar from './components/Sidebar.jsx';
+import SyncBar from './components/SyncBar.jsx';
 import StatRow from './components/StatRow.jsx';
 import NetWorthChart from './components/NetWorthChart.jsx';
 import SpendingChart from './components/SpendingChart.jsx';

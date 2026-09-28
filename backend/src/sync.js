@@ -35,6 +35,8 @@ const syncState = {
   inProgress: false,
   startedAt: null,
   source: null,
+  currentStep: 'initializing',
+  progress: 0,
 };
 
 function isSyncInProgress() {
@@ -54,6 +56,8 @@ function getSyncState() {
     inProgress: isSyncInProgress(),
     startedAt: syncState.startedAt,
     source: syncState.source,
+    currentStep: syncState.currentStep,
+    progress: syncState.progress,
   };
 }
 
@@ -356,12 +360,27 @@ async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
   acquireSyncLock(source);
   const started = Date.now();
   try {
+    syncState.currentStep = 'syncing_accounts';
+    syncState.progress = 20;
     const accounts = await syncAccounts(firefly);
+
+    syncState.currentStep = 'syncing_categories';
+    syncState.progress = 40;
     const categories = await syncCategories(firefly);
+
+    syncState.currentStep = 'syncing_tags';
+    syncState.progress = 60;
     const tags = await syncTags(firefly);
+
+    syncState.currentStep = 'syncing_transactions';
+    syncState.progress = 80;
     const transactions = await syncTransactions(firefly);
+
+    syncState.currentStep = 'rebuilding_balance_history';
+    syncState.progress = 90;
     rebuildBalanceHistory();
 
+    syncState.progress = 100;
     return await finalizeSync(firefly, started, {
       accounts,
       categories,
@@ -378,12 +397,27 @@ async function runIncrementalSync(firefly = defaultFirefly, { source = 'api', lo
   acquireSyncLock(source);
   const started = Date.now();
   try {
+    syncState.currentStep = 'syncing_accounts';
+    syncState.progress = 20;
     const accounts = await syncAccounts(firefly);
+
+    syncState.currentStep = 'syncing_categories';
+    syncState.progress = 40;
     const categories = await syncCategories(firefly);
+
+    syncState.currentStep = 'syncing_tags';
+    syncState.progress = 60;
     const tags = await syncTags(firefly);
+
+    syncState.currentStep = 'syncing_transactions';
+    syncState.progress = 80;
     const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays);
+    
+    syncState.currentStep = 'rebuilding_balance_history';
+    syncState.progress = 90;
     rebuildBalanceHistory();
 
+    syncState.progress = 100;
     return await finalizeSync(firefly, started, {
       accounts,
       categories,
