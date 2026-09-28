@@ -39,6 +39,16 @@ const syncState = {
   progress: 0,
 };
 
+// Progress budget: accounts/categories/tags take 0-15%, transactions (by far the
+// slowest step) 15-90% driven by real page counts, balance history 90-100%.
+const TX_PROGRESS_START = 15;
+const TX_PROGRESS_END = 90;
+
+function reportTransactionPage({ page, totalPages }) {
+  const fraction = Math.min(1, page / Math.max(1, totalPages));
+  syncState.progress = Math.round(TX_PROGRESS_START + (TX_PROGRESS_END - TX_PROGRESS_START) * fraction);
+}
+
 function isSyncInProgress() {
   if (!syncState.inProgress) return false;
   if (syncState.startedAt && Date.now() - new Date(syncState.startedAt).getTime() > MAX_SYNC_DURATION_MS) {
@@ -46,6 +56,8 @@ function isSyncInProgress() {
     syncState.inProgress = false;
     syncState.startedAt = null;
     syncState.source = null;
+    syncState.currentStep = 'initializing';
+    syncState.progress = 0;
     return false;
   }
   return true;
@@ -176,8 +188,8 @@ function transactionRowFromSplit(group, s, idx) {
   };
 }
 
-async function syncTransactions(firefly = defaultFirefly) {
-  const groups = await firefly.getTransactions();
+async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
+  const groups = await firefly.getTransactions({ onPage });
   const clear = db.prepare('DELETE FROM transactions');
   let count = 0;
 
@@ -210,9 +222,9 @@ async function syncTransactions(firefly = defaultFirefly) {
  * A wide-enough lookback window catches those edits; a change further back
  * than the window won't be picked up until the next full sync.
  */
-async function syncTransactionsIncremental(firefly = defaultFirefly, lookbackDays = getLookbackDays()) {
+async function syncTransactionsIncremental(firefly = defaultFirefly, lookbackDays = getLookbackDays(), { onPage } = {}) {
   const windowStart = shiftDate(today(), -lookbackDays);
-  const groups = await firefly.getTransactions({ start: windowStart });
+  const groups = await firefly.getTransactions({ start: windowStart, onPage });
   const clearWindow = db.prepare('DELETE FROM transactions WHERE substr(date, 1, 10) >= ?');
   let count = 0;
 
@@ -365,20 +377,20 @@ async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
   const started = Date.now();
   try {
     syncState.currentStep = 'syncing_accounts';
-    syncState.progress = 20;
+    syncState.progress = 0;
     const accounts = await syncAccounts(firefly);
 
     syncState.currentStep = 'syncing_categories';
-    syncState.progress = 40;
+    syncState.progress = 5;
     const categories = await syncCategories(firefly);
 
     syncState.currentStep = 'syncing_tags';
-    syncState.progress = 60;
+    syncState.progress = 10;
     const tags = await syncTags(firefly);
 
     syncState.currentStep = 'syncing_transactions';
-    syncState.progress = 80;
-    const transactions = await syncTransactions(firefly);
+    syncState.progress = TX_PROGRESS_START;
+    const transactions = await syncTransactions(firefly, { onPage: reportTransactionPage });
 
     syncState.currentStep = 'rebuilding_balance_history';
     syncState.progress = 90;
@@ -402,20 +414,20 @@ async function runIncrementalSync(firefly = defaultFirefly, { source = 'api', lo
   const started = Date.now();
   try {
     syncState.currentStep = 'syncing_accounts';
-    syncState.progress = 20;
+    syncState.progress = 0;
     const accounts = await syncAccounts(firefly);
 
     syncState.currentStep = 'syncing_categories';
-    syncState.progress = 40;
+    syncState.progress = 5;
     const categories = await syncCategories(firefly);
 
     syncState.currentStep = 'syncing_tags';
-    syncState.progress = 60;
+    syncState.progress = 10;
     const tags = await syncTags(firefly);
 
     syncState.currentStep = 'syncing_transactions';
-    syncState.progress = 80;
-    const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays);
+    syncState.progress = TX_PROGRESS_START;
+    const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays, { onPage: reportTransactionPage });
     
     syncState.currentStep = 'rebuilding_balance_history';
     syncState.progress = 90;

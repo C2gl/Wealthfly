@@ -278,14 +278,16 @@ export default function App() {
     load();
   }, [load]);
 
+  // Poll always: fast while a sync is visible, slowly otherwise so syncs started
+  // elsewhere (the cron job, another tab) still make the bar appear.
   useEffect(() => {
-    if (!syncing) return;
     const interval = setInterval(async () => {
       try {
         const status = await api.syncStatus();
         if (status?.inProgress) {
           setSyncProgress({ currentStep: status.currentStep, progress: status.progress });
-        } else {
+          if (!syncing) setSyncing(true);
+        } else if (syncing) {
           setSyncing(false);
           setSyncProgress(null);
           await load();
@@ -294,7 +296,7 @@ export default function App() {
       } catch {
         // Keep polling on transient failure
       }
-    }, 2000);
+    }, syncing ? 1000 : 10000);
     return () => clearInterval(interval);
   }, [syncing, load, loadReconciliation]);
 
