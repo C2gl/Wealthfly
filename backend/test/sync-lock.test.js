@@ -17,7 +17,7 @@ const {
 
 test.beforeEach(() => {
   // Ensure lock state is clean before each test
-  _syncState.inProgress = false;
+  _syncState.inProgress = false; // potential issue due to the new backend status system, we now have the step system , no more true and false, see sync.js
   _syncState.startedAt = null;
   _syncState.source = null;
 });
