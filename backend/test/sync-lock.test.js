@@ -36,6 +36,8 @@ test('sync lock defaults to idle state', () => {
     inProgress: false,
     startedAt: null,
     source: null,
+    currentStep: 'initializing',
+    progress: 0,
   });
 });
 
