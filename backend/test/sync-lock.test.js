@@ -20,6 +20,8 @@ test.beforeEach(() => {
   _syncState.inProgress = false;
   _syncState.startedAt = null;
   _syncState.source = null;
+  _syncState.currentStep = 'initializing';
+  _syncState.progress = 0;
 });
 
 test('SyncInProgressError has proper name and error code', () => {
@@ -36,6 +38,8 @@ test('sync lock defaults to idle state', () => {
     inProgress: false,
     startedAt: null,
     source: null,
+    currentStep: 'initializing',
+    progress: 0,
   });
 });
 

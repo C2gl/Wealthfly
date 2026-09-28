@@ -104,6 +104,8 @@ router.get('/sync/status', (req, res) => {
     inProgress: state.inProgress,
     startedAt: state.startedAt,
     source: state.source,
+    currentStep: state.currentStep,
+    progress: state.progress,
   });
 });
 

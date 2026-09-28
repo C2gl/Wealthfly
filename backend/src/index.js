@@ -98,8 +98,11 @@ app.listen(PORT, () => {
     console.log(`[wealthfly] scheduled sync: "${SYNC_CRON}"`);
   }
 
-  // Kick off an initial sync shortly after boot if we have credentials.
-  if (process.env.FIREFLY_URL && process.env.FIREFLY_TOKEN) {
+  // Kick off an initial sync shortly after boot if we have credentials —
+  // unless the operator explicitly disabled it (SYNC_ON_STARTUP=false).
+  if (process.env.SYNC_ON_STARTUP === 'false') {
+    console.log('[sync] initial sync on startup disabled (SYNC_ON_STARTUP=false)');
+  } else if (process.env.FIREFLY_URL && process.env.FIREFLY_TOKEN) {
     setTimeout(() => {
       if (isSyncInProgress()) {
         console.log('[sync] initial sync skipped: a sync is already in progress');

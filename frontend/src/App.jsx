@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Sidebar from './components/Sidebar.jsx';
+import SyncBar from './components/SyncBar.jsx';
 import StatRow from './components/StatRow.jsx';
 import NetWorthChart from './components/NetWorthChart.jsx';
 import SpendingChart from './components/SpendingChart.jsx';
@@ -134,6 +135,7 @@ export default function App() {
   const [accounts, setAccounts] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [syncing, setSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(null);
   const [syncNotification, setSyncNotification] = useState(null);
   const [savingsAccountWords, setSavingsAccountWords] = useState(null);
   const [syncLookbackDays, setSyncLookbackDays] = useState(null);
@@ -276,20 +278,25 @@ export default function App() {
     load();
   }, [load]);
 
+  // Poll always: fast while a sync is visible, slowly otherwise so syncs started
+  // elsewhere (the cron job, another tab) still make the bar appear.
   useEffect(() => {
-    if (!syncing) return;
     const interval = setInterval(async () => {
       try {
         const status = await api.syncStatus();
-        if (!status?.inProgress) {
+        if (status?.inProgress) {
+          setSyncProgress({ currentStep: status.currentStep, progress: status.progress });
+          if (!syncing) setSyncing(true);
+        } else if (syncing) {
           setSyncing(false);
+          setSyncProgress(null);
           await load();
           loadReconciliation();
         }
       } catch {
         // Keep polling on transient failure
       }
-    }, 2000);
+    }, syncing ? 1000 : 10000);
     return () => clearInterval(interval);
   }, [syncing, load, loadReconciliation]);
 
@@ -372,6 +379,7 @@ export default function App() {
       />
 
       <main className="main">
+        <SyncBar syncing={syncing} syncProgress={syncProgress} syncNotification={syncNotification} />
         <header className="top-bar">
           <h1>{viewTitle}</h1>
           <div className="top-bar-actions">

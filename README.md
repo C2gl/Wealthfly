@@ -39,6 +39,11 @@ WEALTHFLY_LANGUAGE=en
 `WEALTHFLY_LANGUAGE` is read by the running container, so it also works when using a prebuilt image.
 `RECURENT_WORD_IN_SAVING_ACCOUNTS` is a comma-separated list of words used to identify savings
 accounts by name, for example `RECURENT_WORD_IN_SAVING_ACCOUNTS=savings, investment`.
+`FIREFLY_REQUEST_DELAY_MS` throttles the sync by waiting that many milliseconds between paginated
+requests to Firefly (0 by default). Raise it if syncing noticeably strains a small/self-hosted
+Firefly instance.
+`SYNC_ON_STARTUP` (default `true`) controls the sync Wealthfly runs ~2s after boot, on top of the
+`SYNC_CRON` schedule. Set it to `false` to skip that boot-time sync.
 
 ## Authentication
 

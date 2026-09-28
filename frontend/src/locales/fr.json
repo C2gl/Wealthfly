@@ -16,7 +16,15 @@
     "inProgress": "Synchronisation...",
     "completed": "Synchronisation terminee",
     "failed": "Echec de la synchronisation",
-    "syncedSummary": "{{accounts}} compte, {{categories}} categorie, {{tags}} etiquette et {{transactions}} transaction synchronises."
+    "syncedSummary": "{{accounts}} compte, {{categories}} categorie, {{tags}} etiquette et {{transactions}} transaction synchronises.",
+    "steps": {
+      "initializing": "Demarrage de la synchronisation...",
+      "syncing_accounts": "Synchronisation des comptes...",
+      "syncing_categories": "Synchronisation des categories...",
+      "syncing_tags": "Synchronisation des etiquettes...",
+      "syncing_transactions": "Synchronisation des transactions...",
+      "rebuilding_balance_history": "Reconstruction de l'historique des soldes..."
+    }
   },
   "periods": { "thisMonth": "Ce mois-ci", "previousMonth": "Mois dernier", "30d": "30J", "90d": "90J", "ytd": "AN", "all": "TOUT" },
   "overview": {

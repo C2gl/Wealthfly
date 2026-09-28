@@ -35,7 +35,19 @@ const syncState = {
   inProgress: false,
   startedAt: null,
   source: null,
+  currentStep: 'initializing',
+  progress: 0,
 };
+
+// Progress budget: accounts/categories/tags take 0-15%, transactions (by far the
+// slowest step) 15-90% driven by real page counts, balance history 90-100%.
+const TX_PROGRESS_START = 15;
+const TX_PROGRESS_END = 90;
+
+function reportTransactionPage({ page, totalPages }) {
+  const fraction = Math.min(1, page / Math.max(1, totalPages));
+  syncState.progress = Math.round(TX_PROGRESS_START + (TX_PROGRESS_END - TX_PROGRESS_START) * fraction);
+}
 
 function isSyncInProgress() {
   if (!syncState.inProgress) return false;
@@ -44,6 +56,8 @@ function isSyncInProgress() {
     syncState.inProgress = false;
     syncState.startedAt = null;
     syncState.source = null;
+    syncState.currentStep = 'initializing';
+    syncState.progress = 0;
     return false;
   }
   return true;
@@ -54,6 +68,8 @@ function getSyncState() {
     inProgress: isSyncInProgress(),
     startedAt: syncState.startedAt,
     source: syncState.source,
+    currentStep: syncState.currentStep,
+    progress: syncState.progress,
   };
 }
 
@@ -172,8 +188,8 @@ function transactionRowFromSplit(group, s, idx) {
   };
 }
 
-async function syncTransactions(firefly = defaultFirefly) {
-  const groups = await firefly.getTransactions();
+async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
+  const groups = await firefly.getTransactions({ onPage });
   const clear = db.prepare('DELETE FROM transactions');
   let count = 0;
 
@@ -206,9 +222,9 @@ async function syncTransactions(firefly = defaultFirefly) {
  * A wide-enough lookback window catches those edits; a change further back
  * than the window won't be picked up until the next full sync.
  */
-async function syncTransactionsIncremental(firefly = defaultFirefly, lookbackDays = getLookbackDays()) {
+async function syncTransactionsIncremental(firefly = defaultFirefly, lookbackDays = getLookbackDays(), { onPage } = {}) {
   const windowStart = shiftDate(today(), -lookbackDays);
-  const groups = await firefly.getTransactions({ start: windowStart });
+  const groups = await firefly.getTransactions({ start: windowStart, onPage });
   const clearWindow = db.prepare('DELETE FROM transactions WHERE substr(date, 1, 10) >= ?');
   let count = 0;
 
@@ -322,6 +338,8 @@ function acquireSyncLock(source) {
   syncState.inProgress = true;
   syncState.startedAt = new Date().toISOString();
   syncState.source = source;
+  syncState.currentStep = 'initializing';
+  syncState.progress = 0;
   setSyncStatusMeta('running');
 }
 
@@ -329,6 +347,8 @@ function releaseSyncLock() {
   syncState.inProgress = false;
   syncState.startedAt = null;
   syncState.source = null;
+  syncState.currentStep = 'initializing';
+  syncState.progress = 0;
   setSyncStatusMeta('idle');
 }
 
@@ -356,12 +376,27 @@ async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
   acquireSyncLock(source);
   const started = Date.now();
   try {
+    syncState.currentStep = 'syncing_accounts';
+    syncState.progress = 0;
     const accounts = await syncAccounts(firefly);
+
+    syncState.currentStep = 'syncing_categories';
+    syncState.progress = 5;
     const categories = await syncCategories(firefly);
+
+    syncState.currentStep = 'syncing_tags';
+    syncState.progress = 10;
     const tags = await syncTags(firefly);
-    const transactions = await syncTransactions(firefly);
+
+    syncState.currentStep = 'syncing_transactions';
+    syncState.progress = TX_PROGRESS_START;
+    const transactions = await syncTransactions(firefly, { onPage: reportTransactionPage });
+
+    syncState.currentStep = 'rebuilding_balance_history';
+    syncState.progress = 90;
     rebuildBalanceHistory();
 
+    syncState.progress = 100;
     return await finalizeSync(firefly, started, {
       accounts,
       categories,
@@ -378,12 +413,27 @@ async function runIncrementalSync(firefly = defaultFirefly, { source = 'api', lo
   acquireSyncLock(source);
   const started = Date.now();
   try {
+    syncState.currentStep = 'syncing_accounts';
+    syncState.progress = 0;
     const accounts = await syncAccounts(firefly);
+
+    syncState.currentStep = 'syncing_categories';
+    syncState.progress = 5;
     const categories = await syncCategories(firefly);
+
+    syncState.currentStep = 'syncing_tags';
+    syncState.progress = 10;
     const tags = await syncTags(firefly);
-    const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays);
+
+    syncState.currentStep = 'syncing_transactions';
+    syncState.progress = TX_PROGRESS_START;
+    const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays, { onPage: reportTransactionPage });
+    
+    syncState.currentStep = 'rebuilding_balance_history';
+    syncState.progress = 90;
     rebuildBalanceHistory();
 
+    syncState.progress = 100;
     return await finalizeSync(firefly, started, {
       accounts,
       categories,
