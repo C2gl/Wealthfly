@@ -373,6 +373,7 @@ export default function App() {
       />
 
       <main className="main">
+      <SyncBar syncing={syncing} syncNotification={syncNotification} />
         <header className="top-bar">
           <h1>{viewTitle}</h1>
           <div className="top-bar-actions">

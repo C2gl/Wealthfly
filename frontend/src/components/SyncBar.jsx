@@ -7,7 +7,7 @@ export default function SyncBar({ syncing, syncNotification }) {
   if (!syncing && !syncNotification) return null;
 
   return (
-    <div className="sync-bar">
+    <div className="sync-bar" style={{ backgroundColor: 'red', padding: '10px' }}">
       {syncing ? (
         <div className="sync-bar-loading">
           <span className="sync-bar-spinner"></span>
