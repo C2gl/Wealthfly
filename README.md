@@ -160,6 +160,15 @@ npm install
 npm run dev
 ```
 
+### Testing
+
+```bash
+cd backend && npm test    # node's built-in test runner
+cd frontend && npm test   # vitest
+```
+
+CI runs both on every push and pull request, and only builds/pushes the Docker image if both pass.
+
 ### Branch workflow
 
 Keep `main` deployable and create a branch for each feature or fix:
