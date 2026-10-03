@@ -28,21 +28,21 @@ export default function NetWorthChart({ data }) {
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
-            stroke="#8992A1"
+            stroke="var(--led-gray-500)"
             tick={{ fontSize: 11, fontFamily: 'IBM Plex Mono, monospace' }}
             minTickGap={40}
           />
           <YAxis
             tickFormatter={formatCompact}
-            stroke="#8992A1"
+            stroke="var(--led-gray-500)"
             tick={{ fontSize: 11, fontFamily: 'IBM Plex Mono, monospace' }}
             width={56}
           />
           <Tooltip
             cursor={false}
             contentStyle={{
-              background: '#151A21',
-              border: '1px solid #232A34',
+              background: 'var(--led-panel)',
+              border: '1px solid var(--led-border)',
               borderRadius: 4,
               fontFamily: 'IBM Plex Mono, monospace',
               fontSize: 12,
@@ -53,7 +53,7 @@ export default function NetWorthChart({ data }) {
           <Area
             type="monotone"
             dataKey="total"
-            stroke="#D9A54F"
+            stroke="var(--chart-networth-liabilities)"
             strokeWidth={2}
             fill="url(#netWorthFill)"
           />

@@ -1423,6 +1423,45 @@ h1, h2, h3, h4, h5, h6 {
   gap: 12px;
 }
 
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: 11px 'IBM Plex Mono', monospace;
+  font-size: 13px;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  color: var(--text);
+  border-color: rgba(var(--led-gray-800-rgb), 0.3);
+}
+
+.theme-toggle.is-dark {
+  background: rgba(var(--led-negative-rgb), 0.15);
+  color: var(--text);
+}
+
+[data-theme="dark"] .theme-toggle {
+  border-color: #1f2a44;
+}
+
+[data-theme="dark"] .theme-toggle:hover,
+[data-theme="dark"] .theme-toggle:focus-visible {
+  border-color: #1f2a44;
+}
+
+[data-theme="dark"] .theme-toggle.is-dark {
+  border-color: #1f2a44;
+  background: rgba(255, 112, 112, 0.25);
+}
+
 .notification-bell-root {
   position: relative;
 }
