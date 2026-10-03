@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../i18n.jsx';
+import ThemeToggle from './themeToggle.jsx';
 
 const NAV = [
   { key: 'overview' },
@@ -34,6 +35,7 @@ export default function Sidebar({ active, onNavigate, lastSync, onSync, syncing 
         ))}
       </nav>
 
+      <ThemeToggle />
       <div className="sidebar-footer">
         <div className="sync-status">
           <span className="sync-label">{t('sync.lastSynced')}</span>
