@@ -10,6 +10,7 @@ import AccountsPage from './components/AccountsPage.jsx';
 import SavingsPage from './components/SavingsPage.jsx';
 import SettingsPage from './components/SettingsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
+import ThemeToggle from './components/ThemeToggle.jsx';
 import OverviewView from './views/OverviewView.jsx';
 import SpendingView from './views/SpendingView.jsx';
 import { useAppConfig } from './hooks/useAppConfig.js';
@@ -105,6 +106,7 @@ export default function App() {
                 </button>
               ))}
             </div>
+            <ThemeToggle />
             <NotificationBell notifications={notifications} />
           </div>
         </header>

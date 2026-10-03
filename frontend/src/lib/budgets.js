@@ -1,4 +1,4 @@
-const BUDGET_COLORS = ['#8da34d', '#c6a642', '#62615d'];
+const BUDGET_COLORS = ['var(--chart-4)', 'var(--gold)', 'var(--chart-8)'];
 
 export function budgetAmount(value) {
   if (Array.isArray(value)) return value.reduce((sum, item) => sum + budgetAmount(item), 0);

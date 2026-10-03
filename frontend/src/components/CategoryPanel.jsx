@@ -22,7 +22,7 @@ function CategorySparkline({ category, color, currentRows, previousRows, hasComp
   return (
     <div className="category-sparkline-wrap">
       <svg className="category-sparkline" viewBox="0 0 120 32" role="img" aria-label={`${category} spending trend`}>
-        {hasComparison && <polyline points={previousPoints} fill="none" stroke="#c6a642" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />}
+        {hasComparison && <polyline points={previousPoints} fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />}
         <polyline points={currentPoints} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
       </svg>
       {hasComparison && <span className="category-sparkline-legend"><i className="category-sparkline-current" />now <i className="category-sparkline-previous" />prior</span>}

@@ -1,0 +1,135 @@
+/*
+ * Wealthfly design tokens — "Ledger" direction.
+ *
+ * Every colour, typeface and corner radius the app uses comes from here.
+ * Change a value in this file and the whole UI (including charts) follows.
+ *
+ * Dark mode: follows the OS by default, or the user's choice via the
+ * data-theme="light|dark" attribute on <html> (see hooks/useTheme.js).
+ * The two dark blocks below must stay identical — test/tokens.test.js checks it.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #f5f0e4;
+  --panel: #fffcf5;
+  --border: #e3dac7;
+  --track: #e8dfcc;
+
+  /* Text */
+  --text: #1f2a24;
+  --text-muted: #666a60;
+
+  /* Brand and meaning */
+  --accent: #2f5d46;
+  --accent-soft: #dfe8dc;
+  --on-accent: #fffcf5;
+  --positive: #2f5d46;
+  --positive-bright: #4e9a6e;
+  --negative: #a9482f;
+  --gold: #c9892b;
+  --on-gold: #1f2a24;
+  --info: #3a6f96;
+  --inverse-bg: #1f2a24;
+  --inverse-text: #f5f0e4;
+
+  /* Bases for translucent tints (used with color-mix) */
+  --wash: #ffffff;
+  --shadow-ink: #4b5445;
+
+  /* Categorical chart palette */
+  --chart-1: #2f5d46;
+  --chart-2: #c9892b;
+  --chart-3: #b4533a;
+  --chart-4: #8a9a5b;
+  --chart-5: #5a73a1;
+  --chart-6: #8d72b2;
+  --chart-7: #6f8a7b;
+  --chart-8: #9f9d93;
+
+  /* Type */
+  --font-body: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius: 12px;
+  --radius-pill: 999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #121714;
+    --panel: #1a211d;
+    --border: #2b352f;
+    --track: #26302a;
+
+    --text: #ece6d6;
+    --text-muted: #a0a898;
+
+    --accent: #6fbf93;
+    --accent-soft: #22332a;
+    --on-accent: #0f1a14;
+    --positive: #6fbf93;
+    --positive-bright: #6fbf93;
+    --negative: #e8856b;
+    --gold: #e0a84a;
+    --on-gold: #1a1608;
+    --info: #7fb0d0;
+    --inverse-bg: #ece6d6;
+    --inverse-text: #121714;
+
+    --wash: #46524a;
+    --shadow-ink: #000000;
+
+    --chart-1: #6fbf93;
+    --chart-2: #e0a84a;
+    --chart-3: #e8856b;
+    --chart-4: #aebd7f;
+    --chart-5: #7f9bd0;
+    --chart-6: #b49be0;
+    --chart-7: #8fb0a0;
+    --chart-8: #b5b3a8;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #121714;
+  --panel: #1a211d;
+  --border: #2b352f;
+  --track: #26302a;
+
+  --text: #ece6d6;
+  --text-muted: #a0a898;
+
+  --accent: #6fbf93;
+  --accent-soft: #22332a;
+  --on-accent: #0f1a14;
+  --positive: #6fbf93;
+  --positive-bright: #6fbf93;
+  --negative: #e8856b;
+  --gold: #e0a84a;
+  --on-gold: #1a1608;
+  --info: #7fb0d0;
+  --inverse-bg: #ece6d6;
+  --inverse-text: #121714;
+
+  --wash: #46524a;
+  --shadow-ink: #000000;
+
+  --chart-1: #6fbf93;
+  --chart-2: #e0a84a;
+  --chart-3: #e8856b;
+  --chart-4: #aebd7f;
+  --chart-5: #7f9bd0;
+  --chart-6: #b49be0;
+  --chart-7: #8fb0a0;
+  --chart-8: #b5b3a8;
+}

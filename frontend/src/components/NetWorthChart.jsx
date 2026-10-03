@@ -9,6 +9,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { formatCompact, formatCurrency, formatDate } from '../utils';
+import { CHART, axisTick, tooltipStyle } from '../lib/chartTheme';
 
 export default function NetWorthChart({ data }) {
   return (
@@ -20,40 +21,36 @@ export default function NetWorthChart({ data }) {
         <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="netWorthFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D9A54F" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#D9A54F" stopOpacity={0} />
+              <stop offset="0%" style={{ stopColor: CHART.primary, stopOpacity: 0.28 }} />
+              <stop offset="100%" style={{ stopColor: CHART.primary, stopOpacity: 0 }} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#232A34" vertical={false} />
+          <CartesianGrid stroke={CHART.grid} vertical={false} strokeDasharray="2 4" />
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
-            stroke="#8992A1"
-            tick={{ fontSize: 11, fontFamily: 'IBM Plex Mono, monospace' }}
+            axisLine={false}
+            tickLine={false}
+            tick={axisTick(11)}
             minTickGap={40}
           />
           <YAxis
             tickFormatter={formatCompact}
-            stroke="#8992A1"
-            tick={{ fontSize: 11, fontFamily: 'IBM Plex Mono, monospace' }}
+            axisLine={false}
+            tickLine={false}
+            tick={axisTick(11)}
             width={56}
           />
           <Tooltip
             cursor={false}
-            contentStyle={{
-              background: '#151A21',
-              border: '1px solid #232A34',
-              borderRadius: 4,
-              fontFamily: 'IBM Plex Mono, monospace',
-              fontSize: 12,
-            }}
+            contentStyle={tooltipStyle(12)}
             labelFormatter={formatDate}
             formatter={(value) => [formatCurrency(value), 'Net worth']}
           />
           <Area
             type="monotone"
             dataKey="total"
-            stroke="#D9A54F"
+            stroke={CHART.primary}
             strokeWidth={2}
             fill="url(#netWorthFill)"
           />
