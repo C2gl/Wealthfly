@@ -20,11 +20,11 @@ export default function NetWorthChart({ data }) {
         <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="netWorthFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D9A54F" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#D9A54F" stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--chart-networth-assets)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--chart-networth-assets)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#232A34" vertical={false} />
+          <CartesianGrid stroke="var(--led-border)" vertical={false} />
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}

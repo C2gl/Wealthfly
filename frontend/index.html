@@ -5,12 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wealthfly</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- Fraunces: serif for display hierarchy (hero numbers, headings) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- IBM Plex Mono: self-hosted via @fontsource (already installed) -->
+    <link rel="modulepreload" href="/src/@fontsource/ibm-plex-mono/index.js" />
+    
+    <!-- Inline styles to import the tokens first, then components -->
+    <link rel="stylesheet" href="/src/tokens.css" />
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
     <div id="root"></div>
