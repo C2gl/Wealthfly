@@ -1,5 +1,6 @@
 import React from 'react';
 import { categoryColor, formatCurrency } from '../utils';
+import DeltaPill from './DeltaPill.jsx';
 
 function sparklinePoints(rows, category, maxDay, maxTotal) {
   const valuesByDay = new Map(
@@ -67,12 +68,12 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
             const previousAmount = Number(previousByCategory.get(row.category)?.total || 0);
             const change = amount - previousAmount;
             const share = total ? (amount / total) * 100 : 0;
-            const changeLabel = !hasComparison ? 'No prior data' : `${change >= 0 ? '+' : ''}${formatCurrency(change)}`;
+            const changeLabel = !hasComparison ? 'No prior data' : `${change > 0 ? '+' : ''}${formatCurrency(change)}`;
             return (
               <button className="category-detail-row category-block" key={row.category} type="button" onClick={() => onCategoryClick?.(row.category)}>
                 <div className="category-detail-heading">
                   <span className="bar-row-name"><span className="category-dot" style={{ backgroundColor: color }} />{row.category}</span>
-                  <div className="category-detail-amounts"><strong>{formatCurrency(amount)}</strong><span className={hasComparison ? (change > 0 ? 'stat-negative' : change < 0 ? 'stat-positive' : '') : ''}>{changeLabel}</span></div>
+                  <div className="category-detail-amounts"><strong>{formatCurrency(amount)}</strong><DeltaPill value={hasComparison ? change : null} label={changeLabel} goodWhen="down" /></div>
                 </div>
                 <CategorySparkline category={row.category} color={color} currentRows={trendRows} previousRows={previousTrendRows} hasComparison={hasComparison} />
                 <div className="category-detail-meta">
