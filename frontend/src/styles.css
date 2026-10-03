@@ -970,11 +970,39 @@ h1, h2, h3, h4, h5, h6 {
 .budget-meter-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
 .budget-meter-label { display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); font: 10px 'IBM Plex Mono', monospace; }
 .budget-meter-label i { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; }
-.budget-dot-0 { background: #8da34d; }
-.budget-dot-1 { background: #c6a642; }
-.budget-dot-2 { background: #62615d; }
+.budget-dot-0 {
+  background: #8da34d;
+}
+
+[data-theme="dark"] .budget-dot-0 {
+  background: #a8be52;
+}
+.budget-dot-1 {
+  background: #c6a642;
+}
+
+[data-theme="dark"] .budget-dot-1 {
+  background: #f7d67a;
+}
+.budget-dot-2 {
+  background: #62615d;
+}
+
+[data-theme="dark"] .budget-dot-2 {
+  background: #62615d;
+}
 .budget-track { position: relative; height: 12px; overflow: visible; border: 1px solid rgba(122, 129, 119, 0.18); border-radius: 8px; background: var(--panel); }
-.budget-fill { display: block; height: 100%; min-width: 4px; border-radius: 8px; background: #8da34d; }
+.budget-fill {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 8px;
+  background: #8da34d;
+}
+
+[data-theme="dark"] .budget-fill {
+  background: #a8be52;
+}
 .budget-target { position: absolute; top: -5px; width: 3px; height: 22px; border-radius: 2px; background: var(--text); transform: translateX(-1px); }
 .budget-meter-value { min-width: 68px; color: var(--text); text-align: right; font: 10px 'IBM Plex Mono', monospace; }
 .budget-empty { margin-bottom: 16px !important; }
@@ -1097,6 +1125,10 @@ h1, h2, h3, h4, h5, h6 {
   border: 2px solid var(--accent);
   border-radius: 50%;
   background: #c6a642;
+}
+
+[data-theme="dark"] .wordmark-mark::after {
+  background: #fbbf6b;
 }
 
 .wordmark-text {
@@ -1400,6 +1432,9 @@ h1, h2, h3, h4, h5, h6 {
 .notification-warning .notification-marker { background: #c6a642; }
 .notification-info .notification-marker { background: #4f7f9f; }
 
+[data-theme="dark"] .notification-warning .notification-marker { background: #ff7070; }
+[data-theme="dark"] .notification-info .notification-marker { background: #a5c5de; }
+
 .notification-dismiss {
   width: 24px;
   height: 24px;
@@ -1504,6 +1539,11 @@ h1, h2, h3, h4, h5, h6 {
   font: 10px 'IBM Plex Mono', monospace;
   line-height: 16px;
   text-align: center;
+}
+
+[data-theme="dark"] .notification-badge {
+  background: #fbbf6b;
+  color: #e6ecf5;
 }
 
 .notification-badge-critical {
