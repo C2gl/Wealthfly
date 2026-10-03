@@ -28,9 +28,9 @@ function formatTotals(accounts) {
 }
 
 const ACCOUNT_BUCKETS = [
-  { key: 'personal', label: 'Personal', color: '#356957' },
-  { key: 'shared', label: 'Shared', color: '#8eaa9b' },
-  { key: 'savings', label: 'Savings', color: '#c6a642' },
+  { key: 'personal', label: 'Personal', color: 'var(--chart-1)' },
+  { key: 'shared', label: 'Shared', color: 'var(--chart-7)' },
+  { key: 'savings', label: 'Savings', color: 'var(--gold)' },
 ];
 
 function accountBucket(account) {
