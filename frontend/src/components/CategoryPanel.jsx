@@ -34,6 +34,7 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
   const currentCategories = (rows || []).filter((row) => row.category);
   const previousCategories = (previousRows || []).filter((row) => row.category);
   const previousByCategory = new Map(previousCategories.map((row) => [row.category, row]));
+  const currentByCategory = new Map(currentCategories.map((row) => [row.category, row]));
   const categories = [...currentCategories, ...previousCategories
     .filter((row) => !currentCategories.some((currentRow) => currentRow.category === row.category))];
   const total = currentCategories.reduce((sum, row) => sum + Number(row.total || 0), 0);
@@ -58,7 +59,11 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
         <div className="category-detail-list category-block-grid">
           {categories.map((row, index) => {
             const color = categoryColors[index];
-            const amount = Number(row.total || 0);
+            // Categories that only exist in the previous period are listed too, but
+            // `row` is then the previous row — read the current figures from the current rows.
+            const currentRow = currentByCategory.get(row.category);
+            const amount = Number(currentRow?.total || 0);
+            const count = Number(currentRow?.count || 0);
             const previousAmount = Number(previousByCategory.get(row.category)?.total || 0);
             const change = amount - previousAmount;
             const share = total ? (amount / total) * 100 : 0;
@@ -72,7 +77,7 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
                 <CategorySparkline category={row.category} color={color} currentRows={trendRows} previousRows={previousTrendRows} hasComparison={hasComparison} />
                 <div className="category-detail-meta">
                   <span className="category-detail-track"><span style={{ width: `${share}%`, backgroundColor: color }} /></span>
-                  <span>{share.toFixed(1)}% · {row.count || 0} {Number(row.count) === 1 ? 'transaction' : 'transactions'}{hasComparison ? ` · prior ${formatCurrency(previousAmount)}` : ''}</span>
+                  <span>{share.toFixed(1)}% · {count} {count === 1 ? 'transaction' : 'transactions'}{hasComparison ? ` · prior ${formatCurrency(previousAmount)}` : ''}</span>
                 </div>
               </button>
             );
