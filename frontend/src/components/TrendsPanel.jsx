@@ -10,6 +10,8 @@ import {
 } from 'recharts';
 import { formatCurrency } from '../utils';
 import { CHART, axisTick, tooltipStyle } from '../lib/chartTheme';
+import { formatSignedPercent } from '../lib/delta.js';
+import DeltaPill from './DeltaPill.jsx';
 
 function formatDay(index) {
   return `Day ${index + 1}`;
@@ -42,7 +44,7 @@ export default function TrendsPanel({ current, previous, rangeLabel }) {
           <div className="trend-summary">
             <div><span className="trend-current-dot" />Current <strong>{formatCurrency(currentTotal)}</strong></div>
             <div><span className="trend-previous-dot" />Previous <strong>{formatCurrency(previousTotal)}</strong></div>
-            {change !== null && <span className={change <= 0 ? 'stat-positive' : 'stat-negative'}>{change > 0 ? '+' : ''}{change.toFixed(1)}%</span>}
+            {change !== null && <DeltaPill value={change} label={formatSignedPercent(change)} goodWhen="down" />}
           </div>
           <ResponsiveContainer width="100%" height={238}>
             <LineChart data={chartData} margin={{ top: 12, right: 8, bottom: 0, left: -12 }}>

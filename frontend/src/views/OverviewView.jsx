@@ -2,6 +2,7 @@ import React from 'react';
 import StatRow from '../components/StatRow.jsx';
 import NetWorthChart from '../components/NetWorthChart.jsx';
 import OverviewPreview from '../components/OverviewPreview.jsx';
+import DeltaPill from '../components/DeltaPill.jsx';
 import RecentActivity from '../components/RecentActivity.jsx';
 import { useFormatters } from '../hooks/useFormatters.js';
 import { padNetWorthToMonthEnd, sumTotals } from '../lib/dateRanges.js';
@@ -65,7 +66,13 @@ export default function OverviewView({ data, rangeKey, range, rangeLabel, saving
 
         <OverviewPreview label="Period change" foot="Open trend comparison" onClick={() => onNavigate('trends')}>
           <strong>{changeLabel}</strong>
-          <span className="overview-preview-caption">Spending versus previous period</span>
+          <span className="overview-preview-caption">
+            <DeltaPill
+              value={hasPrevious ? periodSpent - previousSpent : null}
+              label={hasPrevious ? `${formatCurrency(Math.abs(periodSpent - previousSpent))} ${periodSpent >= previousSpent ? 'more' : 'less'} than before` : 'No prior period'}
+              goodWhen="down"
+            />
+          </span>
           <div className="overview-preview-comparison">
             <span style={{ width: `${Math.min(100, (periodSpent / comparisonMax) * 100)}%` }} />
             <i style={{ left: `${(previousSpent / comparisonMax) * 100}%` }} />

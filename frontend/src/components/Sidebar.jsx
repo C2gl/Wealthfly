@@ -17,10 +17,15 @@ export default function Sidebar({ active, onNavigate, lastSync, onSync, syncing 
 
   return (
     <aside className="sidebar">
-      <div className="wordmark">
+      <button
+        type="button"
+        className="wordmark wordmark-link"
+        onClick={() => onNavigate('overview')}
+        aria-label="Wealthfly, go to the overview"
+      >
         <span className="wordmark-mark">W</span>
         <span className="wordmark-text">Wealthfly</span>
-      </div>
+      </button>
 
       <nav className="nav">
         {NAV.map((item) => (
