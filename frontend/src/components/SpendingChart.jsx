@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts';
 import { formatCurrency, formatDate } from '../utils';
+import { CHART, axisTick, tooltipStyle } from '../lib/chartTheme';
 
 function shortDate(value) {
   const date = new Date(`${value}T00:00:00`);
@@ -31,30 +32,23 @@ export default function SpendingChart({ data }) {
       </div>
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data} margin={{ top: 12, right: 8, bottom: 0, left: -12 }}>
-          <CartesianGrid stroke="#d9ded1" vertical={false} strokeDasharray="2 4" />
+          <CartesianGrid stroke={CHART.grid} vertical={false} strokeDasharray="2 4" />
           <XAxis
             dataKey="date"
             tickFormatter={shortDate}
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#7a8177', fontSize: 10, fontFamily: 'IBM Plex Mono, monospace' }}
+            tick={axisTick(10)}
             minTickGap={28}
           />
           <YAxis hide />
           <Tooltip
             cursor={false}
-            contentStyle={{
-              background: '#fbfaf1',
-              border: '1px solid #d9ded1',
-              borderRadius: 8,
-              color: '#20251f',
-              fontFamily: 'IBM Plex Mono, monospace',
-              fontSize: 11,
-            }}
+            contentStyle={tooltipStyle(11)}
             labelFormatter={formatDate}
             formatter={(value) => [formatCurrency(value), 'Spent']}
           />
-          <Bar dataKey="total" fill="#39725a" radius={[4, 4, 0, 0]} maxBarSize={18} />
+          <Bar dataKey="total" fill={CHART.primary} radius={[4, 4, 0, 0]} maxBarSize={18} />
         </BarChart>
       </ResponsiveContainer>
     </section>
