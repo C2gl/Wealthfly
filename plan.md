@@ -64,3 +64,16 @@ An option for the user to do a clean sync, to fully prune the DB — should be i
 ### 4. CI/CD & Pipeline Safety
 - **Docker Push on PRs**: The workflow in `.github/workflows/test.yml` currently sets `push: true` for all trigger types including `pull_request`, risking failed runs or unintended image pushes from branches/forks.
 - **Frontend Build in CI**: Frontend builds are only validated inside Docker rather than as a standalone test matrix step.
+
+
+
+Modernising the visuals
+
+What I saw in the code: a single muted green on cream, 2,300 lines of CSS, hardcoded hex colors in every chart, fonts declared but never loaded, and a net worth chart still on an older dark palette. In your screenshot, the category card is mostly empty space with a tiny sparkline. Here's what I'd change, in order of impact:
+
+Design tokens first. Colors, radii, spacing, and shadows become CSS variables with a light and a dark set. Charts read the same tokens, so one place controls the whole theme and dark mode comes almost free.
+Typography. Self-host Inter, use font-variant-numeric: tabular-nums for money so columns line up, and make the key numbers much larger so each screen has a clear hierarchy.
+One card style. Today the preview cards, panels, and category blocks each look a bit different. I'd use a single card with title, big value, and a delta pill (green/red with an arrow), plus skeleton loaders instead of blank states.
+Charts. Soft gradient area fills for net worth and spending, faint or no gridlines, rounded bars, custom tooltips, and a fixed 8–10 color categorical palette so a category keeps its color everywhere.
+Grouped categories. Your names like FOOD - 🥐 Bakery suggest a hierarchy. Splitting on the prefix would give expandable groups ("Food: 412.30" with Bakery, Groceries, and so on under it), which would be a bigger improvement than any color change.
+Details. Lucide icons instead of text arrows and ×, a segmented control for the period picker, subtle hover and number transitions that respect reduced-motion, and a proper dark mode toggle.

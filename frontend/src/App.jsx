@@ -1,370 +1,81 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import SyncBar from './components/SyncBar.jsx';
-import StatRow from './components/StatRow.jsx';
-import NetWorthChart from './components/NetWorthChart.jsx';
-import SpendingChart from './components/SpendingChart.jsx';
-import BreakdownBars from './components/BreakdownBars.jsx';
 import CategoryPanel from './components/CategoryPanel.jsx';
 import TrendsPanel from './components/TrendsPanel.jsx';
+import TrendsDrawer from './components/TrendsDrawer.jsx';
 import TransactionsTable from './components/TransactionsTable.jsx';
 import CategoryInsightsPanel from './components/CategoryInsightsPanel.jsx';
 import AccountsPage from './components/AccountsPage.jsx';
 import SavingsPage from './components/SavingsPage.jsx';
 import SettingsPage from './components/SettingsPage.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
-import { useTranslation } from './i18n.jsx';
-import { api } from './api.js';
-import { categoryColor, daysAgo, endOfMonth, formatCurrency as formatCurrencyValue, formatDate as formatDateValue, isNamedSavingsAccount, startOfMonth, today, transactionAmountMeta as transactionAmountMetaValue } from './utils.js';
-
-const RANGES = [
-  { key: 'thisMonth', start: () => startOfMonth(0), end: () => today() },
-  { key: 'previousMonth', start: () => startOfMonth(1), end: () => endOfMonth(1) },
-  { key: '30d', start: () => daysAgo(30), end: () => today() },
-  { key: '90d', start: () => daysAgo(90), end: () => today() },
-  { key: 'ytd', start: () => `${new Date().getFullYear()}-01-01`, end: () => today() },
-  { key: 'all', start: () => '0000-01-01', end: () => today() },
-];
-
-function budgetAmount(value) {
-  if (Array.isArray(value)) return value.reduce((sum, item) => sum + budgetAmount(item), 0);
-  const raw = value && typeof value === 'object' ? value.amount ?? value.sum ?? value.value : value;
-  if (raw !== value) return budgetAmount(raw);
-  const numeric = Number(raw);
-  return Number.isFinite(numeric) ? Math.abs(numeric) : 0;
-}
-
-function shiftDate(dateString, days) {
-  const date = new Date(`${dateString}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-function countLabel(count, singular) {
-  return `${count || 0} ${singular}${count === 1 ? '' : 's'}`;
-}
-
-function buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus, reconciliation }) {
-  const notifications = [];
-
-  if (syncNotification) notifications.push(syncNotification);
-
-  if (authStatus && !authStatus.authRequired) {
-    notifications.push({
-      id: 'no-auth',
-      level: 'warning',
-      title: 'No password set',
-      message: 'Wealthfly is running without a login — anyone who can reach it can view your data. Set WEALTHFLY_PASSWORD in .env.',
-    });
-  }
-
-  if (reconciliation && reconciliation.drift) {
-    const labels = { income: 'income', expenses: 'expenses', netWorth: 'net worth' };
-    const mismatches = Object.keys(labels).filter((key) => reconciliation[key]?.drift);
-    const detail = mismatches
-      .map((key) => `${labels[key]}: ${reconciliation[key].local} vs Firefly's ${reconciliation[key].firefly}`)
-      .join('; ');
-    notifications.push({
-      id: 'reconciliation-drift',
-      level: 'warning',
-      title: "Totals don't match Firefly",
-      message: `For ${reconciliation.start} to ${reconciliation.end} — ${detail}. Usually means a sync didn't fully complete; try running a sync.`,
-    });
-  }
-
-  if (error && syncNotification?.level !== 'critical') {
-    notifications.push({
-      id: 'api-error',
-      level: 'critical',
-      title: 'Dashboard data is unavailable',
-      message: error,
-    });
-  }
-
-  if (stats) {
-    const lastSyncTime = stats.lastSync ? new Date(stats.lastSync).getTime() : 0;
-    const syncAge = lastSyncTime ? Date.now() - lastSyncTime : Infinity;
-    if (!lastSyncTime || syncAge > 24 * 60 * 60 * 1000) {
-      notifications.push({
-        id: 'stale-sync',
-        level: 'warning',
-        title: stats.lastSync ? 'Data may be stale' : 'Data has not synced yet',
-        message: stats.lastSync
-          ? `Last successful sync: ${new Date(stats.lastSync).toLocaleString()}.`
-          : 'Run a sync to load the latest Firefly III data.',
-      });
-    }
-  }
-
-  budgetRows.filter((row) => row.target > 0 && row.spent > row.target).forEach((row) => {
-    notifications.push({
-      id: `budget-${row.id}`,
-      level: 'warning',
-      title: `${row.name} is over budget`,
-      message: `${formatCurrency(row.spent, row.currency)} spent against a ${formatCurrency(row.target, row.currency)} target.`,
-    });
-  });
-
-  if (stats && transactions.length === 0) {
-    notifications.push({
-      id: 'empty-period',
-      level: 'info',
-      title: `No transactions in ${rangeLabel}`,
-      message: 'Try a wider date range or check that the latest sync completed.',
-    });
-  }
-
-  return notifications;
-}
+import OverviewView from './views/OverviewView.jsx';
+import SpendingView from './views/SpendingView.jsx';
+import { useAppConfig } from './hooks/useAppConfig.js';
+import { useDashboardData } from './hooks/useDashboardData.js';
+import { useFormatters } from './hooks/useFormatters.js';
+import { useSync } from './hooks/useSync.js';
+import { buildBudgetRows } from './lib/budgets.js';
+import { RANGES, getPreviousRange } from './lib/dateRanges.js';
+import { buildNotifications } from './lib/notifications.js';
 
 export default function App() {
-  const { t, language } = useTranslation();
+  const { t, language, formatCurrency } = useFormatters();
   const [view, setView] = useState('overview');
   const [rangeKey, setRangeKey] = useState('thisMonth');
-  const [stats, setStats] = useState(null);
-  const [netWorth, setNetWorth] = useState([]);
-  const [spendingByDay, setSpendingByDay] = useState([]);
-  const [previousSpendingByDay, setPreviousSpendingByDay] = useState([]);
-  const [byCategory, setByCategory] = useState([]);
-  const [previousByCategory, setPreviousByCategory] = useState([]);
-  const [categoryTrends, setCategoryTrends] = useState([]);
-  const [previousCategoryTrends, setPreviousCategoryTrends] = useState([]);
-  const [accountFlows, setAccountFlows] = useState([]);
-  const [byTargetAccount, setByTargetAccount] = useState([]);
-  const [byTag, setByTag] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [budgets, setBudgets] = useState([]);
-  const [syncing, setSyncing] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(null);
-  const [syncNotification, setSyncNotification] = useState(null);
-  const [savingsAccountWords, setSavingsAccountWords] = useState(null);
-  const [syncLookbackDays, setSyncLookbackDays] = useState(null);
-  const [authStatus, setAuthStatus] = useState(null);
-  const [reconciliation, setReconciliation] = useState(null);
-  const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
 
+  const { savingsAccountWords, syncLookbackDays, authStatus } = useAppConfig();
+
   const activeRange = RANGES.find((r) => r.key === rangeKey);
   const range = { start: activeRange.start(), end: activeRange.end() };
+  const previousRange = getPreviousRange(range, rangeKey);
   const rangeLabel = t(`periods.${rangeKey}`);
-  const viewTitle = t(`nav.${view}`);
-  const formatCurrency = (value, currency) => formatCurrencyValue(value, currency, language);
-  const formatDate = (value) => formatDateValue(value, language);
-  const transactionAmountMeta = (transaction) => transactionAmountMetaValue(transaction, language);
-  const previousRange = rangeKey === 'all'
-    ? null
-    : { start: shiftDate(range.start, -(Math.max(1, Math.round((new Date(`${range.end}T00:00:00Z`) - new Date(`${range.start}T00:00:00Z`)) / 86400000)))), end: shiftDate(range.start, -1) };
-  const periodSpent = spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isNamedSavingsAccount(account, savingsAccountWords));
-  // For "this month", extend the chart's x-axis to the full calendar month by padding
-  // the remaining (future) days with null values — Recharts stops the line there
-  // instead of drawing through days that haven't happened yet.
-  const chartNetWorth = rangeKey === 'thisMonth'
-    ? (() => {
-        const monthEnd = endOfMonth(0);
-        const padded = [...netWorth];
-        let cursor = padded.length ? shiftDate(padded[padded.length - 1].date, 1) : range.start;
-        while (cursor <= monthEnd) {
-          padded.push({ date: cursor, total: null });
-          cursor = shiftDate(cursor, 1);
-        }
-        return padded;
-      })()
-    : netWorth;
-  const budgetRows = budgets
-    .filter((budget) => budget.active !== false)
-    .map((budget, index) => {
-      const currentLimit = (budget.limits || []).find((limit) => {
-        const start = String(limit.start || '').slice(0, 10);
-        const end = String(limit.end || '').slice(0, 10);
-        return start <= range.end && end >= range.end;
-      }) || [...(budget.limits || [])].sort((a, b) => String(b.end || '').localeCompare(String(a.end || '')))[0];
-      const spent = currentLimit
-        ? budgetAmount(currentLimit.spent)
-        : (budget.spent || []).reduce((sum, item) => sum + budgetAmount(item), 0);
-      const target = currentLimit
-        ? budgetAmount(currentLimit.amount)
-        : budgetAmount(budget.auto_budget_amount);
-      const currency = currentLimit?.currency_code || budget.spent?.[0]?.currency_code;
-      return {
-        id: budget.id,
-        name: budget.name,
-        spent,
-        target,
-        remaining: target - spent,
-        percent: target > 0 ? (spent / target) * 100 : 0,
-        currency,
-        color: ['#8da34d', '#c6a642', '#62615d'][index % 3],
-      };
-    });
-  const notifications = buildNotifications({ error, stats, budgetRows, transactions, rangeLabel, syncNotification, authStatus, reconciliation });
 
-  const load = useCallback(async () => {
-    try {
-      setError(null);
-      const [s, nw, daily, previousDaily, cat, previousCat, categoryTrend, previousCategoryTrend, flows, tgt, tag, tx, accountRows, budgetRows] = await Promise.all([
-        api.stats(range),
-        api.netWorth(range),
-        api.expensesByDay(range),
-        previousRange ? api.expensesByDay(previousRange) : Promise.resolve([]),
-        api.expensesByCategory(range),
-        previousRange ? api.expensesByCategory(previousRange) : Promise.resolve([]),
-        api.expensesByCategoryByDay(range),
-        previousRange ? api.expensesByCategoryByDay(previousRange) : Promise.resolve([]),
-        api.accountFlows(range),
-        api.expensesByTargetAccount(range),
-        api.expensesByTag(range),
-        api.transactions({ ...range, limit: 200 }),
-        api.accounts(),
-        api.budgets(range),
-      ]);
-      setStats(s);
-      setNetWorth(nw);
-      setSpendingByDay(daily);
-      setPreviousSpendingByDay(previousDaily);
-      setByCategory(cat);
-      setPreviousByCategory(previousCat);
-      setCategoryTrends(categoryTrend);
-      setPreviousCategoryTrends(previousCategoryTrend);
-      setAccountFlows(flows);
-      setByTargetAccount(tgt);
-      setByTag(tag);
-      setTransactions(tx);
-      setAccounts(accountRows);
-      setBudgets(budgetRows);
-    } catch (e) {
-      setError(e.message);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rangeKey]);
+  const { data, error, setError, load, reconciliation, loadReconciliation } = useDashboardData({ range, previousRange, rangeKey });
+  const sync = useSync({ load, loadReconciliation, setError });
 
-  useEffect(() => {
-    api.config()
-      .then((config) => {
-        setSavingsAccountWords(config.savingsAccountWords);
-        setSyncLookbackDays(config.syncLookbackDays);
-      })
-      .catch(() => {});
-  }, []);
+  const budgetRows = buildBudgetRows(data.budgets, range);
+  const notifications = buildNotifications({
+    error,
+    stats: data.stats,
+    budgetRows,
+    transactions: data.transactions,
+    rangeLabel,
+    syncNotification: sync.syncNotification,
+    authStatus,
+    reconciliation,
+    formatCurrency,
+  });
 
-  useEffect(() => {
-    api.session()
-      .then((session) => setAuthStatus(session))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    api.syncStatus()
-      .then((status) => {
-        if (status?.inProgress) {
-          setSyncing(true);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const loadReconciliation = useCallback(() => {
-    api.reconciliation()
-      .then((result) => setReconciliation(result))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    loadReconciliation();
-  }, [loadReconciliation]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // Poll always: fast while a sync is visible, slowly otherwise so syncs started
-  // elsewhere (the cron job, another tab) still make the bar appear.
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const status = await api.syncStatus();
-        if (status?.inProgress) {
-          setSyncProgress({ currentStep: status.currentStep, progress: status.progress });
-          if (!syncing) setSyncing(true);
-        } else if (syncing) {
-          setSyncing(false);
-          setSyncProgress(null);
-          await load();
-          loadReconciliation();
-        }
-      } catch {
-        // Keep polling on transient failure
-      }
-    }, syncing ? 1000 : 10000);
-    return () => clearInterval(interval);
-  }, [syncing, load, loadReconciliation]);
-
-  const handleSync = async (full = false) => {
-    setSyncing(true);
-    try {
-      const result = await api.triggerSync({ full });
-      if (result.inProgress) {
-        setSyncNotification({
-          id: `sync-info-${Date.now()}`,
-          level: 'info',
-          title: 'Sync in progress',
-          message: 'A sync is already running in the background. Results will refresh automatically when finished.',
-        });
-        return;
-      }
-      setSyncNotification({
-        id: `sync-success-${Date.now()}`,
-        level: 'success',
-        title: 'Sync completed',
-        message: `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')}${result.incremental === false ? ' (full resync)' : ''}.`,
-      });
-      await load();
-      loadReconciliation();
-      setSyncing(false);
-    } catch (e) {
-      setSyncNotification({
-        id: `sync-failure-${Date.now()}`,
-        level: 'critical',
-        title: 'Sync failed',
-        message: e.message,
-      });
-      setError(e.message);
-      setSyncing(false);
-    }
-  };
-
-  const [purging, setPurging] = useState(false);
-  const handlePurge = async () => {
-    setPurging(true);
-    try {
-      const result = await api.purge();
-      if (result.inProgress) {
-        setSyncNotification({
-          id: `purge-info-${Date.now()}`,
-          level: 'info',
-          title: 'Sync in progress',
-          message: 'Cannot purge while a sync is running. Try again once it finishes.',
-        });
-        return;
-      }
-      setSyncNotification({
-        id: `purge-success-${Date.now()}`,
-        level: 'success',
-        title: 'Data purged',
-        message: 'All locally cached data was cleared. Run a sync to rebuild it from Firefly III.',
-      });
-      await load();
-      loadReconciliation();
-    } catch (e) {
-      setSyncNotification({
-        id: `purge-failure-${Date.now()}`,
-        level: 'critical',
-        title: 'Purge failed',
-        message: e.message,
-      });
-    } finally {
-      setPurging(false);
+  const renderView = () => {
+    switch (view) {
+      case 'accounts':
+        return <AccountsPage accounts={data.accounts} accountFlows={data.accountFlows} range={range} rangeLabel={rangeLabel} />;
+      case 'savings':
+        return <SavingsPage accounts={data.accounts} accountFlows={data.accountFlows} range={range} rangeLabel={rangeLabel} language={language} savingsAccountWords={savingsAccountWords} />;
+      case 'categories':
+        return <CategoryPanel rows={data.byCategory} previousRows={data.previousByCategory} trendRows={data.categoryTrends} previousTrendRows={data.previousCategoryTrends} rangeLabel={rangeLabel} onCategoryClick={setSelectedCategory} />;
+      case 'trends':
+        return <TrendsPanel current={data.spendingByDay} previous={data.previousSpendingByDay} rangeLabel={rangeLabel} />;
+      case 'overview':
+        return <OverviewView data={data} rangeKey={rangeKey} range={range} rangeLabel={rangeLabel} savingsAccountWords={savingsAccountWords} onNavigate={setView} />;
+      case 'spending':
+        return <SpendingView data={data} budgetRows={budgetRows} rangeLabel={rangeLabel} onSelectCategory={setSelectedCategory} onShowTrends={() => setShowTrends(true)} onNavigate={setView} />;
+      case 'settings':
+        return (
+          <SettingsPage
+            onForceFullSync={() => sync.handleSync(true)}
+            syncing={sync.syncing}
+            onPurge={sync.handlePurge}
+            purging={sync.purging}
+            syncLookbackDays={syncLookbackDays}
+          />
+        );
+      default:
+        return <TransactionsTable transactions={data.transactions} />;
     }
   };
 
@@ -373,15 +84,15 @@ export default function App() {
       <Sidebar
         active={view}
         onNavigate={setView}
-        lastSync={stats?.lastSync}
-        onSync={() => handleSync()}
-        syncing={syncing}
+        lastSync={data.stats?.lastSync}
+        onSync={() => sync.handleSync()}
+        syncing={sync.syncing}
       />
 
       <main className="main">
-        <SyncBar syncing={syncing} syncProgress={syncProgress} syncNotification={syncNotification} />
+        <SyncBar syncing={sync.syncing} syncProgress={sync.syncProgress} syncNotification={sync.syncNotification} />
         <header className="top-bar">
-          <h1>{viewTitle}</h1>
+          <h1>{t(`nav.${view}`)}</h1>
           <div className="top-bar-actions">
             <div className="range-toggle">
               {RANGES.map((r) => (
@@ -398,149 +109,10 @@ export default function App() {
           </div>
         </header>
 
-        {view === 'accounts' ? (
-          <AccountsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} />
-        ) : view === 'savings' ? (
-          <SavingsPage accounts={accounts} accountFlows={accountFlows} range={range} rangeLabel={rangeLabel} language={language} savingsAccountWords={savingsAccountWords} />
-        ) : view === 'categories' ? (
-          <CategoryPanel rows={byCategory} previousRows={previousByCategory} trendRows={categoryTrends} previousTrendRows={previousCategoryTrends} rangeLabel={rangeLabel} onCategoryClick={setSelectedCategory} />
-        ) : view === 'trends' ? (
-          <TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} />
-        ) : view === 'overview' ? (
-          <>
-            <StatRow stats={stats} rangeLabel={rangeLabel} />
-            <div className="overview-preview-grid">
-              <button className="overview-preview overview-preview-category" onClick={() => setView('categories')}>
-                <div className="overview-preview-heading"><span className="eyebrow">Where it went</span><span className="overview-preview-arrow">→</span></div>
-                <strong>{formatCurrency(periodSpent)}</strong>
-                <span className="overview-preview-caption">{byCategory.length} categories · {rangeLabel}</span>
-                <div className="overview-preview-bars">{byCategory.slice(0, 4).reduce((colors, row) => {
-                  const color = categoryColor(row.category, colors.at(-1));
-                  colors.push(color);
-                  return colors;
-                }, []).map((color, index) => <span key={byCategory[index].category} style={{ width: `${periodSpent ? (Number(byCategory[index].total || 0) / periodSpent) * 100 : 0}%`, backgroundColor: color }} />)}</div>
-                <span className="overview-preview-foot">Open category trends</span>
-              </button>
-              <button className="overview-preview" onClick={() => setView('spending')}>
-                <div className="overview-preview-heading"><span className="eyebrow">Spending rhythm</span><span className="overview-preview-arrow">→</span></div>
-                <strong>{spendingByDay.length} active days</strong>
-                <span className="overview-preview-caption">{formatCurrency(periodSpent)} spent in {rangeLabel}</span>
-                <div className="overview-preview-sparkline">{spendingByDay.slice(-18).map((row, index) => <i key={`${row.date}-${index}`} style={{ height: `${Math.max(8, (Number(row.total || 0) / Math.max(1, ...spendingByDay.map((item) => Number(item.total || 0)))) * 42)}px` }} />)}</div>
-                <span className="overview-preview-foot">Open spending analysis</span>
-              </button>
-              <button className="overview-preview" onClick={() => setView('accounts')}>
-                <div className="overview-preview-heading"><span className="eyebrow">Accounts</span><span className="overview-preview-arrow">→</span></div>
-                <strong>{overviewAccounts.length} accounts</strong>
-                <span className="overview-preview-caption">Balances and account activity</span>
-                <div className="overview-account-list">{overviewAccounts.slice(0, 3).map((account) => <span key={account.id}><b>{account.name}</b><em>{formatCurrency(account.current_balance, account.currency_code)}</em></span>)}</div>
-                <span className="overview-preview-foot">Open account details</span>
-              </button>
-              <button className="overview-preview" onClick={() => setView('trends')}>
-                <div className="overview-preview-heading"><span className="eyebrow">Period change</span><span className="overview-preview-arrow">→</span></div>
-                <strong>{previousSpendingByDay.length ? `${periodSpent >= previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0) ? '+' : ''}${(((periodSpent - previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0)) / Math.max(1, previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0))) * 100).toFixed(1)}%` : '—'}</strong>
-                <span className="overview-preview-caption">Spending versus previous period</span>
-                <div className="overview-preview-comparison"><span style={{ width: `${Math.min(100, (periodSpent / Math.max(1, periodSpent, previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0))) * 100)}%` }} /><i style={{ left: `${(previousSpendingByDay.length ? previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0) : 0) / Math.max(1, periodSpent, previousSpendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0)) * 100}%` }} /></div>
-                <span className="overview-preview-foot">Open trend comparison</span>
-              </button>
-            </div>
-            <NetWorthChart data={chartNetWorth} />
-            <section className="panel recent-panel">
-              <div className="panel-heading-row"><h2>Recent activity</h2><button className="text-button" onClick={() => setView('transactions')}>View all →</button></div>
-              <div className="recent-list">
-                {transactions.slice(0, 5).map((tx) => {
-                  const meta = transactionAmountMeta(tx);
-                  const isTransfer = tx.type === 'transfer';
-                  return (
-                    <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
-                      <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
-                      <div className="recent-row-amount-wrap">
-                        {isTransfer && <span className="transfer-badge recent-transfer-badge">Transfer</span>}
-                        <strong className={meta.tone}>{meta.display}</strong>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </>
-        ) : view === 'spending' ? (
-          <>
-            <div className="spending-summary">
-              <div className="summary-total">
-                <span className="eyebrow">Spent · selected period</span>
-                <strong>{formatCurrency(spendingByDay.reduce((sum, row) => sum + Number(row.total || 0), 0))}</strong>
-              </div>
-              <div><span>Income · {rangeLabel}</span><strong className="stat-positive">+{formatCurrency(stats?.monthIncome)}</strong></div>
-              <div><span>Spending · {rangeLabel}</span><strong>{formatCurrency(stats?.monthExpenses)}</strong></div>
-              <div><span>Net · {rangeLabel}</span><strong className={(stats?.monthIncome || 0) - (stats?.monthExpenses || 0) >= 0 ? 'stat-positive' : 'stat-negative'}>{formatCurrency((stats?.monthIncome || 0) - (stats?.monthExpenses || 0))}</strong></div>
-            </div>
-            <SpendingChart data={spendingByDay} />
-            <div className="spending-grid">
-              <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} initialMode="bar" onViewAll={() => setSelectedCategory(byCategory[0]?.category)} />
-              <div className="side-stack">
-                <section className="insight-panel budget-panel">
-                  <div className="panel-heading-row"><h2>Budget pulse</h2><span>{rangeLabel} · Firefly III</span></div>
-                  {budgetRows.length ? (
-                    <div className="budget-meter" aria-label="Firefly III budget comparison">
-                      {budgetRows.map((row) => {
-                        const isOverspent = row.target > 0 && row.spent > row.target;
-                        const scale = Math.max(row.spent, row.target, 1);
-                        const fillWidth = row.target > 0 ? Math.min(row.percent, 100) : 0;
-                        const currentInfo = `${row.name}: ${formatCurrency(row.spent, row.currency)} spent, ${formatCurrency(row.target, row.currency)} target, ${formatCurrency(row.remaining, row.currency)} remaining`;
-                        return (
-                          <div className="budget-meter-row" key={row.id}>
-                            <span className="budget-meter-label"><i style={{ backgroundColor: row.color }} />{row.name}</span>
-                            <div className="budget-track" aria-label={currentInfo} title={currentInfo}>
-                              <span className="budget-fill" style={{ width: `${fillWidth}%`, backgroundColor: row.color }} title={`Current spent: ${formatCurrency(row.spent, row.currency)}`} />
-                              {isOverspent && <span className="budget-target" style={{ left: `${(row.target / scale) * 100}%` }} title={`Target before overspending: ${formatCurrency(row.target, row.currency)}`} />}
-                            </div>
-                            <span className="budget-meter-value">{row.target > 0 ? `${Math.round(row.percent)}%` : '—'}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : <p className="budget-empty">No Firefly III budgets are configured for this period.</p>}
-                </section>
-                <section className="insight-panel">
-                  <div className="panel-heading-row"><h2>Worth a look</h2><span>{byCategory.length} categories</span></div>
-                  <p>{transactions.length ? `${transactions.length} transactions in this period.` : 'No transactions in this period.'}</p>
-                  <button className="text-button" onClick={() => setShowTrends(true)}>View trends →</button>
-                </section>
-              </div>
-            </div>
-            <section className="panel recent-panel">
-              <div className="panel-heading-row"><h2>Recent activity</h2><button className="text-button" onClick={() => setView('transactions')}>View all →</button></div>
-              <div className="recent-list">
-                {transactions.slice(0, 6).map((tx) => {
-                  const meta = transactionAmountMeta(tx);
-                  const isTransfer = tx.type === 'transfer';
-                  return (
-                    <div className="recent-row" key={`${tx.id}-${tx.split_index}`}>
-                      <div><span className="recent-date">{formatDate(tx.date)}</span><strong>{tx.description}</strong><small><span className="category-chip" style={{ '--category-color': categoryColor(tx.category_name) }} />{tx.category_name || 'Uncategorized'}</small></div>
-                      <div className="recent-row-amount-wrap">
-                        {isTransfer && <span className="transfer-badge recent-transfer-badge">Transfer</span>}
-                        <strong className={meta.tone}>{meta.display}</strong>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </>
-        ) : view === 'settings' ? (
-          <SettingsPage
-            onForceFullSync={() => handleSync(true)}
-            syncing={syncing}
-            onPurge={handlePurge}
-            purging={purging}
-            syncLookbackDays={syncLookbackDays}
-          />
-        ) : (
-          <TransactionsTable transactions={transactions} />
-        )}
+        {renderView()}
       </main>
-      {selectedCategory && <CategoryInsightsPanel rows={byCategory} category={selectedCategory} transactions={transactions} onClose={() => setSelectedCategory(null)} />}
-      {showTrends && <div className="drawer-backdrop" onClick={() => setShowTrends(false)}><aside className="insights-drawer" onClick={(event) => event.stopPropagation()}><div className="drawer-header"><div><span className="eyebrow">Spending trends</span><h2>Selected period</h2></div><button className="icon-button" onClick={() => setShowTrends(false)} aria-label="Close spending trends">×</button></div><TrendsPanel current={spendingByDay} previous={previousSpendingByDay} rangeLabel={rangeLabel} /></aside></div>}
+      {selectedCategory && <CategoryInsightsPanel rows={data.byCategory} category={selectedCategory} transactions={data.transactions} onClose={() => setSelectedCategory(null)} />}
+      {showTrends && <TrendsDrawer current={data.spendingByDay} previous={data.previousSpendingByDay} rangeLabel={rangeLabel} onClose={() => setShowTrends(false)} />}
     </div>
   );
 }
