@@ -34,11 +34,11 @@ export default function OverviewView({ data, rangeKey, range, rangeLabel, saving
       <StatRow stats={stats} rangeLabel={rangeLabel} />
       <div className="overview-preview-grid">
         <OverviewPreview label="Where it went" foot="Open category trends" className="overview-preview-category" onClick={() => onNavigate('categories')}>
-          <strong>{formatCurrency(periodSpent)}</strong>
+          <strong className="mono-hero">{formatCurrency(periodSpent)}</strong>
           <span className="overview-preview-caption">{byCategory.length} categories · {rangeLabel}</span>
           <div className="overview-preview-bars">
             {topCategoryColors.map((color, index) => (
-              <span key={topCategories[index].category} style={{ width: `${periodSpent ? (Number(topCategories[index].total || 0) / periodSpent) * 100 : 0}%`, backgroundColor: color }} />
+              <span key={topCategories[index].category} style={{ width: `${periodSpent ? (Number(topCategories[index].total || 0) / periodSpent) * 100 : 0}%`, backgroundColor: color, borderRadius: 'var(--radius-sm)' }} />
             ))}
           </div>
         </OverviewPreview>
@@ -48,7 +48,7 @@ export default function OverviewView({ data, rangeKey, range, rangeLabel, saving
           <span className="overview-preview-caption">{formatCurrency(periodSpent)} spent in {rangeLabel}</span>
           <div className="overview-preview-sparkline">
             {spendingByDay.slice(-18).map((row, index) => (
-              <i key={`${row.date}-${index}`} style={{ height: `${Math.max(8, (Number(row.total || 0) / maxDailySpend) * 42)}px` }} />
+              <i key={`${row.date}-${index}`} style={{ height: `${Math.max('var(--sparkline-min-height)', (Number(row.total || 0) / maxDailySpend) * 'var(--sparkline-max-height)')}` }} />
             ))}
           </div>
         </OverviewPreview>

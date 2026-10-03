@@ -20,10 +20,10 @@ function CategorySparkline({ category, color, currentRows, previousRows, hasComp
   const previousPoints = sparklinePoints(previousRows, category, maxDay, maxTotal);
 
   return (
-    <div className="category-sparkline-wrap">
+    <div className="category-sparkline-wrap" style={{ '--sparkline-current-color': color, '--sparkline-prev-color': 'var(--dot-previous)' }}>
       <svg className="category-sparkline" viewBox="0 0 120 32" role="img" aria-label={`${category} spending trend`}>
-        {hasComparison && <polyline points={previousPoints} fill="none" stroke="#c6a642" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />}
-        <polyline points={currentPoints} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+        {hasComparison && <polyline points={previousPoints} fill="none" stroke="var(--dot-previous)" strokeWidth="var(--sparkline-prev-width)" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />}
+        <polyline points={currentPoints} fill="none" stroke="var(--sparkline-current-color)" strokeWidth="var(--sparkline-current-width)" vectorEffect="non-scaling-stroke" />
       </svg>
       {hasComparison && <span className="category-sparkline-legend"><i className="category-sparkline-current" />now <i className="category-sparkline-previous" />prior</span>}
     </div>
@@ -72,11 +72,11 @@ export default function CategoryPanel({ rows, previousRows = [], trendRows = [],
               <button className="category-detail-row category-block" key={row.category} type="button" onClick={() => onCategoryClick?.(row.category)}>
                 <div className="category-detail-heading">
                   <span className="bar-row-name"><span className="category-dot" style={{ backgroundColor: color }} />{row.category}</span>
-                  <div className="category-detail-amounts"><strong>{formatCurrency(amount)}</strong><span className={hasComparison ? (change > 0 ? 'stat-negative' : change < 0 ? 'stat-positive' : '') : ''}>{changeLabel}</span></div>
+                  <div className="category-detail-amounts"><strong>{formatCurrency(amount)}</strong><span className={hasComparison ? (change > 0 ? 'stat-positive' : change < 0 ? 'stat-negative' : '') : ''}>{changeLabel}</span></div>
                 </div>
                 <CategorySparkline category={row.category} color={color} currentRows={trendRows} previousRows={previousTrendRows} hasComparison={hasComparison} />
                 <div className="category-detail-meta">
-                  <span className="category-detail-track"><span style={{ width: `${share}%`, backgroundColor: color }} /></span>
+                  <span className="category-detail-track"><span style={{ width: `${share}%`, backgroundColor: color, borderRadius: 'var(--radius-circle)' }} /></span>
                   <span>{share.toFixed(1)}% · {count} {count === 1 ? 'transaction' : 'transactions'}{hasComparison ? ` · prior ${formatCurrency(previousAmount)}` : ''}</span>
                 </div>
               </button>

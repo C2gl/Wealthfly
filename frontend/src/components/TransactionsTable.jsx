@@ -41,9 +41,9 @@ export default function TransactionsTable({ transactions }) {
   };
 
   const distribution = [
-    { key: 'withdrawal', label: 'Expenses', color: '#c56c5a', total: totals.withdrawal },
-    { key: 'deposit', label: 'Income', color: '#5cae74', total: totals.deposit },
-    { key: 'transfer', label: 'Transfers', color: '#6fb2d6', total: totals.transfer },
+    { key: 'withdrawal', label: 'Expenses', color: 'var(--led-terracotta)', total: totals.withdrawal },
+    { key: 'deposit', label: 'Income', color: 'var(--led-green)', total: totals.deposit },
+    { key: 'transfer', label: 'Transfers', color: 'var(--led-positive)', total: totals.transfer },
   ].filter((row) => row.total > 0);
 
   const total = distribution.reduce((sum, row) => sum + row.total, 0);

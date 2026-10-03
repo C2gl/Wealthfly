@@ -45,16 +45,16 @@ export default function TrendsPanel({ current, previous, rangeLabel }) {
           </div>
           <ResponsiveContainer width="100%" height={238}>
             <LineChart data={chartData} margin={{ top: 12, right: 8, bottom: 0, left: -12 }}>
-              <CartesianGrid stroke="#d9ded1" vertical={false} strokeDasharray="2 4" />
-              <XAxis dataKey="day" tickFormatter={formatDay} axisLine={false} tickLine={false} tick={{ fill: '#7a8177', fontSize: 10, fontFamily: 'IBM Plex Mono, monospace' }} minTickGap={28} />
+              <CartesianGrid stroke="var(--led-border)" vertical={false} strokeDasharray="2 4" />
+              <XAxis dataKey="day" tickFormatter={formatDay} axisLine={false} tickLine={false} tick={{ fill: 'var(--led-muted)', fontSize: 10, fontFamily: 'IBM Plex Mono, monospace' }} minTickGap={28} />
               <YAxis hide />
               <Tooltip
                 labelFormatter={formatDay}
                 formatter={(value, name) => [formatCurrency(value), name === 'current' ? 'Current' : 'Previous']}
-                contentStyle={{ background: '#fbfaf1', border: '1px solid #d9ded1', borderRadius: 8, color: '#20251f', fontFamily: 'IBM Plex Mono, monospace', fontSize: 11 }}
+                contentStyle={{ background: 'var(--led-panel)', border: '1px solid var(--led-border)', borderRadius: 8, color: 'var(--led-text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: 11 }}
               />
-              <Line type="monotone" dataKey="current" stroke="#39725a" strokeWidth={2} dot={false} connectNulls />
-              <Line type="monotone" dataKey="previous" stroke="#c6a642" strokeWidth={2} strokeDasharray="5 4" dot={false} connectNulls />
+              <Line type="monotone" dataKey="current" stroke="var(--led-green)" strokeWidth={2} dot={false} connectNulls />
+              <Line type="monotone" dataKey="previous" stroke="var(--led-gray-500)" strokeWidth={2} strokeDasharray="5 4" dot={false} connectNulls />
             </LineChart>
           </ResponsiveContainer>
         </>

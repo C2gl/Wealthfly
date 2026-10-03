@@ -20,29 +20,29 @@ export default function NetWorthChart({ data }) {
         <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="netWorthFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D9A54F" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#D9A54F" stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--chart-networth-assets)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--chart-networth-assets)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#232A34" vertical={false} />
+          <CartesianGrid stroke="var(--led-border)" vertical={false} />
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
-            stroke="#8992A1"
+            stroke="var(--led-gray-500)"
             tick={{ fontSize: 11, fontFamily: 'IBM Plex Mono, monospace' }}
             minTickGap={40}
           />
           <YAxis
             tickFormatter={formatCompact}
-            stroke="#8992A1"
+            stroke="var(--led-gray-500)"
             tick={{ fontSize: 11, fontFamily: 'IBM Plex Mono, monospace' }}
             width={56}
           />
           <Tooltip
             cursor={false}
             contentStyle={{
-              background: '#151A21',
-              border: '1px solid #232A34',
+              background: 'var(--led-panel)',
+              border: '1px solid var(--led-border)',
               borderRadius: 4,
               fontFamily: 'IBM Plex Mono, monospace',
               fontSize: 12,
@@ -53,7 +53,7 @@ export default function NetWorthChart({ data }) {
           <Area
             type="monotone"
             dataKey="total"
-            stroke="#D9A54F"
+            stroke="var(--chart-networth-liabilities)"
             strokeWidth={2}
             fill="url(#netWorthFill)"
           />

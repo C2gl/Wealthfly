@@ -105,6 +105,7 @@ export default function App() {
                 </button>
               ))}
             </div>
+            <ThemeToggle />
             <NotificationBell notifications={notifications} />
           </div>
         </header>

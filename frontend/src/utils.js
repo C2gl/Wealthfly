@@ -93,7 +93,7 @@ export function endOfMonth(monthsAgo = 0) {
   return `${year}-${month}-${day}`;
 }
 
-const CATEGORY_COLORS = ['#39725a', '#bc704d', '#c4aa64', '#6f8a7b', '#5a73a1', '#8d72b2', '#9f9d93'];
+const CATEGORY_COLORS = ["var(--cat-seg-food)", "var(--cat-seg-home)", "var(--cat-seg-transport)", "var(--cat-seg-fun)", "var(--cat-seg-savings)"];
 
 export function categoryColor(category, avoidColor) {
   const value = String(category || 'Uncategorized');

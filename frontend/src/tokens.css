@@ -1,0 +1,374 @@
+/*
+  Design Tokens — Ledger Direction
+  =================================
+  Extends the cream/green aesthetic with a serif display type.
+  Self-hosted via @fontsource-variable.
+  
+  Usage:
+    - Colors:   var(--ledger-positive)      var(--ledger-negative)
+    - Type:     var(--text-3xl)
+    - Layout:   var(--radius-md)
+    - Charts:   var(--chart-food)
+*/
+
+/* === COLORS (Light / Dark) === */
+
+:root {
+  /* Core palette — extends existing cream/green */
+  --led-bg: #f5f5f0;
+  --led-panel: #fbfaf1;
+  --led-border: #d9ded1;
+  --led-text: #20251f;
+  --led-muted: #7a8177;
+
+  /* Category card colors — the Ledger book aesthetic */
+  --led-green:  #5f9c5f;
+  --led-green-2: #7ab87a;
+  --led-ochre:  #b47c2f;
+  --led-terracotta: #c46c4c;
+  --led-sage:     #9cb98d;
+  --led-peach:    #e8c5b4;
+
+  /* Semantic tokens */
+  --led-positive:  var(--led-green);
+  --led-positive-2: var(--led-green-2);
+  --led-negative:  var(--led-terracotta);
+  --led-neutral:   var(--led-ochre);
+
+  /* Chart categorical palette (for bars, dots, sparklines) */
+  --chart-food:    var(--led-green);
+  --chart-home:    var(--led-ochre);
+  --chart-transport: var(--led-terracotta);
+  --chart-fun:     var(--led-sage);
+  --chart-savings: var(--led-peach);
+
+  /* Net-worth chart palette */
+  --chart-networth-assets:   var(--led-green-2);
+  --chart-networth-liabilities: var(--led-terracotta);
+  --chart-networth-balance:  #1d2b45;
+
+  /* Accent (primary button, active states) */
+  --led-accent: var(--led-green);
+
+  /* Grays */
+  --led-gray-50: #f9fafb;
+  --led-gray-100: #f3f4f6;
+  --led-gray-200: #e5e7eb;
+  --led-gray-300: #d1d5db;
+  --led-gray-400: #9ca3af;
+  --led-gray-500: #6b7280;
+  --led-gray-600: #4b5563;
+  --led-gray-700: #374151;
+  --led-gray-800: #1f2937;
+  --led-gray-900: #111827;
+  --led-black: #000000;
+}
+
+[data-theme="dark"] {
+  /* Dark mode — deep navy background with lime accents */
+  --led-bg: #0a0f1a;
+  --led-panel: #121829;
+  --led-border: #1f2a44;
+  --led-text: #e6ecf5;
+  --led-muted: #6b7a91;
+
+  --led-green: #8ce98c;
+  --led-green-2: #a8f0a8;
+  --led-ochre: #fbbf6b;
+  --led-terracotta: #ff7070;
+  --led-sage: #c4e8c4;
+  --led-peach: #ffd8a8;
+
+  --led-positive:  var(--led-green);
+  --led-positive-2: var(--led-green-2);
+  --led-negative:  var(--led-terracotta);
+  --led-neutral:   var(--led-ochre);
+
+  --chart-food:    var(--led-green);
+  --chart-home:    var(--led-ochre);
+  --chart-transport: var(--led-terracotta);
+  --chart-fun:     var(--led-sage);
+  --chart-savings: var(--led-peach);
+
+  --chart-networth-assets:   #a8f0a8;
+  --chart-networth-liabilities: #ff7070;
+  --chart-networth-balance:  #ffffff;
+
+  --led-accent: var(--led-green);
+
+  --led-gray-50: #0b1120;
+  --led-gray-100: #0f1626;
+  --led-gray-200: #161e35;
+  --led-gray-300: #1f2a44;
+  --led-gray-400: #2e3b58;
+  --led-gray-500: #45526f;
+  --led-gray-600: #5d6b8f;
+  --led-gray-700: #6e7c99;
+  --led-gray-800: #8494aa;
+  --led-gray-900: #98a4b3;
+  --led-black: #000000;
+}
+
+/* === TYPE (Fonts + Scale) === */
+
+:root {
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+
+  /* Type scale — optimized for dashboard hierarchy */
+  --text-display-1: 4.5rem;
+  --text-display-2: 3rem;
+  --text-display-3: 2.25rem;
+  --text-display-4: 1.75rem;
+  --text-lg: 1.25rem;
+  --text-base: 1rem;
+  --text-sm: 0.875rem;
+  --text-xs: 0.75rem;
+
+  /* Number variants */
+  --font-numeric-tabs: style='tabular-nums';
+  --font-numeric-nums: style='slashed-zero';
+}
+
+[data-theme="dark"] {
+  /* Dark mode type scale (same sizes, lighter text) */
+  --text-display-1: 4.5rem;
+  --text-display-2: 3rem;
+  --text-display-3: 2.25rem;
+  --text-display-4: 1.75rem;
+  --text-lg: 1.25rem;
+  --text-base: 1rem;
+  --text-sm: 0.875rem;
+  --text-xs: 0.75rem;
+}
+
+/* === SPACING === */
+
+:root {
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --space-40: 160px;
+  --space-48: 192px;
+  --space-64: 256px;
+}
+
+[data-theme="dark"] {
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --space-40: 160px;
+  --space-48: 192px;
+  --space-64: 256px;
+}
+
+/* === RADII === */
+
+:root {
+  --radius-none: 0;
+  --radius-sm: 8px;
+  --radius-circle: 50%;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+}
+
+[data-theme="dark"] {
+  --radius-none: 0;
+  --radius-sm: 8px;
+  --radius-circle: 50%;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+}
+
+/* === SHADOWS === */
+
+:root {
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.16);
+  --shadow-2xl: 0 24px 56px rgba(0, 0, 0, 0.20);
+
+  /* Ledger warm shadows (cream-based) */
+  --shadow-cream: 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-cream-lg: 0 12px 32px rgba(0, 0, 0, 0.08);
+
+  /* Dark mode shadows */
+  --shadow-dark-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-dark-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-dark-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-dark-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] {
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 24px 56px rgba(0, 0, 0, 0.6);
+  --shadow-cream: 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-cream-lg: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-dark-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-dark-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-dark-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-dark-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+/* === TRANSITIONS === */
+
+:root {
+  --transition-fast: 120ms ease;
+  --transition: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Ledger warmth */
+  --transition-warm: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --transition-fast: 120ms ease;
+  --transition: 200ms ease;
+  --transition-slow: 300ms ease;
+  --transition-warm: 200ms ease;
+}
+
+/* === COMPONENT COLORS === */
+
+:root {
+  /* Category bar segments */
+  --cat-seg-food: var(--led-green);
+  --cat-seg-home: var(--led-ochre);
+  --cat-seg-transport: var(--led-terracotta);
+  --cat-seg-fun: var(--led-sage);
+  --cat-seg-savings: var(--led-peach);
+
+  /* Category sparkline dots */
+  --dot-current: #5f9c5f;
+  --dot-previous: #d0d5d0;
+
+  /* Pill deltas */
+  --pill-up: #d6edde;
+  --pill-down: #fdece8;
+  --pill-text-up: var(--led-green);
+  --pill-text-down: var(--led-terracotta);
+
+  /* Net worth balance point */
+  --dot-balance: #1d2b45;
+
+  /* Account type colors */
+  --account-asset: var(--led-green);
+  --account-liability: var(--led-terracotta);
+  --account-savings: var(--led-peach);
+
+  /* Notification levels */
+  --notif-success: #5f9c5f;
+  --notif-warning: var(--led-ochre);
+  --notif-error: var(--led-terracotta);
+  --notif-info: #5f9c5f;
+}
+
+[data-theme="dark"] {
+  --cat-seg-food: #8ce98c;
+  --cat-seg-home: #fbbf6b;
+  --cat-seg-transport: #ff7070;
+  --cat-seg-fun: #c4e8c4;
+  --cat-seg-savings: #ffd8a8;
+
+  --dot-current: #8ce98c;
+  --dot-previous: #4a5563;
+  --dot-balance: #ffffff;
+
+  --account-asset: #8ce98c;
+  --account-liability: #ff7070;
+  --account-savings: #ffd8a8;
+
+  --notif-success: #8ce98c;
+  --notif-warning: #fbbf6b;
+  --notif-error: #ff7070;
+  --notif-info: #8ce98c;
+}
+
+/* === CARD COMPONENT TOKENS === */
+
+:root {
+  /* Card (OverviewPreview, category blocks, etc.) */
+  --card-bg: var(--led-panel);
+  --card-border: var(--led-border);
+  --card-shadow: var(--shadow-cream);
+  --card-radius: var(--radius-md);
+  --card-title: var(--font-display);
+  --card-value: var(--font-display);
+  --card-subtitle: var(--text-sm);
+  --card-subtitle-color: var(--led-muted);
+
+  /* Divider line between cards */
+  --card-divider: 1px solid var(--led-border);
+
+  /* Pill badge */
+  --pill-bg-up: var(--led-green-2);
+  --pill-bg-down: #fed7d7;
+  --pill-text-up: #166534;
+  --pill-text-down: #991b1b;
+}
+
+[data-theme="dark"] {
+  --card-bg: var(--led-panel);
+  --card-border: var(--led-border);
+  --card-shadow: var(--shadow-dark-sm);
+  --card-radius: var(--radius-md);
+  --card-title: var(--font-display);
+  --card-value: var(--font-display);
+  --card-subtitle: var(--text-sm);
+  --card-subtitle-color: var(--led-muted);
+  --card-divider: 1px solid var(--led-border);
+  --pill-bg-up: #1b5e20;
+  --pill-bg-down: #4a2c2c;
+  --pill-text-up: #d1fae5;
+  --pill-text-down: #fecaca;
+}
+
+/* === SPARKLINE TOKENS === */
+
+:root {
+  /* Sparkline stroke widths */
+  --sparkline-current-width: 3px;
+  --sparkline-prev-width: 1.5px;
+  --sparkline-min-height: 20%;
+  --sparkline-max-height: 100%;
+}
+
+[data-theme="dark"] {
+  --sparkline-current-width: 2px;
+  --sparkline-prev-width: 1px;
+  --sparkline-min-height: 20%;
+  --sparkline-max-height: 100%;
+}
