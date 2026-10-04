@@ -181,9 +181,79 @@ git switch -c feature/short-description
 
 Commit focused changes on the branch, run the local checks, then open a pull request into `main`. Do not commit `.env`, database files, or generated build output.
 
-Docker images pushed from `main` are published as `:latest`. Images pushed from other branches are
-published as `:dev` (and also receive their branch and commit tags), so branch testing does not replace
-the production image tag. To run the branch image locally:
+
+## Releases & Versions
+
+### Versioning Scheme
+
+Wealthfly follows [Semantic Versioning (SemVer)](https://semver.org/spec/v2.0.0.html):
+
+```
+MAJOR.MINOR.PATCH
+```
+
+- **MAJOR**: Increment for breaking changes (incompatible with previous version)
+- **MINOR**: Increment for new features (backward-compatible)
+- **PATCH**: Increment for bug fixes only (backward-compatible)
+
+### Docker Tags
+
+| Tag | Description | Source | Use Case |
+|-----|-------------|--------|----------|
+| `latest` | Most recent production release | `main` branch | Production deployment |
+| `dev` | Development builds | `develop` branch | Testing new features |
+| `vX.Y.Z` | Tagged releases | Git tags | Specific stable version |
+
+### Recommended Workflow
+
+1. **Develop**: Work on feature branches (`feature/*`, `bugfix/*`), PR to `develop`
+2. **Test Dev**: Use `:dev` image for testing new features
+3. **Release**: When ready, merge to `main` and tag with `vX.Y.Z`
+
+### Pulling Specific Versions
+
+```bash
+# Latest production
+WEALTHFLY_IMAGE_TAG=latest docker compose pull
+
+# Development
+WEALTHFLY_IMAGE_TAG=dev docker compose pull
+
+# Specific release
+WEALTHFLY_IMAGE_TAG=v1.2.3 docker compose pull
+```
+
+### Checking the Current Version
+
+```bash
+# View the running container's version
+docker inspect wealthfly | grep -A 1 "Env"
+
+# Or check the Docker Hub/GitHub Packages
+git tag # see available tags
+```
+
+### Releasing a New Version
+
+1. Update `CHANGELOG.md` with your changes
+2. Bump the version in the tag (e.g., `git tag -a v1.2.3 -m "Release 1.2.3"`)
+3. Push the tag: `git push origin v1.2.3`
+4. CI will:
+   - Validate the tag format
+   - Run tests
+   - Build and push the Docker image
+   - Create a GitHub Release with changelog notes
+
+### Tag Format
+
+- **Production releases**: Must be in `vMAJOR.MINOR.PATCH` format (e.g., `v1.2.3`)
+- **Invalid tags** (not matching SemVer on `main`) will fail CI
+
+### Development Tags
+
+- Feature/bug branches (e.g., `feature/new-feature`, `bugfix-123`) trigger `:dev` builds
+- Only `:dev` images are pushed from feature branches
+- Never push feature branches directly to `main`
 
 ```bash
 WEALTHFLY_IMAGE_TAG=dev docker compose pull

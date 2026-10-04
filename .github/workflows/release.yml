@@ -1,0 +1,154 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - main
+
+jobs:
+  validate-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate tag format
+        id: validate
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          
+          # Check if it matches MAJOR.MINOR.PATCH format
+          if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag validation failed: '$TAG' doesn't match MAJOR.MINOR.PATCH format"
+            exit 1
+          fi
+          
+          echo "version=$TAG" >> $GITHUB_OUTPUT
+          echo "Tag '$TAG' is valid SemVer format"
+
+  tests:
+    needs:
+      - validate-tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test
+
+  build-and-push-release:
+    needs:
+      - validate-tag
+      - tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+      VERSION: ${{ needs.validate-tag.outputs.version }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image (release)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags:
+            - ${{ env.VERSION }}
+            - latest
+          labels:
+            org.opencontainers.image.title=Wealthfly
+            org.opencontainers.image.description=A self-hosted Firefly III dashboard
+            org.opencontainers.image.vendor=Wealthfly
+            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  create-release:
+    needs:
+      - validate-tag
+      - tests
+      - build-and-push-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download CHANGELOG.md
+        uses: actions/download-artifact@v4
+
+      - name: Read CHANGELOG.md
+        id: changelog
+        run: |
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          CHANGELOG_CONTENT=$(echo "${{ steps.changelog.outputs.content }}" | head -n 50)
+          
+          gh release create "$TAG" \
+            --title "Release $TAG" \
+            --notes "$CHANGELOG_CONTENT"
+
+      - name: Upload Docker image as release asset (optional)
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          package_path: ./docker-images/${{ env.VERSION }}.tar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save build digest
+        uses: actions/github-script@v7
+        env:
+          TAG: ${{ env.VERSION }}
+        with:
+          script: |
+            const context = core.context;
+            const sha = context.sha;
+            core.setOutput('digest', sha.substring(0, 7));

@@ -1,4 +1,5 @@
 # ---- Stage 1: build the React frontend ----
+ARG VERSION=latest
 FROM node:24-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json ./
@@ -23,6 +24,8 @@ COPY --from=frontend-build /app/frontend/dist ./public
 
 ENV NODE_ENV=production
 ENV PORT=4400
+ENV VERSION=${VERSION:-latest}
+
 EXPOSE 4400
 
 CMD ["node", "src/index.js"]
