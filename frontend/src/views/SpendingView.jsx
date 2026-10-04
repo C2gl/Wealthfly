@@ -5,6 +5,7 @@ import BudgetPulse from '../components/BudgetPulse.jsx';
 import RecentActivity from '../components/RecentActivity.jsx';
 import { useFormatters } from '../hooks/useFormatters.js';
 import { sumTotals } from '../lib/dateRanges.js';
+import { groupRowsForSummary } from '../lib/categoryGroups.js';
 
 export default function SpendingView({ data, budgetRows, rangeLabel, onSelectCategory, onShowTrends, onNavigate }) {
   const { formatCurrency } = useFormatters();
@@ -24,7 +25,7 @@ export default function SpendingView({ data, budgetRows, rangeLabel, onSelectCat
       </div>
       <SpendingChart data={spendingByDay} />
       <div className="spending-grid">
-        <BreakdownBars title="Where it went" rows={byCategory} labelKey="category" limit={6} initialMode="bar" onViewAll={() => onSelectCategory(byCategory[0]?.category)} />
+        <BreakdownBars title="Where it went" rows={groupRowsForSummary(byCategory)} labelKey="category" limit={6} initialMode="bar" onViewAll={() => onSelectCategory(byCategory[0]?.category)} />
         <div className="side-stack">
           <BudgetPulse rows={budgetRows} rangeLabel={rangeLabel} />
           <section className="insight-panel">

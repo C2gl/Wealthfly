@@ -2434,3 +2434,127 @@ span.delta-pill.delta-pill-bad {
   color: var(--on-accent);
   box-shadow: none;
 }
+
+/* ==== Grouped categories ==== */
+.category-heading-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 14px;
+}
+
+.category-group {
+  cursor: default;
+}
+
+.category-group-open {
+  grid-column: 1 / -1;
+}
+
+.category-group-toggle {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.category-group-toggle:focus-visible,
+.category-child-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.category-group-chevron {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-right: 2px;
+  border-right: 1.5px solid var(--text-muted);
+  border-bottom: 1.5px solid var(--text-muted);
+  transform: rotate(-45deg);
+  transition: transform 160ms ease;
+}
+
+.category-group-open .category-group-chevron {
+  transform: rotate(45deg);
+}
+
+.category-group-count {
+  margin-left: 4px;
+  color: var(--text-muted);
+  font: 11px var(--font-mono);
+}
+
+.category-children {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.category-child-row {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--wash) 30%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.category-child-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--wash) 58%, transparent);
+}
+
+.category-child-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.category-child-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-dot-small {
+  width: 8px;
+  height: 8px;
+  flex: none;
+}
+
+.category-child-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.category-child-amount strong {
+  font: 500 12px var(--font-mono);
+}
+
+.category-child-meta {
+  color: var(--text-muted);
+  font: 11px var(--font-mono);
+}

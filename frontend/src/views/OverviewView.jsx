@@ -6,6 +6,7 @@ import DeltaPill from '../components/DeltaPill.jsx';
 import RecentActivity from '../components/RecentActivity.jsx';
 import { useFormatters } from '../hooks/useFormatters.js';
 import { padNetWorthToMonthEnd, sumTotals } from '../lib/dateRanges.js';
+import { groupRowsForSummary } from '../lib/categoryGroups.js';
 import { categoryColor, isNamedSavingsAccount } from '../utils.js';
 
 export default function OverviewView({ data, rangeKey, range, rangeLabel, savingsAccountWords, onNavigate }) {
@@ -17,7 +18,7 @@ export default function OverviewView({ data, rangeKey, range, rangeLabel, saving
   const overviewAccounts = accounts.filter((account) => account.type === 'asset' && !isNamedSavingsAccount(account, savingsAccountWords));
   const chartNetWorth = padNetWorthToMonthEnd(netWorth, rangeKey, range.start);
 
-  const topCategories = byCategory.slice(0, 4);
+  const topCategories = groupRowsForSummary(byCategory).slice(0, 4);
   const topCategoryColors = topCategories.reduce((colors, row) => {
     colors.push(categoryColor(row.category, colors.at(-1)));
     return colors;
