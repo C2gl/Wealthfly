@@ -30,8 +30,7 @@ jobs:
           echo "Tag '$TAG' is valid SemVer format"
 
   tests:
-    needs:
-      - validate-tag
+    needs: validate-tag
     runs-on: ubuntu-latest
 
     steps:
@@ -61,10 +60,12 @@ jobs:
         working-directory: frontend
         run: npm test
 
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
   build-and-push-release:
-    needs:
-      - validate-tag
-      - tests
+    needs: [validate-tag, tests]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -87,6 +88,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image (release)
+        id: build-release
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -104,51 +106,20 @@ jobs:
           cache-to: type=gha,mode=max
 
   create-release:
-    needs:
-      - validate-tag
-      - tests
-      - build-and-push-release
+    needs: [validate-tag, tests, build-and-push-release]
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Download CHANGELOG.md
-        uses: actions/download-artifact@v4
-
-      - name: Read CHANGELOG.md
-        id: changelog
-        run: |
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          cat CHANGELOG.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${GITHUB_REF_NAME#v}"
-          CHANGELOG_CONTENT=$(echo "${{ steps.changelog.outputs.content }}" | head -n 50)
+          CHANGELOG_CONTENT=$(head -n 50 CHANGELOG.md)
           
           gh release create "$TAG" \
             --title "Release $TAG" \
             --notes "$CHANGELOG_CONTENT"
-
-      - name: Upload Docker image as release asset (optional)
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          package_path: ./docker-images/${{ env.VERSION }}.tar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Save build digest
-        uses: actions/github-script@v7
-        env:
-          TAG: ${{ env.VERSION }}
-        with:
-          script: |
-            const context = core.context;
-            const sha = context.sha;
-            core.setOutput('digest', sha.substring(0, 7));
