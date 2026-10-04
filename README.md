@@ -19,6 +19,7 @@ cache, serving a built React + Recharts frontend.
 In your Firefly III instance: **Options → Profile → OAuth → Personal Access Tokens → Create New Token**.
 Copy the token — Firefly only shows it once.
 
+
 ## 2. Configure
 
 ```bash
