@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 
-// Format a lookback start date into a human-readable string like "Oct 9" or "last 14 days (Oct 9)"
+// Format a lookback start date into a human-readable string like "14 days ago (Oct 9)" or "just now"
 function formatLookbackWindow(startDate) {
+  if (!startDate) return '';
   const start = new Date(startDate);
   const today = new Date();
   const diffMs = today.getTime() - start.getTime();
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffDays <= 1) return `${start.toLocaleDateString([], { month: 'short', day: 'numeric' })} — just now`;
-  if (diffDays <= 7) return `~${diffDays} days ago (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
+  if (diffDays <= 1) {
+    return `~${diffDays} days ago (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
+  }
+  if (diffDays <= 7) {
+    return `~${diffDays} days ago (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
+  }
 
   const todayShort = today.toLocaleDateString([], { month: 'short', day: 'numeric' });
   return `${diffDays} days ago (${todayShort}, from ${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
@@ -81,12 +86,11 @@ export function useSync({ load, loadReconciliation, setError }) {
         // Full resync — show all counts
         message = `Synced ${countLabel(result.accounts, 'account')} accounts, ${countLabel(result.categories, 'category')} categories, ${countLabel(result.tags, 'tag')} tags, and ${countLabel(result.transactions, 'transaction')} transactions (full resync).`;
       } else {
-        // Incremental sync — show window context
+        // Incremental sync — show window context + transaction count
         const start = new Date(result.lookbackStart);
-        const diffMs = new Date().getTime() - start.getTime();
-        const diffDays = Math.floor(diffMs / 86400000);
+        const diffDays = Math.floor((new Date() - start) / 86400000);
 
-        message = `Synced ${countLabel(result.accounts, 'account')} accounts, ${countLabel(result.categories, 'category')} categories, ${countLabel(result.tags, 'tag')} tags, and ${countLabel(result.transactions, 'transaction')} transactions from the last ${diffDays} days (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })}).`;
+        message = `Synced ${countLabel(result.accounts, 'account')} accounts, ${countLabel(result.categories, 'category')} categories, ${countLabel(result.tags, 'tag')} tags, and **${countLabel(result.transactions, 'transaction')} transactions** from the last ${diffDays} days (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })}).`;
       }
 
       setSyncNotification({

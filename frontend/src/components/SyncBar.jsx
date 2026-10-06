@@ -22,6 +22,14 @@ export default function SyncBar({ syncing, syncProgress, syncNotification }) {
     const step = syncProgress?.currentStep;
     const percent = Math.max(0, Math.min(100, Number(syncProgress?.progress) || 0));
     const label = step ? t(`sync.steps.${step}`) : t('sync.inProgress');
+
+    // Show transaction count when in transactions step
+    let txInfo = '';
+    if (syncProgress && syncProgress.currentStep === 'syncing_transactions' && syncNotification?.transactionsProcessed !== null) {
+      const n = Number(syncNotification.transactionsProcessed);
+      txInfo = `<span style={{ color: '#666', fontSize: 0.85em }}>({n} transactions)</span>`;
+    }
+
     return (
       <div className="sync-bar sync-bar-running" role="status" aria-live="polite">
         <span className="sync-bar-spinner" aria-hidden="true" />
@@ -36,6 +44,7 @@ export default function SyncBar({ syncing, syncProgress, syncNotification }) {
           <div className="sync-bar-fill" style={{ width: `${percent}%` }} />
         </div>
         <span className="sync-bar-percent">{percent}%</span>
+        {txInfo && <span className="sync-bar-count">{txInfo}</span>}
       </div>
     );
   }
