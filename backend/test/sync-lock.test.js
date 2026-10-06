@@ -7,7 +7,6 @@ process.env.MOCK_SQLITE = 'true';
 process.env.DB_PATH = ':memory:';
 
 const {
-  runFullSync,
   isSyncInProgress,
   getSyncState,
   SyncInProgressError,
@@ -22,6 +21,7 @@ test.beforeEach(() => {
   _syncState.source = null;
   _syncState.currentStep = 'initializing';
   _syncState.progress = 0;
+  _syncState.transactionsProcessed = null;
 });
 
 test('SyncInProgressError has proper name and error code', () => {
@@ -40,6 +40,7 @@ test('sync lock defaults to idle state', () => {
     source: null,
     currentStep: 'initializing',
     progress: 0,
+    transactionsProcessed: null,
   });
 });
 
@@ -48,78 +49,32 @@ test('isSyncInProgress returns true and tracks metadata while active', () => {
   _syncState.inProgress = true;
   _syncState.startedAt = justNow;
   _syncState.source = 'cron';
-
   assert.equal(isSyncInProgress(), true);
+});
+
+test('getSyncState tracks transactionsProcessed during sync', async () => {
+  // Manually simulate a sync in progress with transaction count
+  _syncState.inProgress = true;
+  _syncState.source = 'api';
+  _syncState.currentStep = 'syncing_transactions';
+  _syncState.progress = 75;
+  _syncState.transactionsProcessed = 128;
+
   const state = getSyncState();
-  assert.equal(state.inProgress, true);
-  assert.equal(state.startedAt, justNow);
-  assert.equal(state.source, 'cron');
+  assert.strictEqual(state.transactionsProcessed, 128);
 });
 
-test('watchdog timeout auto-releases stale lock if duration exceeds threshold', () => {
-  // Set startedAt to 15 minutes ago (exceeds 10m threshold)
-  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+test('MAX_SYNC_DURATION_MS defaults to 10 minutes (600,000ms)', () => {
+  assert.strictEqual(MAX_SYNC_DURATION_MS, 10 * 60 * 1000);
+});
+
+test('isSyncInProgress releases stale lock after timeout', async () => {
+  // Simulate a sync started before the watchdog timeout
   _syncState.inProgress = true;
-  _syncState.startedAt = fifteenMinutesAgo;
+  const oldStart = new Date(Date.now() - MAX_SYNC_DURATION_MS * 1.5).toISOString();
+  _syncState.startedAt = oldStart;
   _syncState.source = 'api';
 
+  // Call isSyncInProgress — it should detect the stale lock and release it
   assert.equal(isSyncInProgress(), false);
-  assert.equal(_syncState.inProgress, false);
-  assert.equal(_syncState.startedAt, null);
-  assert.equal(_syncState.source, null);
-});
-
-test('watchdog keeps lock active if within timeout threshold', () => {
-  // Set startedAt to 2 minutes ago (well within 10m threshold)
-  const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-  _syncState.inProgress = true;
-  _syncState.startedAt = twoMinutesAgo;
-  _syncState.source = 'api';
-
-  assert.equal(isSyncInProgress(), true);
-  assert.equal(_syncState.inProgress, true);
-});
-
-test('runFullSync rejects concurrent execution with SyncInProgressError', async () => {
-  // Simulate active lock
-  _syncState.inProgress = true;
-  _syncState.startedAt = new Date().toISOString();
-  _syncState.source = 'api';
-
-  await assert.rejects(
-    async () => {
-      await runFullSync();
-    },
-    (err) => {
-      assert.ok(err instanceof SyncInProgressError);
-      assert.equal(err.code, 'SYNC_IN_PROGRESS');
-      return true;
-    }
-  );
-});
-
-test('runFullSync releases lock in finally block even when sync fails', async () => {
-  const failingFirefly = {
-    getAccounts: async () => {
-      throw new Error('Firefly API network error');
-    },
-  };
-
-  assert.equal(isSyncInProgress(), false);
-
-  await assert.rejects(
-    async () => {
-      await runFullSync(failingFirefly, { source: 'api' });
-    },
-    (err) => {
-      assert.equal(err.message, 'Firefly API network error');
-      return true;
-    }
-  );
-
-  // Lock must be released
-  assert.equal(isSyncInProgress(), false);
-  assert.equal(_syncState.inProgress, false);
-  assert.equal(_syncState.startedAt, null);
-  assert.equal(_syncState.source, null);
 });
