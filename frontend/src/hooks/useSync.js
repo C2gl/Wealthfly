@@ -1,8 +1,24 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 
+// Format a lookback start date into a human-readable string like "Oct 9" or "last 14 days (Oct 9)"
+function formatLookbackWindow(startDate) {
+  const start = new Date(startDate);
+  const today = new Date();
+  const diffMs = today.getTime() - start.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffDays <= 1) return `${start.toLocaleDateString([], { month: 'short', day: 'numeric' })} — just now`;
+  if (diffDays <= 7) return `~${diffDays} days ago (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
+
+  const todayShort = today.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return `${diffDays} days ago (${todayShort}, from ${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
+}
+
 function countLabel(count, singular) {
-  return `${count || 0} ${singular}${count === 1 ? '' : 's'}`;
+  if (count === null || count === undefined) return '';
+  const n = Number(count);
+  return `${n} ${singular}${n !== 1 && n > 0 ? 's' : ''}`;
 }
 
 // Sync / purge state, the manual actions, and the status polling.
@@ -59,15 +75,29 @@ export function useSync({ load, loadReconciliation, setError }) {
         });
         return;
       }
+
+      let message;
+      if (full || !result.incremental) {
+        // Full resync — show all counts
+        message = `Synced ${countLabel(result.accounts, 'account')} accounts, ${countLabel(result.categories, 'category')} categories, ${countLabel(result.tags, 'tag')} tags, and ${countLabel(result.transactions, 'transaction')} transactions (full resync).`;
+      } else {
+        // Incremental sync — show window context
+        const start = new Date(result.lookbackStart);
+        const diffMs = new Date().getTime() - start.getTime();
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        message = `Synced ${countLabel(result.accounts, 'account')} accounts, ${countLabel(result.categories, 'category')} categories, ${countLabel(result.tags, 'tag')} tags, and ${countLabel(result.transactions, 'transaction')} transactions from the last ${diffDays} days (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })}).`;
+      }
+
       setSyncNotification({
         id: `sync-success-${Date.now()}`,
         level: 'success',
         title: 'Sync completed',
-        message: `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')}${result.incremental === false ? ' (full resync)' : ''}.`,
+        message,
       });
+
       await load();
       loadReconciliation();
-      setSyncing(false);
     } catch (e) {
       setSyncNotification({
         id: `sync-failure-${Date.now()}`,
@@ -76,6 +106,7 @@ export function useSync({ load, loadReconciliation, setError }) {
         message: e.message,
       });
       setError(e.message);
+    } finally {
       setSyncing(false);
     }
   };
@@ -93,14 +124,13 @@ export function useSync({ load, loadReconciliation, setError }) {
         });
         return;
       }
+
       setSyncNotification({
         id: `purge-success-${Date.now()}`,
         level: 'success',
         title: 'Data purged',
         message: 'All locally cached data was cleared. Run a sync to rebuild it from Firefly III.',
       });
-      await load();
-      loadReconciliation();
     } catch (e) {
       setSyncNotification({
         id: `purge-failure-${Date.now()}`,
