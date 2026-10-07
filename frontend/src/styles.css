@@ -1004,7 +1004,9 @@ body {
   padding: 2px 6px;
 }
 
-/* Sidebar */
+/* Sidebar
+   Pinned to the viewport while the page scrolls. If the nav ever outgrows the
+   window it scrolls on its own, and the sync footer stays visible below. */
 .sidebar {
   width: 220px;
   flex-shrink: 0;
@@ -1012,7 +1014,14 @@ body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding: 24px 16px;
+  padding: 24px 16px 0;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .wordmark {
@@ -1102,7 +1111,11 @@ body {
   flex-direction: column;
   gap: 10px;
   border-top: 1px solid var(--border);
-  padding-top: 16px;
+  padding: 16px 0 24px;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: var(--panel);
 }
 
 .sync-status {
@@ -2163,6 +2176,11 @@ body {
     flex-direction: row;
     align-items: center;
     padding: 12px 16px;
+    /* Top bar on small screens: back to normal flow, no pinning. */
+    position: static;
+    align-self: auto;
+    height: auto;
+    overflow-y: visible;
   }
   .wordmark { margin: 0 18px 0 0; }
   .wordmark-text { display: inline; }
