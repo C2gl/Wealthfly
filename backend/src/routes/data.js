@@ -89,6 +89,9 @@ router.post('/sync', async (req, res) => {
         error: 'A sync is already in progress. Please wait for it to complete.',
         startedAt: state.startedAt,
         source: state.source,
+        currentStep: state.currentStep,
+        progress: state.progress,
+        transactionsProcessed: state.transactionsProcessed,
       });
     }
     console.error('[sync] failed:', err.message);
@@ -106,6 +109,7 @@ router.get('/sync/status', (req, res) => {
     source: state.source,
     currentStep: state.currentStep,
     progress: state.progress,
+    transactionsProcessed: state.transactionsProcessed,
   });
 });
 

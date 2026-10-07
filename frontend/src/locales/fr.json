@@ -17,6 +17,7 @@
     "completed": "Synchronisation terminee",
     "failed": "Echec de la synchronisation",
     "syncedSummary": "{{accounts}} compte, {{categories}} categorie, {{tags}} etiquette et {{transactions}} transaction synchronises.",
+    "transactionsCount": "({{count}} transactions)",
     "steps": {
       "initializing": "Demarrage de la synchronisation...",
       "syncing_accounts": "Synchronisation des comptes...",

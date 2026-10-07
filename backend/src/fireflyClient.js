@@ -65,7 +65,7 @@ async function fetchAllPages(path, params = {}, onPage) {
     const { data } = await client.get(path, { params: { ...params, page, limit: 200 } });
     results.push(...(data.data || []));
     totalPages = data.meta?.pagination?.total_pages || 1;
-    if (typeof onPage === 'function') onPage({ page, totalPages });
+    if (typeof onPage === 'function') onPage({ page, totalPages, fetched: results.length });
     page += 1;
   } while (page <= totalPages);
   // Throttling between requests (including between pages here) is handled

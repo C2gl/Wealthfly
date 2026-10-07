@@ -33,6 +33,36 @@ describe('SyncBar', () => {
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '42');
   });
 
+  it('shows the live transaction count during the transactions step', () => {
+    renderSyncBar({
+      syncing: true,
+      syncProgress: { currentStep: 'syncing_transactions', progress: 60, transactionsProcessed: 128 },
+      syncNotification: null,
+    });
+
+    expect(screen.getByText('(128 transactions)')).toBeInTheDocument();
+  });
+
+  it('hides the transaction count outside the transactions step or when unknown', () => {
+    const { rerender } = renderSyncBar({
+      syncing: true,
+      syncProgress: { currentStep: 'syncing_accounts', progress: 10, transactionsProcessed: 5 },
+      syncNotification: null,
+    });
+    expect(screen.queryByText(/transactions\)/)).not.toBeInTheDocument();
+
+    rerender(
+      <TranslationProvider>
+        <SyncBar
+          syncing
+          syncProgress={{ currentStep: 'syncing_transactions', progress: 60, transactionsProcessed: null }}
+          syncNotification={null}
+        />
+      </TranslationProvider>
+    );
+    expect(screen.queryByText(/transactions\)/)).not.toBeInTheDocument();
+  });
+
   it('falls back to a generic label before the first step is reported', () => {
     renderSyncBar({ syncing: true, syncProgress: null, syncNotification: null });
 
