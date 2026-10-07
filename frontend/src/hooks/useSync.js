@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 
-function countLabel(count, singular) {
-  return `${count || 0} ${singular}${count === 1 ? '' : 's'}`;
+function countLabel(count, singular, plural = `${singular}s`) {
+  if (count === null || count === undefined) return '';
+  const n = Number(count);
+  return `${n} ${n === 1 ? singular : plural}`;
+}
+
+function shortDate(date) {
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
 // Sync / purge state, the manual actions, and the status polling.
@@ -31,7 +37,11 @@ export function useSync({ load, loadReconciliation, setError }) {
       try {
         const status = await api.syncStatus();
         if (status?.inProgress) {
-          setSyncProgress({ currentStep: status.currentStep, progress: status.progress });
+          setSyncProgress({
+            currentStep: status.currentStep,
+            progress: status.progress,
+            transactionsProcessed: status.transactionsProcessed ?? null,
+          });
           if (!syncing) setSyncing(true);
         } else if (syncing) {
           setSyncing(false);
@@ -59,15 +69,32 @@ export function useSync({ load, loadReconciliation, setError }) {
         });
         return;
       }
+
+      const counts = [
+        countLabel(result.accounts, 'account'),
+        countLabel(result.categories, 'category', 'categories'),
+        countLabel(result.tags, 'tag'),
+        countLabel(result.transactions, 'transaction'),
+      ];
+      const summary = `Synced ${counts[0]}, ${counts[1]}, ${counts[2]}, and ${counts[3]}`;
+
+      let message;
+      if (full || !result.incremental || !result.lookbackStart) {
+        message = `${summary} (full resync).`;
+      } else {
+        const start = new Date(result.lookbackStart);
+        const diffDays = Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000));
+        message = `${summary} from the last ${diffDays} days (since ${shortDate(start)}).`;
+      }
+
       setSyncNotification({
         id: `sync-success-${Date.now()}`,
         level: 'success',
         title: 'Sync completed',
-        message: `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')}${result.incremental === false ? ' (full resync)' : ''}.`,
+        message,
       });
       await load();
       loadReconciliation();
-      setSyncing(false);
     } catch (e) {
       setSyncNotification({
         id: `sync-failure-${Date.now()}`,
@@ -76,6 +103,7 @@ export function useSync({ load, loadReconciliation, setError }) {
         message: e.message,
       });
       setError(e.message);
+    } finally {
       setSyncing(false);
     }
   };
@@ -108,6 +136,7 @@ export function useSync({ load, loadReconciliation, setError }) {
         title: 'Purge failed',
         message: e.message,
       });
+      setError(e.message);
     } finally {
       setPurging(false);
     }

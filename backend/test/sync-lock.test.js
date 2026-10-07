@@ -22,6 +22,7 @@ test.beforeEach(() => {
   _syncState.source = null;
   _syncState.currentStep = 'initializing';
   _syncState.progress = 0;
+  _syncState.transactionsProcessed = null;
 });
 
 test('SyncInProgressError has proper name and error code', () => {
@@ -40,6 +41,7 @@ test('sync lock defaults to idle state', () => {
     source: null,
     currentStep: 'initializing',
     progress: 0,
+    transactionsProcessed: null,
   });
 });
 
@@ -122,4 +124,28 @@ test('runFullSync releases lock in finally block even when sync fails', async ()
   assert.equal(_syncState.inProgress, false);
   assert.equal(_syncState.startedAt, null);
   assert.equal(_syncState.source, null);
+});
+
+test('getSyncState exposes transactionsProcessed while a sync is running', () => {
+  _syncState.inProgress = true;
+  _syncState.startedAt = new Date().toISOString();
+  _syncState.source = 'api';
+  _syncState.currentStep = 'syncing_transactions';
+  _syncState.progress = 75;
+  _syncState.transactionsProcessed = 128;
+
+  assert.strictEqual(getSyncState().transactionsProcessed, 128);
+});
+
+test('stale-lock watchdog also clears transactionsProcessed', () => {
+  _syncState.inProgress = true;
+  _syncState.startedAt = new Date(Date.now() - MAX_SYNC_DURATION_MS * 1.5).toISOString();
+  _syncState.transactionsProcessed = 50;
+
+  assert.equal(isSyncInProgress(), false);
+  assert.equal(_syncState.transactionsProcessed, null);
+});
+
+test('MAX_SYNC_DURATION_MS defaults to 10 minutes', () => {
+  assert.strictEqual(MAX_SYNC_DURATION_MS, 10 * 60 * 1000);
 });

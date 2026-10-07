@@ -44,7 +44,10 @@ const syncState = {
 const TX_PROGRESS_START = 15;
 const TX_PROGRESS_END = 90;
 
-function reportTransactionPage({ page, totalPages }) {
+function reportTransactionPage({ page, totalPages, fetched }) {
+  // `fetched` = transaction groups downloaded so far; gives the UI a live count
+  // while the (synchronous) DB insert hasn't started yet.
+  if (typeof fetched === 'number') syncState.transactionsProcessed = fetched;
   const fraction = Math.min(1, page / Math.max(1, totalPages));
   syncState.progress = Math.round(TX_PROGRESS_START + (TX_PROGRESS_END - TX_PROGRESS_START) * fraction);
 }
@@ -58,19 +61,24 @@ function isSyncInProgress() {
     syncState.source = null;
     syncState.currentStep = 'initializing';
     syncState.progress = 0;
+    syncState.transactionsProcessed = null;
     return false;
   }
   return true;
 }
 
 function getSyncState() {
-  return {
+  const state = {
     inProgress: isSyncInProgress(),
     startedAt: syncState.startedAt,
     source: syncState.source,
     currentStep: syncState.currentStep,
     progress: syncState.progress,
   };
+
+  state.transactionsProcessed = syncState.transactionsProcessed ?? null;
+
+  return state;
 }
 
 function setSyncStatusMeta(status) {
@@ -204,6 +212,9 @@ async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
     });
   });
   tx(groups);
+
+  // Final, exact row count (the live count during fetching is per group).
+  syncState.transactionsProcessed = count;
   return count;
 }
 
@@ -239,6 +250,8 @@ async function syncTransactionsIncremental(firefly = defaultFirefly, lookbackDay
     });
   });
   tx(groups);
+
+  syncState.transactionsProcessed = count;
   return { count, windowStart };
 }
 
@@ -340,6 +353,7 @@ function acquireSyncLock(source) {
   syncState.source = source;
   syncState.currentStep = 'initializing';
   syncState.progress = 0;
+  syncState.transactionsProcessed = null;
   setSyncStatusMeta('running');
 }
 
@@ -349,6 +363,7 @@ function releaseSyncLock() {
   syncState.source = null;
   syncState.currentStep = 'initializing';
   syncState.progress = 0;
+  syncState.transactionsProcessed = null;
   setSyncStatusMeta('idle');
 }
 
@@ -428,7 +443,7 @@ async function runIncrementalSync(firefly = defaultFirefly, { source = 'api', lo
     syncState.currentStep = 'syncing_transactions';
     syncState.progress = TX_PROGRESS_START;
     const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays, { onPage: reportTransactionPage });
-    
+
     syncState.currentStep = 'rebuilding_balance_history';
     syncState.progress = 90;
     rebuildBalanceHistory();

@@ -22,6 +22,11 @@ export default function SyncBar({ syncing, syncProgress, syncNotification }) {
     const step = syncProgress?.currentStep;
     const percent = Math.max(0, Math.min(100, Number(syncProgress?.progress) || 0));
     const label = step ? t(`sync.steps.${step}`) : t('sync.inProgress');
+
+    // Live count while transactions are being fetched (comes from the status poll).
+    const txCount = syncProgress?.transactionsProcessed;
+    const showTxCount = step === 'syncing_transactions' && txCount !== null && txCount !== undefined;
+
     return (
       <div className="sync-bar sync-bar-running" role="status" aria-live="polite">
         <span className="sync-bar-spinner" aria-hidden="true" />
@@ -36,6 +41,9 @@ export default function SyncBar({ syncing, syncProgress, syncNotification }) {
           <div className="sync-bar-fill" style={{ width: `${percent}%` }} />
         </div>
         <span className="sync-bar-percent">{percent}%</span>
+        {showTxCount && (
+          <span className="sync-bar-count">{t('sync.transactionsCount', { count: Number(txCount) })}</span>
+        )}
       </div>
     );
   }
