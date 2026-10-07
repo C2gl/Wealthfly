@@ -23,11 +23,11 @@ export default function SyncBar({ syncing, syncProgress, syncNotification }) {
     const percent = Math.max(0, Math.min(100, Number(syncProgress?.progress) || 0));
     const label = step ? t(`sync.steps.${step}`) : t('sync.inProgress');
 
-    // Show transaction count when in transactions step - with explicit null check on syncNotification
+    // Show transaction count when in transactions step
     let txInfo = '';
-    if (syncProgress && syncProgress.currentStep === 'syncing_transactions' && syncNotification && syncNotification.transactionsProcessed !== null) {
-      const n = Number(syncNotification.transactionsProcessed);
-      txInfo = `<span style={{ color: '#666', fontSize: 0.85em }}>({n} transactions)</span>`;
+    if (syncProgress && syncProgress.currentStep === 'syncing_transactions' && syncProgress.transactionsProcessed !== undefined) {
+      const n = Number(syncProgress.transactionsProcessed);
+      txInfo = `(${n} transactions)`;
     }
 
     return (

@@ -1,24 +1,43 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 
+function countLabel(count, singular) {
+  if (count === null || count === undefined) return '';
+  const n = Number(count);
+  return `${n} ${singular}${n !== 1 ? 's' : ''}`;
+}
+
+// Sync / purge state, the manual actions, and the status polling.
+// `load` and `loadReconciliation` refresh the dashboard once a sync or purge finishes.
 export function useSync({ load, loadReconciliation, setError }) {
   const [syncing, setSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(null);
   const [syncNotification, setSyncNotification] = useState(null);
   const [purging, setPurging] = useState(false);
 
+  // Pick up a sync that is already running when the page opens.
   useEffect(() => {
-    api.syncStatus().then((status) => {
-      if (status?.inProgress) setSyncing(true);
-    }).catch(() => {});
+    api.syncStatus()
+      .then((status) => {
+        if (status?.inProgress) {
+          setSyncing(true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
+  // Poll always: fast while a sync is visible, slowly otherwise so syncs started
+  // elsewhere (the cron job, another tab) still make the bar appear.
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const status = await api.syncStatus();
         if (status?.inProgress) {
-          setSyncProgress({ currentStep: status.currentStep, progress: status.progress });
+          setSyncProgress({ 
+            currentStep: status.currentStep, 
+            progress: status.progress,
+            transactionsProcessed: status.transactionsProcessed 
+          });
           if (!syncing) setSyncing(true);
         } else if (syncing) {
           setSyncing(false);
@@ -26,7 +45,9 @@ export function useSync({ load, loadReconciliation, setError }) {
           await load();
           loadReconciliation();
         }
-      } catch { /* transient failure */ }
+      } catch {
+        // Keep polling on transient failure
+      }
     }, syncing ? 1000 : 10000);
     return () => clearInterval(interval);
   }, [syncing, load, loadReconciliation]);
@@ -40,24 +61,38 @@ export function useSync({ load, loadReconciliation, setError }) {
           id: `sync-info-${Date.now()}`,
           level: 'info',
           title: 'Sync in progress',
-          message: 'A sync is already running in the background.',
+          message: 'A sync is already running in the background. Results will refresh automatically when finished.',
         });
         return;
       }
 
-      const msg = full || !result.incremental 
-        ? `Full resync complete.`
-        : `Synced from last ${getDaysSince(result.lookbackStart)} days.`;
+      let message;
+      if (full || !result.incremental) {
+        // Full resync — show all counts
+        message = `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')} (full resync).`;
+      } else {
+        // Incremental sync — show window context + transaction count
+        const start = new Date(result.lookbackStart);
+        const diffDays = Math.floor((new Date() - start) / 86400000);
+
+        message = `Synced ${countLabel(result.accounts, 'account')}, ${countLabel(result.categories, 'category')}, ${countLabel(result.tags, 'tag')}, and ${countLabel(result.transactions, 'transaction')} from the last ${diffDays} days (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })}).`;
+      }
 
       setSyncNotification({
         id: `sync-success-${Date.now()}`,
         level: 'success',
         title: 'Sync completed',
-        message: msg,
+        message,
         dismissedAt: Date.now(),
       });
     } catch (e) {
-      setError(e);
+      setSyncNotification({
+        id: `purge-failure-${Date.now()}`,
+        level: 'critical',
+        title: 'Sync failed',
+        message: e.message,
+      });
+      setError(e.message);
     } finally {
       setSyncing(false);
     }
@@ -65,8 +100,21 @@ export function useSync({ load, loadReconciliation, setError }) {
 
   const handlePurge = async () => {
     setPurging(true);
-    try { await api.purge(); await load(); loadReconciliation(); }
-    catch (e) { /* error handled by notification */ } finally { setPurging(false); }
+    try {
+      await api.triggerPurge();
+      await load();
+      loadReconciliation();
+    } catch (e) {
+      setSyncNotification({
+        id: `purge-failure-${Date.now()}`,
+        level: 'critical',
+        title: 'Purge failed',
+        message: e.message,
+      });
+      setError(e.message);
+    } finally {
+      setPurging(false);
+    }
   };
 
   return { syncing, syncProgress, syncNotification, purging, handleSync, handlePurge };
