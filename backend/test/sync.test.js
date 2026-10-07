@@ -240,3 +240,30 @@ test('runFullSync pulls accounts and transactions, then rebuilds balance history
   const lastSync = db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get();
   assert.ok(lastSync && lastSync.value);
 });
+
+test('runFullSync exposes a live transaction count while fetching, and the exact row count after', async () => {
+  const { getSyncState } = require('../src/sync');
+  const seenDuringFetch = [];
+
+  const firefly = fakeFirefly({
+    getTransactions: async ({ onPage } = {}) => {
+      onPage({ page: 1, totalPages: 2, fetched: 3 });
+      seenDuringFetch.push(getSyncState().transactionsProcessed);
+      onPage({ page: 2, totalPages: 2, fetched: 5 });
+      seenDuringFetch.push(getSyncState().transactionsProcessed);
+      return [
+        fireflyTransactionGroup('t1', [
+          { type: 'withdrawal', date: '2024-01-05', amount: '1.00', source_id: '1', destination_id: '9', tags: [] },
+          { type: 'withdrawal', date: '2024-01-05', amount: '2.00', source_id: '1', destination_id: '9', tags: [] },
+        ]),
+      ];
+    },
+  });
+
+  const result = await runFullSync(firefly);
+
+  assert.deepEqual(seenDuringFetch, [3, 5]);
+  assert.equal(result.transactions, 2);
+  // The lock is released at the end, which also clears the live counter.
+  assert.equal(getSyncState().transactionsProcessed, null);
+});

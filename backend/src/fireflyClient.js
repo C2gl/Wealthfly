@@ -56,7 +56,7 @@ client.interceptors.request.use(async (config) => {
  * Fetch every page of a paginated Firefly III v1 endpoint.
  * Firefly paginates with { meta: { pagination: { current_page, total_pages } }, data: [...] }
  */
-async function fetchAllPages(path, params = {}, onPage) {
+async function fetchAllPages(path, params = {}, onPage, countItems = (items) => items.length) {
   let page = 1;
   let totalPages = 1;
   const results = [];
@@ -65,7 +65,7 @@ async function fetchAllPages(path, params = {}, onPage) {
     const { data } = await client.get(path, { params: { ...params, page, limit: 200 } });
     results.push(...(data.data || []));
     totalPages = data.meta?.pagination?.total_pages || 1;
-    if (typeof onPage === 'function') onPage({ page, totalPages, fetched: results.length });
+    if (typeof onPage === 'function') onPage({ page, totalPages, fetched: countItems(results) });
     page += 1;
   } while (page <= totalPages);
   // Throttling between requests (including between pages here) is handled
@@ -101,11 +101,18 @@ async function getBudgetLimits(id, { start, end } = {}) {
   return fetchAllPages(`/budgets/${id}/limits`, params);
 }
 
+// Firefly returns transaction *groups*; each group holds one or more splits and
+// every split becomes one row in our transactions table. Counting splits keeps
+// the live "fetched so far" number consistent with the final row count.
+function countSplits(groups) {
+  return groups.reduce((sum, group) => sum + (group.attributes?.transactions?.length || 0), 0);
+}
+
 async function getTransactions({ start, end, onPage } = {}) {
   const params = {};
   if (start) params.start = start;
   if (end) params.end = end;
-  return fetchAllPages('/transactions', params, onPage);
+  return fetchAllPages('/transactions', params, onPage, countSplits);
 }
 
 async function testConnection() {

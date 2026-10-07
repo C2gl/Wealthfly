@@ -1,0 +1,431 @@
+diff --git a/backend/src/fireflyClient.js b/backend/src/fireflyClient.js
+index a666f87..f829f9d 100644
+--- a/backend/src/fireflyClient.js
++++ b/backend/src/fireflyClient.js
+@@ -56,7 +56,7 @@ client.interceptors.request.use(async (config) => {
+  * Fetch every page of a paginated Firefly III v1 endpoint.
+  * Firefly paginates with { meta: { pagination: { current_page, total_pages } }, data: [...] }
+  */
+-async function fetchAllPages(path, params = {}, onPage) {
++async function fetchAllPages(path, params = {}, onPage, countItems = (items) => items.length) {
+   let page = 1;
+   let totalPages = 1;
+   const results = [];
+@@ -65,7 +65,7 @@ async function fetchAllPages(path, params = {}, onPage) {
+     const { data } = await client.get(path, { params: { ...params, page, limit: 200 } });
+     results.push(...(data.data || []));
+     totalPages = data.meta?.pagination?.total_pages || 1;
+-    if (typeof onPage === 'function') onPage({ page, totalPages, fetched: results.length });
++    if (typeof onPage === 'function') onPage({ page, totalPages, fetched: countItems(results) });
+     page += 1;
+   } while (page <= totalPages);
+   // Throttling between requests (including between pages here) is handled
+@@ -101,11 +101,18 @@ async function getBudgetLimits(id, { start, end } = {}) {
+   return fetchAllPages(`/budgets/${id}/limits`, params);
+ }
+ 
++// Firefly returns transaction *groups*; each group holds one or more splits and
++// every split becomes one row in our transactions table. Counting splits keeps
++// the live "fetched so far" number consistent with the final row count.
++function countSplits(groups) {
++  return groups.reduce((sum, group) => sum + (group.attributes?.transactions?.length || 0), 0);
++}
++
+ async function getTransactions({ start, end, onPage } = {}) {
+   const params = {};
+   if (start) params.start = start;
+   if (end) params.end = end;
+-  return fetchAllPages('/transactions', params, onPage);
++  return fetchAllPages('/transactions', params, onPage, countSplits);
+ }
+ 
+ async function testConnection() {
+diff --git a/backend/src/sync.js b/backend/src/sync.js
+index 2fce19b..e9fdffd 100644
+--- a/backend/src/sync.js
++++ b/backend/src/sync.js
+@@ -45,8 +45,8 @@ const TX_PROGRESS_START = 15;
+ const TX_PROGRESS_END = 90;
+ 
+ function reportTransactionPage({ page, totalPages, fetched }) {
+-  // `fetched` = transaction groups downloaded so far; gives the UI a live count
+-  // while the (synchronous) DB insert hasn't started yet.
++  // `fetched` = transaction splits downloaded so far (what will become rows);
++  // gives the UI a live count while pages are still being fetched.
+   if (typeof fetched === 'number') syncState.transactionsProcessed = fetched;
+   const fraction = Math.min(1, page / Math.max(1, totalPages));
+   syncState.progress = Math.round(TX_PROGRESS_START + (TX_PROGRESS_END - TX_PROGRESS_START) * fraction);
+@@ -213,7 +213,7 @@ async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
+   });
+   tx(groups);
+ 
+-  // Final, exact row count (the live count during fetching is per group).
++  // Final, exact row count (matches the last live `fetched` value).
+   syncState.transactionsProcessed = count;
+   return count;
+ }
+diff --git a/backend/test/firefly-transaction-count.test.js b/backend/test/firefly-transaction-count.test.js
+new file mode 100644
+index 0000000..31ab637
+--- /dev/null
++++ b/backend/test/firefly-transaction-count.test.js
+@@ -0,0 +1,69 @@
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const http = require('node:http');
++
++// Two-page Firefly stand-in. Page 1 has two groups (2 + 1 splits), page 2 has
++// one group (2 splits) — so groups and splits differ at every step.
++function group(id, splitCount) {
++  return {
++    id,
++    attributes: { transactions: Array.from({ length: splitCount }, () => ({ amount: '1.00' })) },
++  };
++}
++
++const PAGES = {
++  1: [group('a', 2), group('b', 1)],
++  2: [group('c', 2)],
++};
++
++function startMockFirefly() {
++  return new Promise((resolve) => {
++    const server = http.createServer((req, res) => {
++      const page = Number(new URL(req.url, 'http://x').searchParams.get('page')) || 1;
++      res.writeHead(200, { 'Content-Type': 'application/json' });
++      res.end(JSON.stringify({
++        data: PAGES[page] || [],
++        meta: { pagination: { current_page: page, total_pages: 2 } },
++      }));
++    });
++    server.listen(0, '127.0.0.1', () => resolve(server));
++  });
++}
++
++test('getTransactions reports splits fetched so far (not groups) to onPage', async (t) => {
++  const server = await startMockFirefly();
++  const { port } = server.address();
++  const saved = {
++    url: process.env.FIREFLY_URL,
++    token: process.env.FIREFLY_TOKEN,
++    delay: process.env.FIREFLY_REQUEST_DELAY_MS,
++  };
++  process.env.FIREFLY_URL = `http://127.0.0.1:${port}`;
++  process.env.FIREFLY_TOKEN = 'test-token';
++  process.env.FIREFLY_REQUEST_DELAY_MS = '0';
++
++  // fireflyClient reads its env at module load, so require it fresh.
++  delete require.cache[require.resolve('../src/fireflyClient')];
++  const firefly = require('../src/fireflyClient');
++
++  t.after(() => {
++    server.close();
++    delete require.cache[require.resolve('../src/fireflyClient')];
++    for (const [key, value] of [
++      ['FIREFLY_URL', saved.url],
++      ['FIREFLY_TOKEN', saved.token],
++      ['FIREFLY_REQUEST_DELAY_MS', saved.delay],
++    ]) {
++      if (value === undefined) delete process.env[key]; else process.env[key] = value;
++    }
++  });
++
++  const reports = [];
++  const groups = await firefly.getTransactions({ onPage: (info) => reports.push(info) });
++
++  assert.equal(groups.length, 3);
++  assert.deepEqual(reports, [
++    { page: 1, totalPages: 2, fetched: 3 },
++    { page: 2, totalPages: 2, fetched: 5 },
++  ]);
++});
+diff --git a/backend/test/sync.test.js b/backend/test/sync.test.js
+index 74daf45..40d8abf 100644
+--- a/backend/test/sync.test.js
++++ b/backend/test/sync.test.js
+@@ -240,3 +240,30 @@ test('runFullSync pulls accounts and transactions, then rebuilds balance history
+   const lastSync = db.prepare("SELECT value FROM sync_meta WHERE key = 'last_sync'").get();
+   assert.ok(lastSync && lastSync.value);
+ });
++
++test('runFullSync exposes a live transaction count while fetching, and the exact row count after', async () => {
++  const { getSyncState } = require('../src/sync');
++  const seenDuringFetch = [];
++
++  const firefly = fakeFirefly({
++    getTransactions: async ({ onPage } = {}) => {
++      onPage({ page: 1, totalPages: 2, fetched: 3 });
++      seenDuringFetch.push(getSyncState().transactionsProcessed);
++      onPage({ page: 2, totalPages: 2, fetched: 5 });
++      seenDuringFetch.push(getSyncState().transactionsProcessed);
++      return [
++        fireflyTransactionGroup('t1', [
++          { type: 'withdrawal', date: '2024-01-05', amount: '1.00', source_id: '1', destination_id: '9', tags: [] },
++          { type: 'withdrawal', date: '2024-01-05', amount: '2.00', source_id: '1', destination_id: '9', tags: [] },
++        ]),
++      ];
++    },
++  });
++
++  const result = await runFullSync(firefly);
++
++  assert.deepEqual(seenDuringFetch, [3, 5]);
++  assert.equal(result.transactions, 2);
++  // The lock is released at the end, which also clears the live counter.
++  assert.equal(getSyncState().transactionsProcessed, null);
++});
+diff --git a/frontend/test/useSync.test.js b/frontend/test/useSync.test.js
+new file mode 100644
+index 0000000..6d1bcaf
+--- /dev/null
++++ b/frontend/test/useSync.test.js
+@@ -0,0 +1,249 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { renderHook, act } from '@testing-library/react';
++
++// useSync talks to the backend only through `api`, so mock that one module.
++vi.mock('../src/api.js', () => ({
++  api: {
++    syncStatus: vi.fn(),
++    triggerSync: vi.fn(),
++    purge: vi.fn(),
++  },
++}));
++
++import { api } from '../src/api.js';
++import { useSync } from '../src/hooks/useSync.js';
++
++function setup() {
++  const load = vi.fn().mockResolvedValue(undefined);
++  const loadReconciliation = vi.fn();
++  const setError = vi.fn();
++  const hook = renderHook(() => useSync({ load, loadReconciliation, setError }));
++  return { ...hook, load, loadReconciliation, setError };
++}
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  // Idle by default; polling tests override this.
++  api.syncStatus.mockResolvedValue({ inProgress: false });
++});
++
++afterEach(() => {
++  vi.useRealTimers();
++});
++
++describe('useSync › handleSync summary message', () => {
++  it('summarises a full resync without repeating the nouns or using markdown', async () => {
++    api.triggerSync.mockResolvedValue({
++      accounts: 12, categories: 5, tags: 3, transactions: 100, incremental: false,
++    });
++    const { result, load, loadReconciliation } = setup();
++
++    await act(async () => {
++      await result.current.handleSync(true);
++    });
++
++    expect(api.triggerSync).toHaveBeenCalledWith({ full: true });
++    const note = result.current.syncNotification;
++    expect(note.level).toBe('success');
++    expect(note.title).toBe('Sync completed');
++    expect(note.message).toBe(
++      'Synced 12 accounts, 5 categories, 3 tags, and 100 transactions (full resync).'
++    );
++    expect(note.message).not.toMatch(/accounts accounts|transactions transactions|\*\*/);
++    // The dashboard refreshes after a manual sync.
++    expect(load).toHaveBeenCalledTimes(1);
++    expect(loadReconciliation).toHaveBeenCalledTimes(1);
++    expect(result.current.syncing).toBe(false);
++  });
++
++  it('describes the lookback window for an incremental sync', async () => {
++    vi.useFakeTimers({ toFake: ['Date'] });
++    vi.setSystemTime(new Date('2026-10-07T12:00:00Z'));
++    api.triggerSync.mockResolvedValue({
++      accounts: 2, categories: 4, tags: 1, transactions: 7,
++      incremental: true, lookbackStart: '2026-09-23',
++    });
++    const { result } = setup();
++
++    await act(async () => {
++      await result.current.handleSync();
++    });
++
++    const { message } = result.current.syncNotification;
++    expect(message).toMatch(
++      /^Synced 2 accounts, 4 categories, 1 tag, and 7 transactions from the last 14 days \(since [A-Za-z]{3} \d{1,2}\)\.$/
++    );
++  });
++
++  it('falls back to the full-resync wording if the backend sends no lookbackStart', async () => {
++    api.triggerSync.mockResolvedValue({
++      accounts: 1, categories: 1, tags: 1, transactions: 1, incremental: true,
++    });
++    const { result } = setup();
++
++    await act(async () => {
++      await result.current.handleSync();
++    });
++
++    expect(result.current.syncNotification.message).not.toMatch(/NaN|Invalid/);
++  });
++
++  it('pluralises correctly for 0 and 1', async () => {
++    api.triggerSync.mockResolvedValue({
++      accounts: 1, categories: 1, tags: 0, transactions: 1, incremental: false,
++    });
++    const { result } = setup();
++
++    await act(async () => {
++      await result.current.handleSync();
++    });
++
++    expect(result.current.syncNotification.message).toBe(
++      'Synced 1 account, 1 category, 0 tags, and 1 transaction (full resync).'
++    );
++  });
++});
++
++describe('useSync › handleSync edge cases', () => {
++  it('shows an info notice and does not refresh when a sync is already running', async () => {
++    api.triggerSync.mockResolvedValue({ inProgress: true });
++    const { result, load } = setup();
++
++    await act(async () => {
++      await result.current.handleSync();
++    });
++
++    expect(result.current.syncNotification.level).toBe('info');
++    expect(load).not.toHaveBeenCalled();
++    expect(result.current.syncing).toBe(false);
++  });
++
++  it('reports failures as a critical notice and passes a string to setError', async () => {
++    api.triggerSync.mockRejectedValue(new Error('Firefly is down'));
++    const { result, setError } = setup();
++
++    await act(async () => {
++      await result.current.handleSync();
++    });
++
++    expect(result.current.syncNotification).toMatchObject({
++      level: 'critical',
++      title: 'Sync failed',
++      message: 'Firefly is down',
++    });
++    expect(result.current.syncNotification.id).toMatch(/^sync-failure-/);
++    expect(setError).toHaveBeenCalledWith('Firefly is down');
++    expect(result.current.syncing).toBe(false);
++  });
++});
++
++describe('useSync › handlePurge', () => {
++  it('purges, confirms, and refreshes the dashboard', async () => {
++    api.purge.mockResolvedValue({ ok: true });
++    const { result, load, loadReconciliation } = setup();
++
++    await act(async () => {
++      await result.current.handlePurge();
++    });
++
++    expect(api.purge).toHaveBeenCalledTimes(1);
++    expect(result.current.syncNotification).toMatchObject({ level: 'success', title: 'Data purged' });
++    expect(load).toHaveBeenCalledTimes(1);
++    expect(loadReconciliation).toHaveBeenCalledTimes(1);
++    expect(result.current.purging).toBe(false);
++  });
++
++  it('refuses politely while a sync is running', async () => {
++    api.purge.mockResolvedValue({ inProgress: true });
++    const { result, load } = setup();
++
++    await act(async () => {
++      await result.current.handlePurge();
++    });
++
++    expect(result.current.syncNotification.level).toBe('info');
++    expect(load).not.toHaveBeenCalled();
++    expect(result.current.purging).toBe(false);
++  });
++
++  it('reports a failed purge and passes a string to setError', async () => {
++    api.purge.mockRejectedValue(new Error('disk is read-only'));
++    const { result, setError } = setup();
++
++    await act(async () => {
++      await result.current.handlePurge();
++    });
++
++    expect(result.current.syncNotification).toMatchObject({
++      level: 'critical',
++      title: 'Purge failed',
++      message: 'disk is read-only',
++    });
++    expect(setError).toHaveBeenCalledWith('disk is read-only');
++    expect(result.current.purging).toBe(false);
++  });
++});
++
++describe('useSync › status polling', () => {
++  it('picks up a sync running elsewhere and forwards the live transaction count', async () => {
++    vi.useFakeTimers();
++    api.syncStatus
++      .mockResolvedValueOnce({ inProgress: false }) // initial check on mount
++      .mockResolvedValue({
++        inProgress: true,
++        currentStep: 'syncing_transactions',
++        progress: 60,
++        transactionsProcessed: 42,
++      });
++    const { result } = setup();
++
++    await act(async () => {
++      await vi.advanceTimersByTimeAsync(10000); // idle poll interval
++    });
++
++    expect(result.current.syncing).toBe(true);
++    expect(result.current.syncProgress).toEqual({
++      currentStep: 'syncing_transactions',
++      progress: 60,
++      transactionsProcessed: 42,
++    });
++  });
++
++  it('defaults the count to null when the backend does not send one', async () => {
++    vi.useFakeTimers();
++    api.syncStatus
++      .mockResolvedValueOnce({ inProgress: false })
++      .mockResolvedValue({ inProgress: true, currentStep: 'syncing_accounts', progress: 10 });
++    const { result } = setup();
++
++    await act(async () => {
++      await vi.advanceTimersByTimeAsync(10000);
++    });
++
++    expect(result.current.syncProgress.transactionsProcessed).toBeNull();
++  });
++
++  it('clears progress and refreshes the dashboard once the sync finishes', async () => {
++    vi.useFakeTimers();
++    api.syncStatus
++      .mockResolvedValueOnce({ inProgress: false }) // mount
++      .mockResolvedValueOnce({ inProgress: true, currentStep: 'syncing_transactions', progress: 80 })
++      .mockResolvedValue({ inProgress: false });
++    const { result, load, loadReconciliation } = setup();
++
++    // First poll: sync visible. Second poll (now every 1s): sync finished.
++    await act(async () => {
++      await vi.advanceTimersByTimeAsync(10000);
++    });
++    expect(result.current.syncing).toBe(true);
++
++    await act(async () => {
++      await vi.advanceTimersByTimeAsync(1000);
++    });
++
++    expect(result.current.syncing).toBe(false);
++    expect(result.current.syncProgress).toBeNull();
++    expect(load).toHaveBeenCalledTimes(1);
++    expect(loadReconciliation).toHaveBeenCalledTimes(1);
++  });
++});
