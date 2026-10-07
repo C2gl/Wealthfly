@@ -45,8 +45,8 @@ const TX_PROGRESS_START = 15;
 const TX_PROGRESS_END = 90;
 
 function reportTransactionPage({ page, totalPages, fetched }) {
-  // `fetched` = transaction groups downloaded so far; gives the UI a live count
-  // while the (synchronous) DB insert hasn't started yet.
+  // `fetched` = transaction splits downloaded so far (what will become rows);
+  // gives the UI a live count while pages are still being fetched.
   if (typeof fetched === 'number') syncState.transactionsProcessed = fetched;
   const fraction = Math.min(1, page / Math.max(1, totalPages));
   syncState.progress = Math.round(TX_PROGRESS_START + (TX_PROGRESS_END - TX_PROGRESS_START) * fraction);
@@ -213,7 +213,7 @@ async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
   });
   tx(groups);
 
-  // Final, exact row count (the live count during fetching is per group).
+  // Final, exact row count (matches the last live `fetched` value).
   syncState.transactionsProcessed = count;
   return count;
 }
