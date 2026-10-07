@@ -17,6 +17,7 @@
     "completed": "Sync completed",
     "failed": "Sync failed",
     "syncedSummary": "Synced {{accounts}} account, {{categories}} category, {{tags}} tag, and {{transactions}} transaction.",
+    "transactionsCount": "({{count}} transactions)",
     "steps": {
       "initializing": "Starting sync...",
       "syncing_accounts": "Syncing accounts...",

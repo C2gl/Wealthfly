@@ -1,29 +1,14 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 
-// Format a lookback start date into a human-readable string like "14 days ago (Oct 9)" or "just now"
-function formatLookbackWindow(startDate) {
-  if (!startDate) return '';
-  const start = new Date(startDate);
-  const today = new Date();
-  const diffMs = today.getTime() - start.getTime();
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffDays <= 1) {
-    return `~${diffDays} days ago (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
-  }
-  if (diffDays <= 7) {
-    return `~${diffDays} days ago (${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
-  }
-
-  const todayShort = today.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  return `${diffDays} days ago (${todayShort}, from ${start.toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
-}
-
-function countLabel(count, singular) {
+function countLabel(count, singular, plural = `${singular}s`) {
   if (count === null || count === undefined) return '';
   const n = Number(count);
-  return `${n} ${singular}${n !== 1 && n > 0 ? 's' : ''}`;
+  return `${n} ${n === 1 ? singular : plural}`;
+}
+
+function shortDate(date) {
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
 // Sync / purge state, the manual actions, and the status polling.
@@ -52,7 +37,11 @@ export function useSync({ load, loadReconciliation, setError }) {
       try {
         const status = await api.syncStatus();
         if (status?.inProgress) {
-          setSyncProgress({ currentStep: status.currentStep, progress: status.progress });
+          setSyncProgress({
+            currentStep: status.currentStep,
+            progress: status.progress,
+            transactionsProcessed: status.transactionsProcessed ?? null,
+          });
           if (!syncing) setSyncing(true);
         } else if (syncing) {
           setSyncing(false);
@@ -81,16 +70,21 @@ export function useSync({ load, loadReconciliation, setError }) {
         return;
       }
 
-      let message;
-      if (full || !result.incremental) {
-        // Full resync — show all counts
-        message = `Synced ${countLabel(result.accounts, 'account')} accounts, ${countLabel(result.categories, 'category')} categories, ${countLabel(result.tags, 'tag')} tags, and ${countLabel(result.transactions, 'transaction')} transactions (full resync).`;
-      } else {
-        // Incremental sync — show window context + transaction count
-        const start = new Date(result.lookbackStart);
-        const diffDays = Math.floor((new Date() - start) / 86400000);
+      const counts = [
+        countLabel(result.accounts, 'account'),
+        countLabel(result.categories, 'category', 'categories'),
+        countLabel(result.tags, 'tag'),
+        countLabel(result.transactions, 'transaction'),
+      ];
+      const summary = `Synced ${counts[0]}, ${counts[1]}, ${counts[2]}, and ${counts[3]}`;
 
-        message = `Synced ${countLabel(result.accounts, 'account')} accounts, ${countLabel(result.categories, 'category')} categories, ${countLabel(result.tags, 'tag')} tags, and **${countLabel(result.transactions, 'transaction')} transactions** from the last ${diffDays} days (${start.toLocaleDateString([], { month: 'short', day: 'numeric' }))}).`;
+      let message;
+      if (full || !result.incremental || !result.lookbackStart) {
+        message = `${summary} (full resync).`;
+      } else {
+        const start = new Date(result.lookbackStart);
+        const diffDays = Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000));
+        message = `${summary} from the last ${diffDays} days (since ${shortDate(start)}).`;
       }
 
       setSyncNotification({
@@ -98,16 +92,17 @@ export function useSync({ load, loadReconciliation, setError }) {
         level: 'success',
         title: 'Sync completed',
         message,
-        dismissedAt: Date.now(),
       });
+      await load();
+      loadReconciliation();
     } catch (e) {
       setSyncNotification({
-        id: `purge-failure-${Date.now()}`,
+        id: `sync-failure-${Date.now()}`,
         level: 'critical',
         title: 'Sync failed',
         message: e.message,
       });
-      setError(e);
+      setError(e.message);
     } finally {
       setSyncing(false);
     }
@@ -116,7 +111,22 @@ export function useSync({ load, loadReconciliation, setError }) {
   const handlePurge = async () => {
     setPurging(true);
     try {
-      await api.triggerPurge();
+      const result = await api.purge();
+      if (result.inProgress) {
+        setSyncNotification({
+          id: `purge-info-${Date.now()}`,
+          level: 'info',
+          title: 'Sync in progress',
+          message: 'Cannot purge while a sync is running. Try again once it finishes.',
+        });
+        return;
+      }
+      setSyncNotification({
+        id: `purge-success-${Date.now()}`,
+        level: 'success',
+        title: 'Data purged',
+        message: 'All locally cached data was cleared. Run a sync to rebuild it from Firefly III.',
+      });
       await load();
       loadReconciliation();
     } catch (e) {
@@ -126,7 +136,7 @@ export function useSync({ load, loadReconciliation, setError }) {
         title: 'Purge failed',
         message: e.message,
       });
-      setError(e);
+      setError(e.message);
     } finally {
       setPurging(false);
     }

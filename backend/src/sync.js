@@ -14,6 +14,9 @@ function shiftDate(dateString, days) {
 
 const DEFAULT_LOOKBACK_DAYS = 30;
 
+// How many trailing days an incremental sync re-fetches and re-applies, so
+// backdated/edited transactions within that window still get picked up.
+// Configurable via SYNC_LOOKBACK_DAYS in .env.
 function getLookbackDays() {
   const raw = Number(process.env.SYNC_LOOKBACK_DAYS);
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : DEFAULT_LOOKBACK_DAYS;
@@ -41,7 +44,10 @@ const syncState = {
 const TX_PROGRESS_START = 15;
 const TX_PROGRESS_END = 90;
 
-function reportTransactionPage({ page, totalPages }) {
+function reportTransactionPage({ page, totalPages, fetched }) {
+  // `fetched` = transaction groups downloaded so far; gives the UI a live count
+  // while the (synchronous) DB insert hasn't started yet.
+  if (typeof fetched === 'number') syncState.transactionsProcessed = fetched;
   const fraction = Math.min(1, page / Math.max(1, totalPages));
   syncState.progress = Math.round(TX_PROGRESS_START + (TX_PROGRESS_END - TX_PROGRESS_START) * fraction);
 }
@@ -55,6 +61,7 @@ function isSyncInProgress() {
     syncState.source = null;
     syncState.currentStep = 'initializing';
     syncState.progress = 0;
+    syncState.transactionsProcessed = null;
     return false;
   }
   return true;
@@ -69,12 +76,7 @@ function getSyncState() {
     progress: syncState.progress,
   };
 
-  // Add transaction count if available
-  if (syncState.transactionsProcessed !== undefined) {
-    state.transactionsProcessed = syncState.transactionsProcessed;
-  } else {
-    state.transactionsProcessed = null;
-  }
+  state.transactionsProcessed = syncState.transactionsProcessed ?? null;
 
   return state;
 }
@@ -197,10 +199,7 @@ function transactionRowFromSplit(group, s, idx) {
 async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
   const groups = await firefly.getTransactions({ onPage });
   const clear = db.prepare('DELETE FROM transactions');
-  let totalProcessed = 0;
-
-  // Initialize transaction counter if first time through this step
-  if (!syncState.transactionsProcessed) syncState.transactionsProcessed = 0;
+  let count = 0;
 
   const tx = db.transaction((rows) => {
     clear.run();
@@ -208,20 +207,15 @@ async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
       const splits = group.attributes.transactions || [];
       splits.forEach((s, idx) => {
         insertTx.run(transactionRowFromSplit(group, s, idx));
-        totalProcessed += 1;
+        count += 1;
       });
     });
   });
-
   tx(groups);
 
-  // Update progress based on pages processed
-  reportTransactionPage({ page: groups.length + 1, totalPages: groups.length + 1 });
-  
-  // Store total processed count for sync status endpoint
-  syncState.transactionsProcessed = totalProcessed;
-  
-  return totalProcessed;
+  // Final, exact row count (the live count during fetching is per group).
+  syncState.transactionsProcessed = count;
+  return count;
 }
 
 /**
@@ -241,38 +235,24 @@ async function syncTransactions(firefly = defaultFirefly, { onPage } = {}) {
  */
 async function syncTransactionsIncremental(firefly = defaultFirefly, lookbackDays = getLookbackDays(), { onPage } = {}) {
   const windowStart = shiftDate(today(), -lookbackDays);
-  let totalProcessed = 0;
-
-  if (!syncState.transactionsProcessed) syncState.transactionsProcessed = 0;
-
-  // We need to track pages differently for incremental since we pass a start date
-  // but the Firefly API still returns paginated results. Let's count as we go.
   const groups = await firefly.getTransactions({ start: windowStart, onPage });
-  
-  if (syncState.transactionsProcessed === undefined) syncState.transactionsProcessed = 0;
-  const initialCount = syncState.transactionsProcessed;
-
-  // For incremental syncs, we need to clear the old data first
   const clearWindow = db.prepare('DELETE FROM transactions WHERE substr(date, 1, 10) >= ?');
-  
+  let count = 0;
+
   const tx = db.transaction((rows) => {
     clearWindow.run(windowStart);
     rows.forEach((group) => {
       const splits = group.attributes.transactions || [];
       splits.forEach((s, idx) => {
         insertTx.run(transactionRowFromSplit(group, s, idx));
-        totalProcessed += 1;
+        count += 1;
       });
     });
   });
-
   tx(groups);
-  
-  // Update progress based on pages processed
-  reportTransactionPage({ page: groups.length + 1, totalPages: groups.length + 1 });
-  
-  syncState.transactionsProcessed = totalProcessed;
-  return { count: totalProcessed, windowStart };
+
+  syncState.transactionsProcessed = count;
+  return { count, windowStart };
 }
 
 function hasSyncedBefore() {
@@ -300,7 +280,7 @@ function purgeAllData() {
  * touches it (chronologically sorted), returns one {date, balance} point per day that
  * had activity, plus a starting point on `startDate`. When more than one transaction
  * lands on the same day, the last one in `transactions` wins for that day's point —
-  callers are responsible for passing transactions in ascending date order.
+ * callers are responsible for passing transactions in ascending date order.
  */
 function computeBalancePoints(accountId, openingBalance, startDate, transactions) {
   const points = new Map();
@@ -423,9 +403,6 @@ async function runFullSync(firefly = defaultFirefly, { source = 'api' } = {}) {
     syncState.progress = 10;
     const tags = await syncTags(firefly);
 
-    // Reset transaction counter before starting transactions step
-    if (syncState.transactionsProcessed === undefined) syncState.transactionsProcessed = 0;
-    
     syncState.currentStep = 'syncing_transactions';
     syncState.progress = TX_PROGRESS_START;
     const transactions = await syncTransactions(firefly, { onPage: reportTransactionPage });
@@ -463,9 +440,6 @@ async function runIncrementalSync(firefly = defaultFirefly, { source = 'api', lo
     syncState.progress = 10;
     const tags = await syncTags(firefly);
 
-    // Reset transaction counter before starting transactions step
-    if (syncState.transactionsProcessed === undefined) syncState.transactionsProcessed = 0;
-    
     syncState.currentStep = 'syncing_transactions';
     syncState.progress = TX_PROGRESS_START;
     const { count: transactions, windowStart } = await syncTransactionsIncremental(firefly, lookbackDays, { onPage: reportTransactionPage });

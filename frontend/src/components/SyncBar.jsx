@@ -23,12 +23,9 @@ export default function SyncBar({ syncing, syncProgress, syncNotification }) {
     const percent = Math.max(0, Math.min(100, Number(syncProgress?.progress) || 0));
     const label = step ? t(`sync.steps.${step}`) : t('sync.inProgress');
 
-    // Show transaction count when in transactions step - with explicit null check on syncNotification
-    let txInfo = '';
-    if (syncProgress && syncProgress.currentStep === 'syncing_transactions' && syncNotification && syncNotification.transactionsProcessed !== null) {
-      const n = Number(syncNotification.transactionsProcessed);
-      txInfo = `<span style={{ color: '#666', fontSize: 0.85em }}>({n} transactions)</span>`;
-    }
+    // Live count while transactions are being fetched (comes from the status poll).
+    const txCount = syncProgress?.transactionsProcessed;
+    const showTxCount = step === 'syncing_transactions' && txCount !== null && txCount !== undefined;
 
     return (
       <div className="sync-bar sync-bar-running" role="status" aria-live="polite">
@@ -44,7 +41,9 @@ export default function SyncBar({ syncing, syncProgress, syncNotification }) {
           <div className="sync-bar-fill" style={{ width: `${percent}%` }} />
         </div>
         <span className="sync-bar-percent">{percent}%</span>
-        {txInfo && <span className="sync-bar-count">{txInfo}</span>}
+        {showTxCount && (
+          <span className="sync-bar-count">{t('sync.transactionsCount', { count: Number(txCount) })}</span>
+        )}
       </div>
     );
   }
